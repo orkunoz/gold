@@ -4,7 +4,7 @@ Internal jewelry inventory and sales workspace for a family business in Ukraine.
 
 ## Scope
 
-Task 1 provides the Next.js foundation, email/password sign-in and sign-out, protected navigation, and placeholder Dashboard, Inventory, and Sales pages. Task 2 adds the database and Row Level Security foundation for shops, employees, categories, and individual physical inventory items. Inventory UI, Excel import, sales workflows, pricing formulas, registration, and hosting deployment are not included yet.
+Task 1 provides the Next.js and authentication foundation. Task 2 adds the database and Row Level Security foundation for shops, employees, categories, and individual physical inventory items. Task 3A adds inventory listing, filtering, scanner-focused barcode lookup, product details, and manual add/edit workflows. Excel import, sales workflows, pricing formulas, registration, and hosting deployment are not included yet.
 
 ## Prerequisites
 
@@ -123,6 +123,14 @@ npm start
 
 The unit tests mock Supabase and cover authentication actions, route redirects, and cookie propagation. They do not replace a live Supabase integration check.
 
+## Inventory workflow
+
+Open `/inventory` to view the newest 200 items accessible under the signed-in employee's RLS policies. Filter by barcode, article number, category, status, free text, and—for owners—shop. The barcode field receives focus on page load; **Open exact barcode** jumps directly to the matching product detail page.
+
+Owners and managers see manual add/edit controls. Managers remain restricted to their assigned shop by both Server Action checks and PostgreSQL RLS. Salespeople have read-only inventory access. Duplicate barcodes and invalid or negative numeric values produce safe form errors. Normal removal is represented by the `REMOVED` status; the UI does not expose deletion.
+
+Prices are displayed in UAH and remain manually entered stored values. Task 3A does not derive prices from weight or any other rule.
+
 With your Supabase configuration in place, verify:
 
 - Visiting `/`, `/dashboard`, `/inventory`, or `/sales` while signed out redirects to `/login`.
@@ -144,6 +152,7 @@ With your Supabase configuration in place, verify:
 - `src/proxy.ts` and `src/lib/supabase/proxy.ts`: refresh sessions, preserve updated cookies on redirects, and prevent caching of auth responses.
 - `src/lib/auth/session.ts`: cached-per-request verified claims and reusable `requireUser` guard. Both layout and pages guard access; future server actions and data access must independently authorize requests.
 - `src/lib/auth/actions.ts`: validated sign-in and current-session sign-out Server Actions. Passwords are never logged or returned to the client.
+- `src/lib/inventory`: typed inventory queries, Server Actions, validation, formatting, and shared constants. All database calls use the current user's cookie-backed Supabase client.
 - `src/components`: login form, navigation, sign-out control, and shared placeholder view.
 - `src/app/globals.css`: Tailwind CSS and small global accessibility defaults.
 - Root configuration files: TypeScript strict mode, ESLint, Next.js, PostCSS, environment example, and dependency lockfile.

@@ -1,0 +1,30 @@
+import { describe, expect, it } from "vitest";
+import { validateInventoryForm } from "./validation";
+
+function form(overrides: Record<string, string> = {}) {
+  const data = new FormData();
+  const values = { shop_id: "shop-id", barcode: "CODE-1", status: "IN_STOCK", ...overrides };
+  Object.entries(values).forEach(([key, value]) => data.set(key, value));
+  return data;
+}
+
+describe("inventory form validation", () => {
+  it("trims text and accepts valid optional values", () => {
+    const result = validateInventoryForm(form({ barcode: "  CODE-1  ", article_number: " A-7 ", weight_grams: "2.345", owner_price: "100" }));
+    expect(result).toMatchObject({ success: true, data: { barcode: "CODE-1", article_number: "A-7", weight_grams: 2.345, owner_price: 100, selling_price: null } });
+  });
+
+  it("requires a barcode and shop", () => {
+    const result = validateInventoryForm(form({ barcode: "", shop_id: "" }));
+    expect(result).toMatchObject({ success: false, errors: { barcode: expect.any(String), shop_id: expect.any(String) } });
+  });
+
+  it.each(["weight_grams", "owner_price", "selling_price"])("rejects invalid %s", (field) => {
+    const result = validateInventoryForm(form({ [field]: "-1" }));
+    expect(result).toMatchObject({ success: false, errors: { [field]: expect.any(String) } });
+  });
+
+  it("rejects an unknown inventory status", () => {
+    expect(validateInventoryForm(form({ status: "UNKNOWN" }))).toMatchObject({ success: false, errors: { status: expect.any(String) } });
+  });
+});
