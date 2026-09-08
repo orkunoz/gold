@@ -20,6 +20,8 @@ Task 1 foundation was uploaded in commit 2bdc7c070fe68bd1145d5c2aca430ca6311c962
 
 No inventory functionality, sales functionality, roles, application database tables, migrations, or live hosting deployment exists in this milestone. GitHub upload is complete; it does not mean a live website exists.
 
+Task 2 was implemented and applied to the hosted Gold Supabase project on 2026-09-08. It adds shops, employees, product categories, individual inventory items, constraints, indexes, timestamp triggers, hardened authorization helpers, RLS policies, optional generic seed data, generated TypeScript database types, and setup/bootstrap documentation. The hosted schema passed Supabase database lint; anonymous table and helper access was denied as intended. Local lint, typecheck, 14 unit tests, and the production build passed. Public Auth signup is disabled, email auth is enabled, and anonymous auth is disabled. A linked owner account successfully completed sign-in, session persistence, protected navigation, sign-out, and post-sign-out redirect checks. Live manager and salesperson RLS testing still requires dedicated test accounts.
+
 ## Scope and next work
 
 The original Task 1 explicitly excluded database tables, inventory features, and sales features. Do not infer authorization to build the entire application from this handoff. Resume by inspecting the actual repository, checking setup and authentication, then agree the next milestone with the user. Schema and access-control design should precede business-data features.

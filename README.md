@@ -4,7 +4,7 @@ Internal jewelry inventory and sales workspace for a family business in Ukraine.
 
 ## Scope
 
-Task 1 only: Next.js foundation, email/password sign-in and sign-out, protected navigation, and placeholder Dashboard, Inventory, and Sales pages. No inventory or sales functionality, database tables, migrations, registration, or hosting deployment is included.
+Task 1 provides the Next.js foundation, email/password sign-in and sign-out, protected navigation, and placeholder Dashboard, Inventory, and Sales pages. Task 2 adds the database and Row Level Security foundation for shops, employees, categories, and individual physical inventory items. Inventory UI, Excel import, sales workflows, pricing formulas, registration, and hosting deployment are not included yet.
 
 ## Prerequisites
 
@@ -43,9 +43,73 @@ Open http://localhost:3000. Signed-out visitors are redirected to `/login`; sign
 2. Disable **Allow new users to sign up** for this staff-only application. There is no public registration UI, but provider-level signup must also be disabled.
 3. Under Authentication > Users, create the authorized staff accounts with email/password and confirmed email status. Give each person their own account. Invitation acceptance and password reset flows are outside Task 1.
 4. Set Authentication > URL Configuration > Site URL to `http://localhost:3000` during local development. Update it to the actual HTTPS application URL when hosting is configured. This password-only sign-in flow does not need an OAuth callback route.
-5. Keep anonymous sign-ins disabled. All authenticated users in this dedicated project have access to the placeholder workspace; role-based permissions are not implemented yet.
+5. Keep anonymous sign-ins disabled. Task 2 database access also requires an active, linked `employees` row and is restricted by its role and assigned shop.
 
-Supabase manages its own Auth storage. Do not create application database tables for this task. PostgreSQL business tables and row-level security policies must be designed before future data features are added. No direct PostgreSQL connection string is needed now.
+Supabase manages its own Auth storage. Application users are linked to Auth identities through `public.employees`. No direct PostgreSQL connection string is needed by the web application.
+
+## Database setup
+
+Task 2 migrations live in `supabase/migrations`; optional generic seed data lives in `supabase/seed.sql`. The schema uses one inventory row per physical jewelry piece. Barcodes are trimmed, non-empty, case-sensitive, and globally unique. Article numbers may repeat. Prices are stored values and are never calculated by this migration.
+
+Install the Supabase CLI using its official installation instructions, authenticate it, and link this checkout to the existing Gold project. Do not commit database passwords, access tokens, service-role keys, or `.env.local`.
+
+```sh
+supabase login
+supabase link --project-ref YOUR_PROJECT_REF
+supabase db push
+```
+
+After schema changes, regenerate the checked-in database types and review the diff:
+
+```sh
+supabase gen types typescript --linked --schema public > src/lib/database.types.ts
+```
+
+The generated `role` and `status` fields are narrowed to the documented TypeScript unions because PostgreSQL check constraints are not represented as enums by the generator.
+
+For a fresh local Supabase stack, apply migrations and the seed with:
+
+```sh
+supabase start
+supabase db reset
+```
+
+The optional seed creates a `Main Shop` with code `MAIN` and generic jewelry categories. It does not create Auth users or employees.
+
+### Bootstrap the first owner
+
+First create or identify the owner's confirmed account under **Authentication > Users**. Then run the following once in the Supabase SQL Editor, replacing only the placeholder UUID with that Auth user's UUID:
+
+```sql
+insert into public.shops (name, code)
+values ('Main Shop', 'MAIN')
+on conflict (code) do update set name = excluded.name
+returning id;
+
+insert into public.employees (auth_user_id, full_name, role, shop_id)
+select
+  'AUTH_USER_UUID'::uuid,
+  'Owner',
+  'owner',
+  shop.id
+from public.shops as shop
+where shop.code = 'MAIN';
+```
+
+This privileged bootstrap is intentionally performed through the SQL Editor: before the first `employees` owner row exists, no application user is authorized to administer employee records. Additional employees can later be added by an owner-facing administrative workflow.
+
+### Authorization model
+
+- Owners can read and administer shops, employees, categories, and all inventory.
+- Managers can read, create, and update inventory belonging to their assigned shop. Moving an item to another shop is rejected by RLS. Managers cannot administer shops, employees, or categories.
+- Salespeople can read inventory for their assigned shop and their own employee record, but cannot write inventory or administrative records.
+- Active managers and salespeople can read their assigned shop and active employees can read categories.
+- Unauthenticated and inactive users have no application-table access.
+- Only owners can delete inventory records. Normal business workflows must change status to `SOLD` or `REMOVED`, not delete rows.
+
+RLS helpers use hardened, schema-qualified functions to look up the current active employee without recursive policies. Authorization remains enforced in PostgreSQL; protected pages alone are not a data-access boundary.
+
+After applying the migration, verify with separate owner, manager, and salesperson test accounts. Confirm that each role can perform only the operations above, that a manager cannot access another shop, and that anonymous API requests return no rows.
 
 ## Checks
 
@@ -74,6 +138,9 @@ With your Supabase configuration in place, verify:
 - `src/app`: App Router, root layout, login, and `(protected)` route group. Pages are Server Components; protected pages are dynamically rendered.
 - `src/lib/supabase/client.ts`: browser client factory using `@supabase/ssr`, ready for future Client Components.
 - `src/lib/supabase/server.ts`: request-scoped server client using Next.js cookies.
+- `src/lib/database.types.ts`: TypeScript representation of the Task 2 database schema.
+- `supabase/migrations`: versioned PostgreSQL schema, constraints, indexes, triggers, and RLS policies.
+- `supabase/seed.sql`: optional idempotent development seed for the first shop and generic categories.
 - `src/proxy.ts` and `src/lib/supabase/proxy.ts`: refresh sessions, preserve updated cookies on redirects, and prevent caching of auth responses.
 - `src/lib/auth/session.ts`: cached-per-request verified claims and reusable `requireUser` guard. Both layout and pages guard access; future server actions and data access must independently authorize requests.
 - `src/lib/auth/actions.ts`: validated sign-in and current-session sign-out Server Actions. Passwords are never logged or returned to the client.
