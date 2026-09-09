@@ -4,7 +4,7 @@ Internal jewelry inventory and sales workspace for a family business in Ukraine.
 
 ## Scope
 
-Task 1 provides the Next.js and authentication foundation. Task 2 adds the database and Row Level Security foundation. Tasks 3A–3C add manual and Excel inventory management plus scanner-focused lookup. Task 4A adds immutable sales history and an atomic database sale transaction. The cashier UI, returns, refunds, pricing formulas, payments, receipts, analytics, registration, and hosting deployment are not included yet.
+Task 1 provides the Next.js and authentication foundation. Task 2 adds the database and Row Level Security foundation. Tasks 3A–3C add manual and Excel inventory management plus scanner-focused lookup. Task 4A adds immutable sales history and an atomic database sale transaction. Task 4B adds cashier checkout and read-only sales history/details. Returns, refunds, pricing formulas, payments, receipts, analytics, registration, and hosting deployment are not included yet.
 
 ## Prerequisites
 
@@ -176,6 +176,16 @@ Do not send employee IDs, sale numbers, list prices, totals, or target statuses;
 
 `supabase/tests/complete_sale.sql` is a rollback-only integration verification intended for a migration-capable connection with an existing active owner. It covers owner, manager, and salesperson success; one- and multi-item totals; historical list-price snapshots; status changes; requested validation failures; duplicate-sale protection; atomic rollback; and direct-write privilege restrictions. It restores the sale-number sequence and rolls back all test rows.
 
+## Cashier checkout
+
+Open `/sales` for the scanner-first checkout. The page shows the current employee and shop, a focused exact-barcode field, the client-only current cart, editable final prices, a client-side total, optional notes up to 5000 characters, and the completion control. Owners may choose among accessible active shops; managers and salespeople are locked to their assigned shop. Changing an owner’s shop clears the unfinished cart to avoid mixing stock.
+
+USB scanners can type a barcode and send Enter. Only exact, RLS-accessible `IN_STOCK` products enter the cart. `SOLD`, `RESERVED`, and `REMOVED` items show specific warnings; duplicate scans do not duplicate a physical item. Each line shows product details, the current list price (`selling_price` or fallback `owner_price`), an editable non-negative final price with two-decimal validation, and a remove action. Removing a line changes only browser state.
+
+**Complete Sale** is disabled for an empty cart and guarded against double submission. The server sends only the shop, item IDs/final prices, and optional notes to `complete_sale`; it never inserts sales rows or marks inventory `SOLD` directly. The RPC remains authoritative for authorization, availability, price snapshots, totals, locking, and atomic writes. Failure keeps the cart and states that no partial sale was created. Success clears the cart and shows the generated sale number, time, item count, authoritative total, and links to begin again or view the read-only detail.
+
+Recent RLS-accessible sales appear below checkout in pages of 25. `/sales/[id]` shows the immutable header, notes, totals, employee/shop, and item-level barcode/article/category/weight plus list and final price snapshots. There are no edit or delete actions. Task 4B does not add formulas, discounts, returns/refunds, payments, receipts, transfers, customers, analytics, camera scanning, or persistent draft carts.
+
 With your Supabase configuration in place, verify:
 
 - Visiting `/`, `/dashboard`, `/inventory`, or `/sales` while signed out redirects to `/login`.
@@ -199,7 +209,9 @@ With your Supabase configuration in place, verify:
 - `src/lib/auth/actions.ts`: validated sign-in and current-session sign-out Server Actions. Passwords are never logged or returned to the client.
 - `src/lib/inventory`: typed inventory queries, Server Actions, validation, formatting, and shared constants. All database calls use the current user's cookie-backed Supabase client.
 - `src/lib/inventory/import`: server-side workbook parsing, header suggestions, row validation, duplicate checks, and bounded batching.
+- `src/lib/sales`: client-state checkout rules, the sole sale-completion Server Action, and RLS-backed history/detail queries.
 - `src/app/api/inventory/import`: authenticated parse, preview, and execution endpoints. They use the current employee's RLS-restricted Supabase session and never use a service-role key.
+- `src/app/api/sales/lookup`: authenticated, exact, shop-scoped inventory lookup for checkout scanning; it performs no writes.
 - `src/components`: login form, navigation, sign-out control, and shared placeholder view.
 - `src/app/globals.css`: Tailwind CSS and small global accessibility defaults.
 - Root configuration files: TypeScript strict mode, ESLint, Next.js, PostCSS, environment example, and dependency lockfile.
