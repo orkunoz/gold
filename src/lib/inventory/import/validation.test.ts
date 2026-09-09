@@ -11,8 +11,20 @@ describe("Excel value parsing", () => {
     expect(parseImportedNumber("12kg")).toMatchObject({ error: "Malformed number" });
   });
 
-  it("parses Ukrainian and ISO dates", () => {
-    expect(parseImportedDate("08.09.2026").value).toBe("2026-09-08T00:00:00.000Z");
+  it.each([
+    ["28.02.2025", "2025-02-28T00:00:00.000Z"],
+    ["29-02-2024", "2024-02-29T00:00:00.000Z"],
+    ["01/09/2026", "2026-09-01T00:00:00.000Z"],
+  ])("parses valid calendar date %s", (input, expected) => {
+    expect(parseImportedDate(input)).toEqual({ value: expected });
+  });
+
+  it.each(["31.02.2026", "32-01-2026", "29/02/2025"])("rejects impossible calendar date %s", (input) => {
+    expect(parseImportedDate(input)).toEqual({ value: null, error: "Invalid date" });
+  });
+
+  it("continues to parse ISO dates and rejects malformed dates", () => {
+    expect(parseImportedDate("2026-09-01").value).toBe("2026-09-01T00:00:00.000Z");
     expect(parseImportedDate("not a date")).toMatchObject({ error: "Invalid date" });
   });
 

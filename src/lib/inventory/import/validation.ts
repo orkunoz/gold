@@ -25,8 +25,15 @@ export function parseImportedDate(value: SpreadsheetCell | undefined) {
   if (!raw) return { value: null as string | null };
   let date: Date;
   const ukrainian = raw.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
-  if (ukrainian) date = new Date(Date.UTC(Number(ukrainian[3]), Number(ukrainian[2]) - 1, Number(ukrainian[1])));
-  else date = new Date(raw);
+  if (ukrainian) {
+    const day = Number(ukrainian[1]);
+    const month = Number(ukrainian[2]);
+    const year = Number(ukrainian[3]);
+    date = new Date(Date.UTC(year, month - 1, day));
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
+      return { value: null, error: "Invalid date" };
+    }
+  } else date = new Date(raw);
   if (Number.isNaN(date.getTime())) return { value: null, error: "Invalid date" };
   return { value: date.toISOString() };
 }
