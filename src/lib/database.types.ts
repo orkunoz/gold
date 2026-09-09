@@ -19,10 +19,17 @@ export type Database = {
   }
   public: {
     Tables: {
+      employee_invitations: {
+        Row: { id: string; email: string; full_name: string; role: EmployeeRole; shop_id: string | null; status: string; created_by: string; auth_user_id: string | null; created_at: string; accepted_at: string | null }
+        Insert: { id?: string; email: string; full_name: string; role: EmployeeRole; shop_id?: string | null; status?: string; created_by: string; auth_user_id?: string | null; created_at?: string; accepted_at?: string | null }
+        Update: { id?: string; email?: string; full_name?: string; role?: EmployeeRole; shop_id?: string | null; status?: string; created_by?: string; auth_user_id?: string | null; created_at?: string; accepted_at?: string | null }
+        Relationships: []
+      }
       employees: {
         Row: {
           auth_user_id: string
           created_at: string
+          email: string | null
           full_name: string | null
           id: string
           is_active: boolean
@@ -33,6 +40,7 @@ export type Database = {
         Insert: {
           auth_user_id: string
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id?: string
           is_active?: boolean
@@ -43,6 +51,7 @@ export type Database = {
         Update: {
           auth_user_id?: string
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id?: string
           is_active?: boolean
@@ -364,6 +373,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_create_shop: { Args: { p_name: string; p_code: string }; Returns: string }
+      admin_update_shop: { Args: { p_shop_id: string; p_name: string; p_code: string }; Returns: undefined }
+      admin_set_shop_active: { Args: { p_shop_id: string; p_active: boolean }; Returns: undefined }
+      admin_update_employee: { Args: { p_employee_id: string; p_full_name: string; p_role: string; p_shop_id: string | null; p_active: boolean }; Returns: undefined }
+      admin_prepare_employee_invite: { Args: { p_email: string; p_full_name: string; p_role: string; p_shop_id: string | null }; Returns: Json }
+      admin_finalize_employee_invite: { Args: { p_invitation_id: string; p_auth_user_id: string }; Returns: string }
       calculate_selling_price: {
         Args: {
           p_category_id: string | null

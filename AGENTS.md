@@ -38,11 +38,13 @@ Task 5B is complete and pushed in commit `c4788ed`. Effective customer price pre
 
 Task 6 is complete. `/dashboard` is backed by one hardened `get_dashboard_report` RPC with Owner all/single-shop views, manager assigned-shop enforcement, and a reduced today-only salesperson payload. It provides period KPIs, current inventory value/status, daily revenue, recent sales, category and employee breakdowns, and Owner shop performance. Reporting boundaries use `Europe/Kyiv`; sales metrics use immutable history while stock value uses current effective prices without repricing rows. The hosted migration is applied and rollback-only KPI, empty-state, role, shop, historical immutability, and timezone-boundary verification passes. Hosted DB lint and migration parity are clean; local lint, typecheck, 61 tests, and production build pass. Live Owner acceptance confirmed the all-shops empty-sales/current-inventory dashboard renders successfully against hosted data.
 
+Task 7 is implemented locally and awaiting its final commit. Owner-only `/admin` pages manage shops and employees without direct database edits. Shop deactivation blocks active staff and sellable/reserved inventory; employee changes enforce active-shop assignments and serialized last-Owner protection. Direct authenticated shop/employee writes and delete policies were removed in favor of hardened RPCs. Employee email is normalized for administration while immutable `auth_user_id` remains authoritative. Invitation uses a pending record, server-only `SUPABASE_SERVICE_ROLE_KEY`, exact Auth email verification, and idempotent retry; no real invitation was sent during testing. Two hosted migrations are applied, rollback-only admin/security/history verification passes, and DB lint/migration parity are clean. Live Owner acceptance passed for landing, lists, filters, email display, and invitation form. A controlled second email is still needed for delivery acceptance.
+
 ## Scope and next work
 
 The original Task 1 explicitly excluded database tables, inventory features, and sales features. Do not infer authorization to build the entire application from this handoff. Resume by inspecting the actual repository, checking setup and authentication, then agree the next milestone with the user. Schema and access-control design should precede business-data features.
 
-Tasks 1 through 6 define the current implemented baseline. Returns, refunds, transfers, receipts, and broader analytics remain future work and require their own scoped tasks.
+Tasks 1 through 7 define the current implemented baseline. Returns, refunds, transfers, receipts, scheduling/payroll, and broader analytics remain future work and require their own scoped tasks.
 
 ## Architecture
 

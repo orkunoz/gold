@@ -1,0 +1,1 @@
+import {ShopForm} from "@/components/shop-form"; import {createShop} from "@/lib/admin/actions"; import {requireOwner} from "@/lib/admin/queries"; export default async function NewShopPage(){await requireOwner();return <section><h1 className="text-3xl font-semibold">Create shop</h1><div className="mt-8"><ShopForm action={createShop}/></div></section>}

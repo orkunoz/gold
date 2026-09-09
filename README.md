@@ -206,6 +206,16 @@ Reporting periods are Today, Last 7 days, This month (the default), and Last 30 
 
 Current inventory KPIs are separate from the selected sales period. They include status counts, in-stock count/weight, and customer value using the live effective-price precedence (manual override → current rule → owner price). Null effective prices are excluded from the monetary sum and reported as a missing-price count. Dashboard calculation neither rewrites inventory nor recalculates historical sale snapshots.
 
+## Owner administration
+
+Owners have an **Administration** navigation area with shop and employee pages. Shop codes are required, normalized to uppercase, and unique. Shops can be created, renamed, activated, and deactivated but not deleted. Deactivation is blocked while active employees are assigned or `IN_STOCK`/`RESERVED` inventory remains; historical shops, sales, and sold/removed stock keep their original references and names.
+
+Employees remain linked authoritatively by immutable `auth_user_id`. Owners can edit display names, the fixed roles `owner`/`manager`/`salesperson`, active-shop assignments, and active status; records are never deleted. Active managers and salespeople require one active shop. Database-level serialized protection prevents deactivating or downgrading the last active Owner, including concurrent requests. Inactive employees immediately fail existing operational authorization checks, while historical sales retain their attribution.
+
+Employee onboarding uses a recoverable two-step invitation. An Owner-only database RPC first records a normalized pending invitation, then a server-only Supabase Admin client finds or invites the exact email identity, and a second Owner-only RPC verifies that `auth.users` email before linking the employee. Retrying the same pending email is safe. Configure `SUPABASE_SERVICE_ROLE_KEY` only in the server environment; never expose it with a `NEXT_PUBLIC_` name or commit it. Without that variable, shop/employee administration still works but the invitation action shows a configuration message. Real invitation delivery requires a controlled second email acceptance test and is intentionally not exercised by automated tests.
+
+Normal authenticated clients no longer have direct insert/update/delete privileges on `shops` or `employees`; critical changes use fixed-search-path `SECURITY DEFINER` RPCs that require an active Owner. Operational selectors show active shops, while historical sales/detail queries continue resolving inactive shop and employee names.
+
 With your Supabase configuration in place, verify:
 
 - Visiting `/`, `/dashboard`, `/inventory`, or `/sales` while signed out redirects to `/login`.

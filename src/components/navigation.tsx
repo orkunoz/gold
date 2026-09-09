@@ -12,7 +12,7 @@ const links = [
 
 export function Navigation({ role }: { role: EmployeeRole }) {
   const pathname = usePathname();
-  const visibleLinks = role === "owner" ? [...links, { href: "/pricing", label: "Pricing" }] : links;
+  const visibleLinks = role === "owner" ? [...links, { href: "/pricing", label: "Pricing" }, { href: "/admin", label: "Administration" }] : links;
   return <nav aria-label="Main navigation" className="flex gap-2 overflow-x-auto">
     {visibleLinks.map(({ href, label }) => {
       const active = pathname === href || pathname.startsWith(`${href}/`);
