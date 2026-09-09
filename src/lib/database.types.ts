@@ -164,6 +164,99 @@ export type Database = {
         }
         Relationships: []
       }
+      sale_items: {
+        Row: {
+          created_at: string
+          id: string
+          inventory_item_id: string
+          list_price: number | null
+          sale_id: string
+          sale_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inventory_item_id: string
+          list_price?: number | null
+          sale_id: string
+          sale_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inventory_item_id?: string
+          list_price?: number | null
+          sale_id?: string
+          sale_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_items_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: true
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          notes: string | null
+          sale_number: string
+          shop_id: string
+          sold_at: string
+          total_list_price: number | null
+          total_sale_price: number
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          notes?: string | null
+          sale_number: string
+          shop_id: string
+          sold_at?: string
+          total_list_price?: number | null
+          total_sale_price: number
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          notes?: string | null
+          sale_number?: string
+          shop_id?: string
+          sold_at?: string
+          total_list_price?: number | null
+          total_sale_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shops: {
         Row: {
           code: string | null
@@ -197,6 +290,16 @@ export type Database = {
     }
     Functions: {
       can_access_shop: { Args: { target_shop_id: string }; Returns: boolean }
+      complete_sale: {
+        Args: { p_items: Json; p_notes?: string; p_shop_id: string }
+        Returns: {
+          item_count: number
+          sale_id: string
+          sale_number: string
+          sold_at: string
+          total_sale_price: number
+        }[]
+      }
       current_employee_role: { Args: never; Returns: string }
       current_employee_shop_id: { Args: never; Returns: string }
       is_active_employee: { Args: never; Returns: boolean }

@@ -4,7 +4,7 @@ Internal jewelry inventory and sales workspace for a family business in Ukraine.
 
 ## Scope
 
-Task 1 provides the Next.js and authentication foundation. Task 2 adds the database and Row Level Security foundation. Task 3A adds inventory listing and manual management. Task 3B adds a validated `.xlsx` inventory import workflow and paginated inventory access. Sales workflows, pricing formulas, registration, and hosting deployment are not included yet.
+Task 1 provides the Next.js and authentication foundation. Task 2 adds the database and Row Level Security foundation. Tasks 3A–3C add manual and Excel inventory management plus scanner-focused lookup. Task 4A adds immutable sales history and an atomic database sale transaction. The cashier UI, returns, refunds, pricing formulas, payments, receipts, analytics, registration, and hosting deployment are not included yet.
 
 ## Prerequisites
 
@@ -106,6 +106,7 @@ This privileged bootstrap is intentionally performed through the SQL Editor: bef
 - Active managers and salespeople can read their assigned shop and active employees can read categories.
 - Unauthenticated and inactive users have no application-table access.
 - Only owners can delete inventory records. Normal business workflows must change status to `SOLD` or `REMOVED`, not delete rows.
+- `SOLD` is protected history: ordinary authenticated inserts and updates cannot create, modify, or reverse a sold inventory row. Only the atomic `complete_sale` RPC may set it.
 
 RLS helpers use hardened, schema-qualified functions to look up the current active employee without recursive policies. Authorization remains enforced in PostgreSQL; protected pages alone are not a data-access boundary.
 
@@ -125,7 +126,7 @@ The unit tests mock Supabase and cover authentication actions, route redirects, 
 
 ## Inventory workflow
 
-Open `/inventory` to view the newest 200 items accessible under the signed-in employee's RLS policies. Filter by barcode, article number, category, status, free text, and—for owners—shop. The barcode field receives focus on page load; **Open exact barcode** jumps directly to the matching product detail page.
+Open `/inventory` to view accessible inventory in pages of 50, newest first. Filter by partial barcode, article number, category, status, free text, and—for owners—shop. The separate scanner field receives focus and performs exact barcode lookup on Enter.
 
 Owners and managers see manual add/edit controls. Managers remain restricted to their assigned shop by both Server Action checks and PostgreSQL RLS. Salespeople have read-only inventory access. Duplicate barcodes and invalid or negative numeric values produce safe form errors. Normal removal is represented by the `REMOVED` status; the UI does not expose deletion.
 
@@ -153,6 +154,28 @@ Rows with missing or duplicate barcodes, existing database barcodes, malformed o
 
 Workbook formulas are not calculated and macros are not executed. Uploaded data is parsed on the server and validated again immediately before insertion; the browser preview is not trusted. Only `.xlsx` is supported. Inventory results are paginated at 50 rows per page.
 
+## Sales database and transaction
+
+Task 4A adds permanent `sales` headers and `sale_items` price snapshots. Each physical inventory item can appear in `sale_items` only once. Foreign keys use restrictive deletion behavior, values have non-negative constraints, and authenticated clients receive read-only table grants governed by shop-scoped RLS. Owners may read all sales; managers and salespeople may read sales for their assigned shop. Ordinary clients cannot insert, update, or delete sales history.
+
+Sales are created only through the authenticated `complete_sale(p_shop_id, p_items, p_notes)` RPC. Each JSON item contains exactly an `inventory_item_id` and final `sale_price`; the database resolves the active employee from `auth.uid()`, verifies role and active-shop access, rejects duplicate/missing/wrong-shop/non-`IN_STOCK` items, and locks inventory rows in deterministic UUID order. It generates the sale number, snapshots `selling_price` or fallback `owner_price`, calculates totals, inserts all history rows, and marks every item `SOLD` in one transaction. Any error rolls back the sale, line items, and all status changes.
+
+Example typed RPC payload for future server-side UI work:
+
+```ts
+await supabase.rpc("complete_sale", {
+  p_shop_id: shopId,
+  p_items: [
+    { inventory_item_id: inventoryItemId, sale_price: 3500 },
+  ],
+  p_notes: null,
+})
+```
+
+Do not send employee IDs, sale numbers, list prices, totals, or target statuses; the database derives them. Task 4A intentionally includes no Sales page implementation, checkout, returns/refunds, discounts, formulas, payments, receipts, transfers, or analytics.
+
+`supabase/tests/complete_sale.sql` is a rollback-only integration verification intended for a migration-capable connection with an existing active owner. It covers owner, manager, and salesperson success; one- and multi-item totals; historical list-price snapshots; status changes; requested validation failures; duplicate-sale protection; atomic rollback; and direct-write privilege restrictions. It restores the sale-number sequence and rolls back all test rows.
+
 With your Supabase configuration in place, verify:
 
 - Visiting `/`, `/dashboard`, `/inventory`, or `/sales` while signed out redirects to `/login`.
@@ -168,7 +191,7 @@ With your Supabase configuration in place, verify:
 - `src/app`: App Router, root layout, login, and `(protected)` route group. Pages are Server Components; protected pages are dynamically rendered.
 - `src/lib/supabase/client.ts`: browser client factory using `@supabase/ssr`, ready for future Client Components.
 - `src/lib/supabase/server.ts`: request-scoped server client using Next.js cookies.
-- `src/lib/database.types.ts`: TypeScript representation of the Task 2 database schema.
+- `src/lib/database.types.ts`: generated TypeScript representation of the public database schema, including sales tables and `complete_sale`.
 - `supabase/migrations`: versioned PostgreSQL schema, constraints, indexes, triggers, and RLS policies.
 - `supabase/seed.sql`: optional idempotent development seed for the first shop and generic categories.
 - `src/proxy.ts` and `src/lib/supabase/proxy.ts`: refresh sessions, preserve updated cookies on redirects, and prevent caching of auth responses.
