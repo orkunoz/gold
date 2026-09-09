@@ -4,7 +4,7 @@ Internal jewelry inventory and sales workspace for a family business in Ukraine.
 
 ## Scope
 
-Task 1 provides the Next.js and authentication foundation. Task 2 adds the database and Row Level Security foundation. Tasks 3A–3C add manual and Excel inventory management plus scanner-focused lookup. Task 4A adds immutable sales history and an atomic database sale transaction. Task 4B adds cashier checkout and read-only sales history/details. Returns, refunds, pricing formulas, payments, receipts, analytics, registration, and hosting deployment are not included yet.
+Task 1 provides the Next.js and authentication foundation. Task 2 adds the database and Row Level Security foundation. Tasks 3A–3C add inventory management and scanner lookup. Tasks 4A–4B add atomic sales and cashier/history UI. Task 5A adds configurable pricing-rule management and calculation without operational repricing. Returns, refunds, pricing integration, payments, receipts, analytics, registration, and hosting deployment are not included yet.
 
 ## Prerequisites
 
@@ -185,6 +185,14 @@ USB scanners can type a barcode and send Enter. Only exact, RLS-accessible `IN_S
 **Complete Sale** is disabled for an empty cart and guarded against double submission. The server sends only the shop, item IDs/final prices, and optional notes to `complete_sale`; it never inserts sales rows or marks inventory `SOLD` directly. The RPC remains authoritative for authorization, availability, price snapshots, totals, locking, and atomic writes. Failure keeps the cart and states that no partial sale was created. Success clears the cart and shows the generated sale number, time, item count, authoritative total, and links to begin again or view the read-only detail.
 
 Recent RLS-accessible sales appear below checkout in pages of 25. `/sales/[id]` shows the immutable header, notes, totals, employee/shop, and item-level barcode/article/category/weight plus list and final price snapshots. There are no edit or delete actions. Task 4B does not add formulas, discounts, returns/refunds, payments, receipts, transfers, customers, analytics, camera scanning, or persistent draft carts.
+
+## Pricing rules foundation
+
+Owners have a **Pricing** navigation item and Owner-only `/pricing` management pages. Rules support `FIXED_AMOUNT` (owner price plus a configured UAH amount) and `PERCENTAGE` (owner price plus a configured percentage), with Global, Shop, Category, or Shop + Category scope. Resolution selects exactly one active/current rule in this order: Shop + Category, Shop, Category, Global; higher priority wins within a scope, followed deterministically by newest creation time and ID.
+
+`calculate_selling_price(owner_price, shop_id, category_id)` performs PostgreSQL numeric arithmetic and rounds to two decimals. Null owner price returns null; no matching rule returns owner price unchanged. Rules can have optional start/end times and are retired with `is_active=false`, never deletion. Only Owners can read or mutate the rule table; active employees use the hardened calculation function without direct rule visibility.
+
+The create/edit form validates scope, values, priority, dates, and notes server-side and includes an informational price preview. Task 5A creates no repricing trigger and performs no inventory update. Existing manual `inventory_items.selling_price` values remain unchanged, checkout still uses its existing precedence, and completed `sale_items` snapshots are immutable. Task 5B will define and integrate operational precedence for calculated prices.
 
 With your Supabase configuration in place, verify:
 

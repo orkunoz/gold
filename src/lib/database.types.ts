@@ -8,6 +8,7 @@ export type Json =
 
 export type EmployeeRole = "owner" | "manager" | "salesperson"
 export type InventoryStatus = "IN_STOCK" | "SOLD" | "RESERVED" | "REMOVED"
+export type PricingRuleType = "FIXED_AMOUNT" | "PERCENTAGE"
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -133,6 +134,79 @@ export type Database = {
           },
           {
             foreignKeyName: "inventory_items_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing_rules: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          priority: number
+          rule_type: PricingRuleType
+          rule_value: number
+          shop_id: string | null
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          priority?: number
+          rule_type: PricingRuleType
+          rule_value: number
+          shop_id?: string | null
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          priority?: number
+          rule_type?: PricingRuleType
+          rule_value?: number
+          shop_id?: string | null
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_rules_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_rules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_rules_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -289,6 +363,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_selling_price: {
+        Args: {
+          p_category_id: string
+          p_owner_price: number
+          p_shop_id: string
+        }
+        Returns: {
+          calculated_price: number
+          pricing_rule_id: string
+          rule_type: PricingRuleType
+          rule_value: number
+        }[]
+      }
       can_access_shop: { Args: { target_shop_id: string }; Returns: boolean }
       complete_sale: {
         Args: { p_items: Json; p_notes?: string; p_shop_id: string }

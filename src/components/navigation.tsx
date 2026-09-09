@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { EmployeeRole } from "@/lib/database.types";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
@@ -9,10 +10,11 @@ const links = [
   { href: "/sales", label: "Sales" },
 ];
 
-export function Navigation() {
+export function Navigation({ role }: { role: EmployeeRole }) {
   const pathname = usePathname();
+  const visibleLinks = role === "owner" ? [...links, { href: "/pricing", label: "Pricing" }] : links;
   return <nav aria-label="Main navigation" className="flex gap-2 overflow-x-auto">
-    {links.map(({ href, label }) => {
+    {visibleLinks.map(({ href, label }) => {
       const active = pathname === href || pathname.startsWith(`${href}/`);
       return <Link key={href} href={href} aria-current={active ? "page" : undefined}
         className={`rounded-lg px-4 py-2 text-sm font-medium ${active ? "bg-stone-900 text-white" : "text-stone-600 hover:bg-stone-100"}`}>{label}</Link>;
