@@ -411,6 +411,10 @@ export type Database = {
           source: EffectivePriceSource
         }[]
       }
+      get_dashboard_report: {
+        Args: { p_period?: string; p_shop_id?: string | null }
+        Returns: Json
+      }
       is_active_employee: { Args: never; Returns: boolean }
       is_owner: { Args: never; Returns: boolean }
     }

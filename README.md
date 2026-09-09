@@ -198,6 +198,14 @@ Operational pricing uses one precedence everywhere: a non-null `inventory_items.
 
 Checkout defaults the editable final sale price to the effective price. If both manual and owner prices are null, checkout leaves the final price blank and requires the cashier to enter one. At completion, `complete_sale` recalculates the effective list price inside its existing atomic transaction after row locking, so `sale_items.list_price` reflects current rules at completion time rather than trusting the browser. Completed snapshots are never recalculated when rules later change.
 
+## Business dashboard
+
+`/dashboard` uses one authenticated `get_dashboard_report` RPC rather than loading raw sales and inventory into the browser. Owners can report across all active shops or select one shop. Managers are database-restricted to their assigned active shop. Salespeople receive a deliberately limited view: today's shop revenue, sales, items, sold weight, average sale, and recent sales; inventory valuation and comparison data are omitted by the RPC itself.
+
+Reporting periods are Today, Last 7 days, This month (the default), and Last 30 days. PostgreSQL calculates inclusive local-day starts and the exclusive next-day boundary using the `Europe/Kyiv` IANA timezone, including daylight-saving changes. Sales KPIs use immutable `sales` and `sale_items` history: revenue, sale/item counts, physical sold weight, average sale, daily revenue, category totals, employee totals, and Owner all-shop comparison. Recent sales link to their read-only details.
+
+Current inventory KPIs are separate from the selected sales period. They include status counts, in-stock count/weight, and customer value using the live effective-price precedence (manual override → current rule → owner price). Null effective prices are excluded from the monetary sum and reported as a missing-price count. Dashboard calculation neither rewrites inventory nor recalculates historical sale snapshots.
+
 With your Supabase configuration in place, verify:
 
 - Visiting `/`, `/dashboard`, `/inventory`, or `/sales` while signed out redirects to `/login`.
