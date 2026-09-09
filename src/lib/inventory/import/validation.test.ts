@@ -56,6 +56,13 @@ describe("inventory import validation", () => {
     expect(validateImportRows([["B-1", null, null, "Rign"]], base).rows[0]).toMatchObject({ classification: "Warning", warnings: [expect.stringContaining("Unknown category")] });
   });
 
+  it("preserves imported selling prices as manual overrides and blanks as null", () => {
+    const mapping = { barcode: 0, owner_price: 1, selling_price: 2 };
+    const preview = validateImportRows([["MANUAL", "100", "125"], ["AUTOMATIC", "100", null]], { ...base, mapping });
+    expect(preview.rows[0].item?.selling_price).toBe(125);
+    expect(preview.rows[1].item?.selling_price).toBeNull();
+  });
+
   it("enforces a manager's assigned shop", () => {
     const preview = validateImportRows([["B-1"]], { ...base, targetShopId: "other-id", role: "manager" });
     expect(preview.rows[0].errors).toContain("Managers may import only to their assigned shop");

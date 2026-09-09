@@ -76,8 +76,9 @@ export function InventoryForm({ action, categories, shops, item, cancelHref }: P
         <FieldError message={state.fieldErrors?.owner_price} />
       </label>
 
-      <label className={labelClass}>Selling price, UAH
+      <label className={labelClass}>Manual customer price override, UAH
         <input name="selling_price" type="number" min="0" step="0.01" inputMode="decimal" defaultValue={item?.selling_price ?? ""} className={inputClass} />
+        <span className="mt-1 block text-xs font-normal text-stone-500">Leave blank to use the automatic pricing rule.</span>
         <FieldError message={state.fieldErrors?.selling_price} />
       </label>
 

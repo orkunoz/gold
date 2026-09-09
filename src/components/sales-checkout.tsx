@@ -8,6 +8,7 @@ import { completeSaleAction, type SaleConfirmation } from "@/lib/sales/actions";
 import { addProductToCart, buildSaleRpcItems, cartTotal, checkoutShopLocked, checkoutShops, normalizeSalesBarcode, parseSalePrice, removeCartItem, updateCartPrice, type CartItem, type CheckoutProduct } from "@/lib/sales/checkout";
 import { formatPrice } from "@/lib/inventory/format";
 import { InventoryStatus } from "@/components/inventory-status";
+import { effectivePriceSourceLabel } from "@/lib/pricing/model";
 
 type Shop = { id: string; name: string };
 
@@ -130,7 +131,7 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
             <td className="px-4 py-3"><p>{item.category || "Uncategorized"}</p><p className="text-xs text-stone-500">{[item.gold_fineness, item.gold_color, item.size && `Size ${item.size}`].filter(Boolean).join(" · ") || "—"}</p></td>
             <td className="px-4 py-3">{item.weight_grams === null ? "—" : `${item.weight_grams} g`}</td>
             <td className="px-4 py-3"><InventoryStatus status={item.status} /></td>
-            <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.listPrice)}</td>
+            <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.listPrice)}<span className="block text-xs text-stone-500">{effectivePriceSourceLabel(item.source)}</span></td>
             <td className="px-4 py-3"><input aria-label={`Final price for ${item.barcode}`} inputMode="decimal" value={item.finalPrice} onChange={(event) => setCart(updateCartPrice(cart, item.id, event.target.value))} className={`w-36 rounded-lg border px-3 py-2 ${priceError ? "border-red-500" : "border-stone-300"}`} />{priceError ? <p className="mt-1 max-w-48 text-xs text-red-700">{priceError}</p> : null}</td>
             <td className="px-4 py-3 text-right"><button onClick={() => { setCart(removeCartItem(cart, item.id)); refocusScanner(); }} className="text-sm font-medium text-red-700 hover:underline">Remove</button></td>
           </tr>;

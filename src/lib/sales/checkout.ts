@@ -1,4 +1,4 @@
-import type { EmployeeRole, InventoryStatus, Json } from "@/lib/database.types";
+import type { EffectivePriceSource, EmployeeRole, InventoryStatus, Json, PricingRuleType } from "@/lib/database.types";
 
 export type CheckoutProduct = {
   id: string;
@@ -12,6 +12,11 @@ export type CheckoutProduct = {
   size: string | null;
   owner_price: number | null;
   selling_price: number | null;
+  effective_price: number | null;
+  source: EffectivePriceSource;
+  pricing_rule_id: string | null;
+  rule_type: PricingRuleType | null;
+  rule_value: number | null;
   status: InventoryStatus;
 };
 
@@ -28,8 +33,8 @@ export function unavailableMessage(status: InventoryStatus) {
   return null;
 }
 
-export function defaultListPrice(product: Pick<CheckoutProduct, "selling_price" | "owner_price">) {
-  return product.selling_price ?? product.owner_price;
+export function defaultListPrice(product: Pick<CheckoutProduct, "effective_price">) {
+  return product.effective_price;
 }
 
 export function addProductToCart(cart: CartItem[], product: CheckoutProduct) {

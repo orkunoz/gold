@@ -5,6 +5,7 @@ import type { EmployeeRole, InventoryStatus, Tables } from "@/lib/database.types
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { applyExactBarcodeMatch } from "@/lib/inventory/scanner";
+import { getEffectivePrice, getEffectivePrices } from "@/lib/pricing/effective";
 
 export type CurrentEmployee = Pick<
   Tables<"employees">,
@@ -69,7 +70,9 @@ export async function getInventoryItems(filters: InventoryFilters, page = 1, pag
 
   const { data, error, count } = await query;
   if (error) throw new Error("Unable to load inventory.");
-  return { items: data ?? [], count: count ?? 0, page, pageSize };
+  const items = data ?? [];
+  const prices = await getEffectivePrices(supabase, items.map((item) => item.id));
+  return { items: items.map((item) => ({ ...item, pricing: prices.get(item.id) ?? null })), count: count ?? 0, page, pageSize };
 }
 
 export async function findInventoryItemByBarcode(barcode: string) {
@@ -91,7 +94,12 @@ export async function getInventoryItem(id: string) {
     .maybeSingle();
   if (error) throw new Error("Unable to load this inventory item.");
   if (!data) notFound();
-  return data;
+  const [pricing, { data: calculation, error: calculationError }] = await Promise.all([
+    getEffectivePrice(supabase, data.id),
+    supabase.rpc("calculate_selling_price", { p_owner_price: data.owner_price, p_shop_id: data.shop_id, p_category_id: data.category_id }).single(),
+  ]);
+  if (calculationError || !calculation) throw new Error("Unable to calculate this inventory item's price.");
+  return { ...data, pricing: { ...pricing, calculated_price: calculation.calculated_price } };
 }
 
 export function canManageInventory(role: EmployeeRole) {

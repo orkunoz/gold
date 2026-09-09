@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentEmployee } from "@/lib/inventory/queries";
 import { normalizeSalesBarcode } from "@/lib/sales/checkout";
 import { createClient } from "@/lib/supabase/server";
+import { getEffectivePrice } from "@/lib/pricing/effective";
 
 export async function GET(request: NextRequest) {
   const employee = await getCurrentEmployee();
@@ -16,5 +17,10 @@ export async function GET(request: NextRequest) {
     .eq("barcode", barcode).eq("shop_id", shopId).maybeSingle();
   if (error) return NextResponse.json({ error: "Unable to look up this barcode." }, { status: 500 });
   if (!data) return NextResponse.json({ error: "Barcode not found." }, { status: 404 });
-  return NextResponse.json({ item: { ...data, category: data.product_categories?.name ?? null, product_categories: undefined } });
+  try {
+    const pricing = await getEffectivePrice(supabase, data.id);
+    return NextResponse.json({ item: { ...data, category: data.product_categories?.name ?? null, product_categories: undefined, ...pricing } });
+  } catch {
+    return NextResponse.json({ error: "Unable to calculate this item's customer price." }, { status: 500 });
+  }
 }

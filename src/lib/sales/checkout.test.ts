@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { addProductToCart, buildSaleRpcItems, cartAfterCompletion, checkoutShopLocked, checkoutShops, defaultListPrice, normalizeSalesBarcode, parseSalePrice, removeCartItem, updateCartPrice, type CheckoutProduct } from "./checkout";
 
-const product = (overrides: Partial<CheckoutProduct> = {}): CheckoutProduct => ({ id: "item-1", shop_id: "shop-1", barcode: "ABC-1", article_number: "ART", category: "Ring", gold_fineness: "585", gold_color: "Yellow", weight_grams: 2.5, size: "17", owner_price: 100, selling_price: 120, status: "IN_STOCK", ...overrides });
+const product = (overrides: Partial<CheckoutProduct> = {}): CheckoutProduct => ({ id: "item-1", shop_id: "shop-1", barcode: "ABC-1", article_number: "ART", category: "Ring", gold_fineness: "585", gold_color: "Yellow", weight_grams: 2.5, size: "17", owner_price: 100, selling_price: 120, effective_price: 120, source: "MANUAL", pricing_rule_id: null, rule_type: null, rule_value: null, status: "IN_STOCK", ...overrides });
 
 describe("sales checkout", () => {
   it("trims scans and adds an exact IN_STOCK product with the customer price", () => {
@@ -20,9 +20,9 @@ describe("sales checkout", () => {
     expect(addProductToCart(first, product())).toMatchObject({ cart: first, error: expect.stringContaining("already in") });
   });
 
-  it("falls back to owner price and allows a missing price to be entered", () => {
-    expect(defaultListPrice(product({ selling_price: null }))).toBe(100);
-    expect(addProductToCart([], product({ selling_price: null, owner_price: null })).cart[0].finalPrice).toBe("");
+  it("uses the server-resolved effective price and allows a missing price to be entered", () => {
+    expect(defaultListPrice(product({ selling_price: null, effective_price: 115, source: "PRICING_RULE" }))).toBe(115);
+    expect(addProductToCart([], product({ selling_price: null, owner_price: null, effective_price: null, source: "OWNER_PRICE_FALLBACK" })).cart[0].finalPrice).toBe("");
   });
 
   it("edits and removes cart items without database state", () => {

@@ -11,7 +11,7 @@ type Props = { role: EmployeeRole; employeeShopId: string | null; shops: Pick<Ta
 const fieldLabels: Record<typeof IMPORT_FIELDS[number], string> = {
   barcode: "Barcode (required)", article_number: "Article number", category: "Category / product",
   gold_fineness: "Gold fineness", gold_color: "Gold color", weight_grams: "Weight, grams",
-  size: "Size", owner_price: "Owner/base price", selling_price: "Selling price",
+  size: "Size", owner_price: "Owner/base price", selling_price: "Manual customer price override",
   received_at: "Received date", notes: "Notes", shop: "Shop (optional override)",
 };
 

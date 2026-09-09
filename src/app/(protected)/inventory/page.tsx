@@ -13,6 +13,7 @@ import {
   getInventoryOptions,
   type InventoryFilters,
 } from "@/lib/inventory/queries";
+import { effectivePriceSourceLabel } from "@/lib/pricing/model";
 
 export const metadata = { title: "Inventory" };
 
@@ -109,7 +110,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
       </div> : <div className="overflow-x-auto">
         <table className="min-w-[1280px] w-full text-left text-sm">
           <thead className="border-b border-stone-200 bg-stone-50 text-xs uppercase tracking-wide text-stone-500"><tr>
-            {["Barcode", "Article", "Category", "Fineness", "Color", "Weight", "Size", "Owner/base", "Selling", "Status", "Shop", "Received"].map((heading) => <th key={heading} className="px-4 py-3 font-medium">{heading}</th>)}
+            {["Barcode", "Article", "Category", "Fineness", "Color", "Weight", "Size", "Owner/base", "Manual override", "Customer price", "Status", "Shop", "Received"].map((heading) => <th key={heading} className="px-4 py-3 font-medium">{heading}</th>)}
           </tr></thead>
           <tbody className="divide-y divide-stone-100">
             {items.map((item) => <tr key={item.id} className="hover:bg-amber-50/40">
@@ -122,6 +123,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
               <td className="px-4 py-3">{displayValue(item.size)}</td>
               <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.owner_price)}</td>
               <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.selling_price)}</td>
+              <td className="px-4 py-3 whitespace-nowrap"><span className="font-medium">{formatPrice(item.pricing?.effective_price ?? null)}</span>{item.pricing ? <span className="block text-xs text-stone-500">{effectivePriceSourceLabel(item.pricing.source)}</span> : null}</td>
               <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
               <td className="px-4 py-3">{item.shops?.name ?? "—"}</td>
               <td className="px-4 py-3 whitespace-nowrap">{formatDate(item.received_at)}</td>

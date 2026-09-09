@@ -9,6 +9,7 @@ export type Json =
 export type EmployeeRole = "owner" | "manager" | "salesperson"
 export type InventoryStatus = "IN_STOCK" | "SOLD" | "RESERVED" | "REMOVED"
 export type PricingRuleType = "FIXED_AMOUNT" | "PERCENTAGE"
+export type EffectivePriceSource = "MANUAL" | "PRICING_RULE" | "OWNER_PRICE_FALLBACK"
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -365,9 +366,9 @@ export type Database = {
     Functions: {
       calculate_selling_price: {
         Args: {
-          p_category_id: string
-          p_owner_price: number
-          p_shop_id: string
+          p_category_id: string | null
+          p_owner_price: number | null
+          p_shop_id: string | null
         }
         Returns: {
           calculated_price: number
@@ -389,6 +390,27 @@ export type Database = {
       }
       current_employee_role: { Args: never; Returns: string }
       current_employee_shop_id: { Args: never; Returns: string }
+      get_effective_inventory_price: {
+        Args: { p_inventory_item_id: string }
+        Returns: {
+          effective_price: number | null
+          pricing_rule_id: string | null
+          rule_type: PricingRuleType | null
+          rule_value: number | null
+          source: EffectivePriceSource
+        }[]
+      }
+      get_effective_inventory_prices: {
+        Args: { p_inventory_item_ids: string[] }
+        Returns: {
+          effective_price: number | null
+          inventory_item_id: string
+          pricing_rule_id: string | null
+          rule_type: PricingRuleType | null
+          rule_value: number | null
+          source: EffectivePriceSource
+        }[]
+      }
       is_active_employee: { Args: never; Returns: boolean }
       is_owner: { Args: never; Returns: boolean }
     }
