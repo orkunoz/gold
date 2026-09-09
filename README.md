@@ -4,7 +4,7 @@ Internal jewelry inventory and sales workspace for a family business in Ukraine.
 
 ## Scope
 
-Task 1 provides the Next.js and authentication foundation. Task 2 adds the database and Row Level Security foundation for shops, employees, categories, and individual physical inventory items. Task 3A adds inventory listing, filtering, scanner-focused barcode lookup, product details, and manual add/edit workflows. Excel import, sales workflows, pricing formulas, registration, and hosting deployment are not included yet.
+Task 1 provides the Next.js and authentication foundation. Task 2 adds the database and Row Level Security foundation. Task 3A adds inventory listing and manual management. Task 3B adds a validated `.xlsx` inventory import workflow and paginated inventory access. Sales workflows, pricing formulas, registration, and hosting deployment are not included yet.
 
 ## Prerequisites
 
@@ -131,6 +131,22 @@ Owners and managers see manual add/edit controls. Managers remain restricted to 
 
 Prices are displayed in UAH and remain manually entered stored values. Task 3A does not derive prices from weight or any other rule.
 
+## Excel inventory import
+
+Owners and managers can open **Import inventory** from `/inventory`. The guided flow is Upload → Sheet → Map → Preview → Results:
+
+1. Upload a standard `.xlsx` file no larger than 5 MB.
+2. Select a worksheet when the workbook contains multiple sheets.
+3. Review and edit the detected header mapping. Barcode is the only required imported column.
+4. Select the target shop. Managers are locked to their assigned shop; owners may choose any accessible active shop.
+5. Validate and review every row before importing valid rows in batches of 100.
+
+The importer recognizes common English and Ukrainian headers, including `Артикул`, `Штрихкод`, `Штрих-код`, `Код`, `Виріб`, `Проба`, `Колір`, `Вага`, `Розмір`, `Ціна`, `Ціна грн`, `Примітка`, and `Дата`. Mappings always remain editable.
+
+Rows with missing or duplicate barcodes, existing database barcodes, malformed or negative numbers, invalid dates, or invalid shops are not imported. Unknown categories are imported without a category and shown as warnings; categories are never automatically created. Existing products are never overwritten. New items default to `IN_STOCK` and record the importing employee in `created_by`.
+
+Workbook formulas are not calculated and macros are not executed. Uploaded data is parsed on the server and validated again immediately before insertion; the browser preview is not trusted. Only `.xlsx` is supported. Inventory results are paginated at 50 rows per page.
+
 With your Supabase configuration in place, verify:
 
 - Visiting `/`, `/dashboard`, `/inventory`, or `/sales` while signed out redirects to `/login`.
@@ -153,6 +169,8 @@ With your Supabase configuration in place, verify:
 - `src/lib/auth/session.ts`: cached-per-request verified claims and reusable `requireUser` guard. Both layout and pages guard access; future server actions and data access must independently authorize requests.
 - `src/lib/auth/actions.ts`: validated sign-in and current-session sign-out Server Actions. Passwords are never logged or returned to the client.
 - `src/lib/inventory`: typed inventory queries, Server Actions, validation, formatting, and shared constants. All database calls use the current user's cookie-backed Supabase client.
+- `src/lib/inventory/import`: server-side workbook parsing, header suggestions, row validation, duplicate checks, and bounded batching.
+- `src/app/api/inventory/import`: authenticated parse, preview, and execution endpoints. They use the current employee's RLS-restricted Supabase session and never use a service-role key.
 - `src/components`: login form, navigation, sign-out control, and shared placeholder view.
 - `src/app/globals.css`: Tailwind CSS and small global accessibility defaults.
 - Root configuration files: TypeScript strict mode, ESLint, Next.js, PostCSS, environment example, and dependency lockfile.

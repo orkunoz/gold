@@ -47,13 +47,14 @@ function safeSearch(value: string | undefined) {
   return value?.trim().slice(0, 100).replace(/[,%()]/g, "") ?? "";
 }
 
-export async function getInventoryItems(filters: InventoryFilters) {
+export async function getInventoryItems(filters: InventoryFilters, page = 1, pageSize = 50) {
   const supabase = await createClient();
+  const from = (page - 1) * pageSize;
   let query = supabase
     .from("inventory_items")
-    .select("*, product_categories(name), shops(name, code)")
+    .select("*, product_categories(name), shops(name, code)", { count: "exact" })
     .order("created_at", { ascending: false })
-    .limit(200);
+    .range(from, from + pageSize - 1);
 
   const barcode = safeSearch(filters.barcode);
   const article = safeSearch(filters.article);
@@ -65,9 +66,9 @@ export async function getInventoryItems(filters: InventoryFilters) {
   if (filters.shop) query = query.eq("shop_id", filters.shop);
   if (search) query = query.or(`barcode.ilike.%${search}%,article_number.ilike.%${search}%,notes.ilike.%${search}%`);
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
   if (error) throw new Error("Unable to load inventory.");
-  return data ?? [];
+  return { items: data ?? [], count: count ?? 0, page, pageSize };
 }
 
 export async function findInventoryItemByBarcode(barcode: string) {

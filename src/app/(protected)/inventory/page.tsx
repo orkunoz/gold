@@ -30,6 +30,8 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
   }
 
   const rawStatus = parameter(params, "status");
+  const requestedPage = Number(parameter(params, "page"));
+  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
   const filters: InventoryFilters = {
     barcode,
     article: parameter(params, "article"),
@@ -38,18 +40,26 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
     search: parameter(params, "search"),
     status: INVENTORY_STATUSES.includes(rawStatus as InventoryStatus) ? rawStatus as InventoryStatus : undefined,
   };
-  const [employee, options, items] = await Promise.all([getCurrentEmployee(), getInventoryOptions(), getInventoryItems(filters)]);
+  const [employee, options, inventory] = await Promise.all([getCurrentEmployee(), getInventoryOptions(), getInventoryItems(filters, page)]);
+  const { items, count, pageSize } = inventory;
   const canManage = canManageInventory(employee.role);
   const exactMiss = parameter(params, "mode") === "exact" && Boolean(barcode.trim());
+  const totalPages = Math.max(1, Math.ceil(count / pageSize));
+  function pageHref(nextPage: number) {
+    const next = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => { if (typeof value === "string" && key !== "mode" && key !== "page" && value) next.set(key, value); });
+    if (nextPage > 1) next.set("page", String(nextPage));
+    return `/inventory${next.size ? `?${next.toString()}` : ""}`;
+  }
 
   return <section>
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
         <p className="text-xs font-medium uppercase tracking-widest text-stone-500">Stock workspace</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">Inventory</h1>
-        <p className="mt-2 text-sm text-stone-600">{items.length} item{items.length === 1 ? "" : "s"} shown · newest first</p>
+        <p className="mt-2 text-sm text-stone-600">{count} item{count === 1 ? "" : "s"} found · newest first</p>
       </div>
-      {canManage ? <Link href="/inventory/new" className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-stone-700">Add product</Link> : null}
+      {canManage ? <div className="flex flex-wrap gap-3"><Link href="/inventory/import" className="rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-sm font-medium text-stone-800 hover:bg-stone-100">Import inventory</Link><Link href="/inventory/new" className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-stone-700">Add product</Link></div> : null}
     </div>
 
     <form className="mt-8 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
@@ -118,6 +128,12 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
         </table>
       </div>}
     </div>
-    {items.length === 200 ? <p className="mt-3 text-sm text-stone-500">Showing the newest 200 matches. Add filters to narrow the list.</p> : null}
+    {totalPages > 1 ? <nav aria-label="Inventory pages" className="mt-5 flex items-center justify-between gap-4">
+      <span className="text-sm text-stone-600">Page {page} of {totalPages}</span>
+      <div className="flex gap-2">
+        {page > 1 ? <Link href={pageHref(page - 1)} className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium">Previous</Link> : null}
+        {page < totalPages ? <Link href={pageHref(page + 1)} className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium">Next</Link> : null}
+      </div>
+    </nav> : null}
   </section>;
 }
