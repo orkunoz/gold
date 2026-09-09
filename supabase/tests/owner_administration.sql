@@ -2,8 +2,8 @@
 begin;
 do $$
 declare
-  v_owner public.employees%rowtype; v_shop uuid; v_safe_shop uuid; v_second_owner uuid:=gen_random_uuid(); v_staff_auth uuid:=gen_random_uuid();
-  v_second_employee uuid; v_invite jsonb; v_staff uuid; v_sales_hash text; v_items_hash text;
+  v_owner public.employees%rowtype; v_shop uuid; v_safe_shop uuid; v_second_owner uuid:=gen_random_uuid(); v_staff_auth uuid:=gen_random_uuid(); v_stale_auth uuid:=gen_random_uuid();
+  v_second_employee uuid; v_invite jsonb; v_stale_invite jsonb; v_staff uuid; v_sales_hash text; v_items_hash text;
 begin
   select * into v_owner from public.employees where role='owner' and is_active order by created_at limit 1;
   if not found then raise exception 'Task 7 verification requires an active owner'; end if;
@@ -27,13 +27,27 @@ begin
 
   insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
   values(v_second_owner,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','task7-owner@example.test','',now(),'{}','{}',now(),now()),
-        (v_staff_auth,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','task7-staff@example.test','',now(),'{}','{}',now(),now());
+        (v_staff_auth,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','task7-staff@example.test','',now(),'{}','{}',now(),now()),
+        (v_stale_auth,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','task7-stale@example.test','',now(),'{}','{}',now(),now());
   insert into public.employees(auth_user_id,email,full_name,role,is_active) values(v_second_owner,'task7-owner@example.test','Second Owner','owner',true) returning id into v_second_employee;
   v_invite:=public.admin_prepare_employee_invite(' TASK7-STAFF@example.test ','Staff Member','manager',v_shop);
   v_staff:=public.admin_finalize_employee_invite((v_invite->>'invitation_id')::uuid,v_staff_auth);
   if not exists(select 1 from public.employees where id=v_staff and email='task7-staff@example.test' and role='manager' and shop_id=v_shop) then raise exception 'employee finalize failed'; end if;
   begin perform public.admin_prepare_employee_invite('task7-staff@example.test','Duplicate','salesperson',v_shop); raise exception 'duplicate employee email accepted'; exception when unique_violation then null; end;
   begin perform public.admin_set_shop_active(v_shop,false); raise exception 'active employee shop deactivated'; exception when sqlstate '22023' then null; end;
+
+  -- Finalization must revalidate mutable shop state and leave a failed invitation retryable.
+  perform public.admin_set_shop_active(v_safe_shop,true);
+  v_stale_invite:=public.admin_prepare_employee_invite('task7-stale@example.test','Stale Invite','salesperson',v_safe_shop);
+  perform public.admin_set_shop_active(v_safe_shop,false);
+  begin perform public.admin_finalize_employee_invite((v_stale_invite->>'invitation_id')::uuid,v_stale_auth); raise exception 'inactive-shop invitation finalized'; exception when sqlstate '22023' then null; end;
+  if exists(select 1 from public.employees where auth_user_id=v_stale_auth) then raise exception 'failed finalization created employee'; end if;
+  if (select status from public.employee_invitations where id=(v_stale_invite->>'invitation_id')::uuid)<>'PENDING' then raise exception 'failed finalization consumed invitation'; end if;
+  perform public.admin_set_shop_active(v_safe_shop,true);
+  perform public.admin_finalize_employee_invite((v_stale_invite->>'invitation_id')::uuid,v_stale_auth);
+  if not exists(select 1 from public.employees where auth_user_id=v_stale_auth and is_active) then raise exception 'valid retry finalization failed'; end if;
+  perform public.admin_update_employee((select id from public.employees where auth_user_id=v_stale_auth),'Stale Invite','salesperson',v_safe_shop,false);
+  perform public.admin_set_shop_active(v_safe_shop,false);
 
   perform public.admin_update_employee(v_staff,'Staff Updated','salesperson',v_shop,false);
   if (select is_active from public.employees where id=v_staff) then raise exception 'employee deactivation failed'; end if;
