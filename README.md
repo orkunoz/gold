@@ -4,7 +4,7 @@ Internal jewelry inventory and sales workspace for a family business in Ukraine.
 
 ## Scope
 
-Task 1 provides the Next.js and authentication foundation. Task 2 adds the database and Row Level Security foundation. Tasks 3A–3C add inventory management and scanner lookup. Tasks 4A–4B add atomic sales and cashier/history UI. Task 5A adds configurable pricing-rule management and calculation without operational repricing. Returns, refunds, pricing integration, payments, receipts, analytics, registration, and hosting deployment are not included yet.
+V1 includes authentication, inventory and Excel import, barcode workflows, atomic sales, operational pricing, reporting, and Owner administration. Returns/refunds, transfers, stocktaking, receipt/fiscal printing, customer records/CRM, loyalty, commissions/payroll, and advanced analytics remain deferred.
 
 ## Prerequisites
 
@@ -20,14 +20,17 @@ cd gold
 npm ci
 ```
 
-Copy `.env.example` to `.env.local` and fill in both values:
+Copy `.env.example` to `.env.local` and configure the application values:
 
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_PUBLIC_KEY
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+# Server-only; required for Owner employee invitations.
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVER_SECRET
 ```
 
-Get the URL and public key from your Supabase project's Connect dialog or API settings. The requested `ANON_KEY` variable name is retained; it can contain the project's legacy anon key or its newer publishable key. Never use a service-role or secret key here. Both variables are intentionally public; `.env.local` is ignored by Git. Environment values are checked when creating a client, not during module import, so a build does not need live credentials. Restart the dev server after changing them. Configure them before building on a future hosting provider because Next.js bundles public variables at build time.
+Get the URL and public key from your Supabase project's Connect dialog or API settings. The requested `ANON_KEY` variable name is retained; it can contain the project's legacy anon key or its newer publishable key. The three `NEXT_PUBLIC_` values are browser configuration; `SUPABASE_SERVICE_ROLE_KEY` is server-only and must never be exposed, logged, or committed. It is used only by the protected employee invitation action. `.env.local` is ignored by Git. Environment values are checked when creating a client, not during module import, so a build does not need live credentials. Restart the server after changing them; public variables are embedded at build time.
 
 ## Development
 
@@ -124,6 +127,10 @@ npm start
 
 The unit tests mock Supabase and cover authentication actions, route redirects, and cookie propagation. They do not replace a live Supabase integration check.
 
+## Production deployment
+
+The intended V1 architecture is this Next.js application on Vercel over HTTPS, backed by the existing Supabase Auth/Postgres project. See [PRODUCTION.md](./PRODUCTION.md) for environment classification, exact Vercel and Supabase Auth setup, backup/recovery expectations, controlled smoke-test guidance, and the full production acceptance checklist. Repository readiness does not mean a live deployment has been completed.
+
 ## Inventory workflow
 
 Open `/inventory` to view accessible inventory in pages of 50, newest first. Filter by partial barcode, article number, category, status, free text, and—for owners—shop. The separate scanner field receives focus and performs exact barcode lookup on Enter.
@@ -158,7 +165,7 @@ Workbook formulas are not calculated and macros are not executed. Uploaded data 
 
 Task 4A adds permanent `sales` headers and `sale_items` price snapshots. Each physical inventory item can appear in `sale_items` only once. Foreign keys use restrictive deletion behavior, values have non-negative constraints, and authenticated clients receive read-only table grants governed by shop-scoped RLS. Owners may read all sales; managers and salespeople may read sales for their assigned shop. Ordinary clients cannot insert, update, or delete sales history.
 
-Sales are created only through the authenticated `complete_sale(p_shop_id, p_items, p_notes)` RPC. Each JSON item contains exactly an `inventory_item_id` and final `sale_price`; the database resolves the active employee from `auth.uid()`, verifies role and active-shop access, rejects duplicate/missing/wrong-shop/non-`IN_STOCK` items, and locks inventory rows in deterministic UUID order. It generates the sale number, snapshots `selling_price` or fallback `owner_price`, calculates totals, inserts all history rows, and marks every item `SOLD` in one transaction. Any error rolls back the sale, line items, and all status changes.
+Sales are created only through the authenticated `complete_sale(p_shop_id, p_items, p_notes)` RPC. Each JSON item contains exactly an `inventory_item_id` and final `sale_price`; the database resolves the active employee from `auth.uid()`, verifies role and active-shop access, rejects duplicate/missing/wrong-shop/non-`IN_STOCK` items, and locks inventory rows in deterministic UUID order. It generates the sale number, snapshots the authoritative effective list price, calculates totals, inserts all history rows, and marks every item `SOLD` in one transaction. Any error rolls back the sale, line items, and all status changes.
 
 Example typed RPC payload for future server-side UI work:
 
@@ -255,4 +262,4 @@ Authentication uses verified `getClaims()` rather than trusting `getSession()`. 
 - [Next.js installation](https://nextjs.org/docs/app/getting-started/installation)
 - [Supabase server-side clients](https://supabase.com/docs/guides/auth/server-side/creating-a-client)
 
-GitHub stores the source. A live deployment and hosting configuration are separate work, outside this task.
+GitHub stores the source. Task 8 makes the repository deployment-ready; live Vercel deployment remains pending the business account, production URL, and production environment configuration documented in `PRODUCTION.md`.

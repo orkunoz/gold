@@ -42,6 +42,10 @@ Task 7 is complete and pushed in commit `3a44251`. Owner-only `/admin` pages man
 
 Task 7 invitation integrity patch is applied to hosted Supabase. Finalization now revalidates the invitation's stored role/shop with `active=true` immediately before inserting the employee. Rollback verification proves an inactive-shop failure inserts no employee, leaves the invitation `PENDING`, and succeeds safely after shop reactivation; exact Auth email verification is preserved.
 
+Task 8 is a production-readiness milestone, not a feature milestone. The target architecture is Vercel over HTTPS with Supabase Auth/Postgres. Repository CI, safe response headers, a non-sensitive `/api/health` endpoint, complete environment documentation, and `PRODUCTION.md` deployment/recovery/acceptance procedures are part of this milestone. A live Vercel deployment and real invitation delivery must remain explicitly unverified until performed with the business account, final URL, secrets, and a controlled second email.
+
+Task 8 verification found no tracked credential-like files or matching credential patterns in Git history, no npm vulnerabilities, no Supabase schema-lint errors, no migration drift, and no performance-advisor findings. All five hosted rollback-only SQL suites pass. Security-advisor warnings for authenticated `SECURITY DEFINER` functions are expected for the deliberately exposed hardened RPC interface; leaked-password protection remains a manual Supabase Auth setting to enable if supported by the production plan.
+
 ## Scope and next work
 
 The original Task 1 explicitly excluded database tables, inventory features, and sales features. Do not infer authorization to build the entire application from this handoff. Resume by inspecting the actual repository, checking setup and authentication, then agree the next milestone with the user. Schema and access-control design should precede business-data features.
