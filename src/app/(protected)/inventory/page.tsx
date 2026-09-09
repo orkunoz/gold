@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { InventoryStatus } from "@/lib/database.types";
 import { InventoryStatus as StatusBadge } from "@/components/inventory-status";
+import { BarcodeScanner } from "@/components/barcode-scanner";
 import { INVENTORY_STATUSES, STATUS_LABELS } from "@/lib/inventory/constants";
 import { displayValue, formatDate, formatPrice } from "@/lib/inventory/format";
 import {
@@ -24,16 +25,17 @@ function parameter(params: Record<string, string | string[] | undefined>, name: 
 export default async function InventoryPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const barcode = parameter(params, "barcode");
-  if (parameter(params, "mode") === "exact" && barcode.trim()) {
+  const exactMode = parameter(params, "mode") === "exact";
+  if (exactMode && barcode.trim()) {
     const exact = await findInventoryItemByBarcode(barcode);
-    if (exact) redirect(`/inventory/${exact.id}`);
+    if (exact) redirect(`/inventory/${exact.id}?from=scan`);
   }
 
   const rawStatus = parameter(params, "status");
   const requestedPage = Number(parameter(params, "page"));
   const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
   const filters: InventoryFilters = {
-    barcode,
+    barcode: exactMode ? "" : barcode,
     article: parameter(params, "article"),
     category: parameter(params, "category"),
     shop: parameter(params, "shop"),
@@ -43,7 +45,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
   const [employee, options, inventory] = await Promise.all([getCurrentEmployee(), getInventoryOptions(), getInventoryItems(filters, page)]);
   const { items, count, pageSize } = inventory;
   const canManage = canManageInventory(employee.role);
-  const exactMiss = parameter(params, "mode") === "exact" && Boolean(barcode.trim());
+  const exactMiss = exactMode && Boolean(barcode.trim());
   const totalPages = Math.max(1, Math.ceil(count / pageSize));
   function pageHref(nextPage: number) {
     const next = new URLSearchParams();
@@ -62,10 +64,12 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
       {canManage ? <div className="flex flex-wrap gap-3"><Link href="/inventory/import" className="rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-sm font-medium text-stone-800 hover:bg-stone-100">Import inventory</Link><Link href="/inventory/new" className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-stone-700">Add product</Link></div> : null}
     </div>
 
-    <form className="mt-8 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+    <div className="mt-8"><BarcodeScanner initialValue={exactMiss ? barcode.trim() : ""} notFound={exactMiss} /></div>
+
+    <form className="mt-6 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <label className="text-sm font-medium">Barcode
-          <input name="barcode" autoFocus defaultValue={filters.barcode} placeholder="Scan or enter barcode" className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2.5" />
+          <input name="barcode" defaultValue={filters.barcode} placeholder="Filter by partial barcode" className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2.5" />
         </label>
         <label className="text-sm font-medium">Article number
           <input name="article" defaultValue={filters.article} placeholder="Article number" className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2.5" />
@@ -94,10 +98,8 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
       </div>
       <div className="mt-5 flex flex-wrap gap-3">
         <button className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700">Apply filters</button>
-        <button name="mode" value="exact" className="rounded-lg border border-amber-700 px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-50">Open exact barcode</button>
         <Link href="/inventory" className="rounded-lg px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100">Clear</Link>
       </div>
-      {exactMiss ? <p role="status" className="mt-4 text-sm text-amber-800">No accessible item has the exact barcode “{barcode.trim()}”.</p> : null}
     </form>
 
     <div className="mt-6 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">

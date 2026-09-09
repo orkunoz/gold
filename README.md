@@ -131,6 +131,12 @@ Owners and managers see manual add/edit controls. Managers remain restricted to 
 
 Prices are displayed in UAH and remain manually entered stored values. Task 3A does not derive prices from weight or any other rule.
 
+## Barcode scanner workflow
+
+The Inventory page includes a prominent, automatically focused **Scan barcode** field for USB scanners that type a barcode and send Enter. Enter performs a case-sensitive exact barcode lookup through the authenticated Supabase session and existing RLS policies; the partial barcode filter remains separate. Surrounding whitespace is trimmed, and empty scans are ignored.
+
+A match opens the complete product detail view without changing its inventory status. `SOLD` and `REMOVED` items display prominent warnings. A scanned result includes **Scan another item**, which returns directly to the focused scanner field. Missing scans display **Barcode not found** in place and reselect the field so staff can immediately scan again. Camera scanning and scan-history database tables are not included.
+
 ## Excel inventory import
 
 Owners and managers can open **Import inventory** from `/inventory`. The guided flow is Upload → Sheet → Map → Preview → Results:

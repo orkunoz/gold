@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import type { EmployeeRole, InventoryStatus, Tables } from "@/lib/database.types";
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { applyExactBarcodeMatch } from "@/lib/inventory/scanner";
 
 export type CurrentEmployee = Pick<
   Tables<"employees">,
@@ -73,11 +74,10 @@ export async function getInventoryItems(filters: InventoryFilters, page = 1, pag
 
 export async function findInventoryItemByBarcode(barcode: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const query = supabase
     .from("inventory_items")
-    .select("id")
-    .eq("barcode", barcode.trim())
-    .maybeSingle();
+    .select("id");
+  const { data, error } = await applyExactBarcodeMatch(query, barcode).maybeSingle();
   if (error) throw new Error("Unable to search inventory.");
   return data;
 }
