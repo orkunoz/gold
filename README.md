@@ -1,5 +1,9 @@
 # Gold
 
+Current production behavior (Task 12): Zlata Jewelry branding; username/password sign-in; Owner and one Salesperson per shop; direct Owner account creation and password reset; checkout-only Sales; three inventory states (IN_STOCK, SOLD, REMOVED); simplified role-scoped dashboard. Inventory formula price is the primary checkout list price, with discount calculated by PostgreSQL. Price-per-gram-empty XLSX rows are skipped when that column is mapped. Earlier milestone notes below are historical.
+
+The September 10 clean start preserved previous operational records in the restricted `production_recovery.task12_before_import` database archive before clearing Inventory and Sales. The application starts empty for the real XLSX import. No passwords or service-role credentials are stored in this repository.
+
 Internal jewelry inventory and sales workspace for a family business in Ukraine. The UI is currently English.
 
 ## Scope

@@ -2,9 +2,37 @@
 
 @theme inline {
   --font-sans: Arial, Helvetica, sans-serif;
+  --color-stone-50: #faf7f1;
+  --color-stone-100: #f2ece1;
+  --color-stone-200: #e5dbca;
+  --color-stone-300: #d0c1ac;
+  --color-stone-500: #796b5a;
+  --color-stone-600: #665542;
+  --color-stone-700: #523c27;
+  --color-stone-800: #402a15;
+  --color-stone-900: #352109;
+  --color-stone-950: #2b1906;
+  --color-amber-50: #fff8e6;
+  --color-amber-500: #dfbd65;
+  --color-amber-700: #97701f;
+  --color-amber-800: #785115;
+  --color-amber-900: #57370b;
+  --color-amber-950: #3f2300;
 }
 
-body { background: #faf9f6; color: #292820; }
+body { background: #fbf7ee; color: #2f2118; }
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 12% 8%, rgba(212,175,55,.10), transparent 34rem), linear-gradient(180deg,#fffdf8 0%,#f8f0df 100%); }
+.login-shell { background: radial-gradient(circle at 75% 10%, rgba(244,220,154,.45), transparent 28rem), linear-gradient(145deg,#2f1604 0%,#5a3108 48%,#efe0b8 48.2%,#fffaf0 100%); }
+.page-intro h1 { margin-top: .55rem; font-family: Georgia, "Times New Roman", serif; font-size: clamp(2rem,4vw,3rem); line-height: 1; letter-spacing: -.025em; }
+.page-intro > p:last-child { margin-top: .75rem; color: #756456; font-size: .925rem; }
+.eyebrow { color: #906914; font-size: .72rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+header { box-shadow: 0 1px 16px rgba(70,42,12,.06); }
+main h1 { font-family: Georgia, "Times New Roman", serif; letter-spacing: -.025em; }
+main .shadow-sm { box-shadow: 0 3px 16px rgba(72,43,8,.045); }
+main input, main select, main textarea { min-height: 2.75rem; }
+main input[type=checkbox] { min-height: auto; accent-color: #785115; }
+table tbody tr { transition: background-color .15s ease; }
+table tbody tr:hover { background: rgba(251,243,219,.55); }
 button, a, input { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
 button:disabled { cursor: wait; }

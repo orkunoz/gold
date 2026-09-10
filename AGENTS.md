@@ -1,5 +1,11 @@
 # Gold — project handoff
 
+## Current Task 12 state (2026-09-10)
+
+Username login uses normalized internal Auth email aliases. Active accounts are admin (Owner), kamin, horokhiv, novovolynsk, volodymyr (one Salesperson per corresponding shop). Old employees remain inactive. No credentials belong in this repository. Task 12 migrations add username uniqueness, remove the reservation status, support shop-scoped reporting periods, and harden idempotent account linking. Sales is checkout-only. Dashboard shows Revenue, Items sold, Gold weight sold and Owner inventory Total value. Zlata logo, cream/brown/gold palette, branded login and navigation replace the prior visual identity.
+
+The Owner subsequently explicitly requested clearing ALL inventory and sales for a fresh import. Operational tables were cleared after preserving 132 inventory rows, 1 sale, 1 sale line and 136 history rows in restricted `production_recovery.task12_before_import`. This archive is not exposed to application roles. Shops and employee identities remain. Never rerun this one-time cleanup automatically. The previous milestone descriptions below are historical and can describe superseded behavior.
+
 ## Start here
 
 Read this file, README.md, package.json, and the existing source before changing anything. Preserve working functionality; do not reinitialize the application. This file preserves project context across computers and tasks; it is not a complete conversation transcript. Current user instructions take precedence.

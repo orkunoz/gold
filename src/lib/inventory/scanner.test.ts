@@ -21,7 +21,6 @@ describe("barcode scanner workflow", () => {
     expect(scanStatusWarning("SOLD")).toBe("This item is already sold.");
     expect(scanStatusWarning("REMOVED")).toBe("This item has been removed from inventory.");
     expect(scanStatusWarning("IN_STOCK")).toBeNull();
-    expect(scanStatusWarning("RESERVED")).toBeNull();
   });
 
   it("returns to the scanner-focused inventory state for repeated scans", () => {

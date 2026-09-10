@@ -28,7 +28,6 @@ export function normalizeSalesBarcode(value: string) {
 
 export function unavailableMessage(status: InventoryStatus) {
   if (status === "SOLD") return "This item is already sold.";
-  if (status === "RESERVED") return "This item is reserved and cannot be sold.";
   if (status === "REMOVED") return "This item has been removed from inventory.";
   return null;
 }

@@ -8,7 +8,7 @@ export async function getAdminData() {
   await requireOwner(); const supabase=await createClient();
   const [{data:shops,error:shopError},{data:employees,error:employeeError},{data:stock,error:stockError}] = await Promise.all([
     supabase.from("shops").select("*").order("name"),
-    supabase.from("employees").select("id,email,full_name,role,shop_id,is_active,created_at,shops(name)").order("created_at"),
+    supabase.from("employees").select("id,email,username,full_name,role,shop_id,is_active,created_at,shops(name)").order("created_at"),
     supabase.from("inventory_items").select("shop_id").eq("status","IN_STOCK"),
   ]);
   if(shopError||employeeError||stockError) throw new Error("Unable to load administration data.");

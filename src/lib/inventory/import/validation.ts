@@ -68,8 +68,8 @@ export function normalizeImportedStatus(value: SpreadsheetCell | undefined) {
   if (!raw) return { value: "IN_STOCK" as InventoryStatus };
   const key = normalized(raw).replace(/[ -]+/g, "_").toUpperCase();
   const aliases: Record<string, InventoryStatus> = {
-    IN_STOCK: "IN_STOCK", INSTOCK: "IN_STOCK", SOLD: "SOLD", RESERVED: "RESERVED", REMOVED: "REMOVED",
-    "В_НАЯВНОСТІ": "IN_STOCK", ПРОДАНО: "SOLD", ЗАРЕЗЕРВОВАНО: "RESERVED", ВИДАЛЕНО: "REMOVED",
+    IN_STOCK: "IN_STOCK", INSTOCK: "IN_STOCK", SOLD: "SOLD", REMOVED: "REMOVED",
+    "В_НАЯВНОСТІ": "IN_STOCK", ПРОДАНО: "SOLD", ВИДАЛЕНО: "REMOVED",
   };
   return aliases[key] ? { value: aliases[key] } : { value: "IN_STOCK" as InventoryStatus, warning: `Unknown status “${raw}”; using IN_STOCK` };
 }

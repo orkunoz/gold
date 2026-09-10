@@ -12,7 +12,7 @@ describe("sales checkout", () => {
   it("supports an article-only item without a barcode",()=>expect(addProductToCart([],product({barcode:null,article_number:"ARTICLE-7"}))).toMatchObject({error:null,cart:[{article_number:"ARTICLE-7",barcode:null}]}));
 
   it.each([
-    ["SOLD", "already sold"], ["RESERVED", "reserved"], ["REMOVED", "removed"],
+    ["SOLD", "already sold"], ["REMOVED", "removed"],
   ] as const)("rejects %s products", (status, message) => {
     expect(addProductToCart([], product({ status })).error).toContain(message);
   });

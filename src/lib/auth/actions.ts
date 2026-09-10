@@ -7,15 +7,15 @@ import { createClient } from "@/lib/supabase/server";
 export type AuthState = { error: string };
 
 export async function signIn(_previous: AuthState, formData: FormData): Promise<AuthState> {
-  const email = formData.get("email");
+  const username = formData.get("username");
   const password = formData.get("password");
-  if (typeof email !== "string" || typeof password !== "string" ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) || email.length > 254 ||
+  const normalized = typeof username === "string" ? username.trim().toLowerCase() : "";
+  if (typeof password !== "string" || !/^[a-z0-9][a-z0-9_-]{2,31}$/.test(normalized) ||
       !password || password.length > 4096) {
-    return { error: "Enter a valid email address and password." };
+    return { error: "Unable to sign in. Check your credentials and try again." };
   }
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+  const { error } = await supabase.auth.signInWithPassword({ email: `${normalized}@internal.local`, password });
   if (error) return { error: "Unable to sign in. Check your credentials and try again." };
   revalidatePath("/", "layout");
   redirect("/dashboard");

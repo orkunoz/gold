@@ -21,7 +21,7 @@ export function Navigation({ role }: { role: EmployeeRole }) {
     {visibleLinks.map(({ href, label }) => {
       const active = pathname === href || pathname.startsWith(`${href}/`);
       return <Link key={href} href={href} aria-current={active ? "page" : undefined}
-        className={`rounded-lg px-4 py-2 text-sm font-medium ${active ? "bg-stone-900 text-white" : "text-stone-600 hover:bg-stone-100"}`}>{label}</Link>;
+        className={`rounded-xl px-4 py-2.5 text-sm font-medium transition ${active ? "bg-amber-950 text-amber-50 shadow-sm" : "text-stone-600 hover:bg-amber-50 hover:text-amber-950"}`}>{label}</Link>;
     })}
   </nav>;
 }

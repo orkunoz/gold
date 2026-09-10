@@ -1,17 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const mocks = vi.hoisted(() => ({ getClaims: vi.fn(), createServerClient: vi.fn() }));
+const mocks = vi.hoisted(() => ({ getClaims: vi.fn(), createServerClient: vi.fn(), employee: vi.fn(), signOut: vi.fn() }));
 vi.mock("@supabase/ssr", () => ({ createServerClient: mocks.createServerClient }));
 vi.mock("./env", () => ({ getSupabaseEnv: () => ({ url: "https://example.supabase.co", key: "test-key" }) }));
 import { updateSession } from "./proxy";
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.createServerClient.mockReturnValue({ auth: { getClaims: mocks.getClaims } });
+  mocks.employee.mockResolvedValue({ data: { is_active: true } });
+  mocks.createServerClient.mockReturnValue({ auth: { getClaims: mocks.getClaims, signOut: mocks.signOut }, from: () => ({ select: () => ({ eq: () => ({ maybeSingle: mocks.employee }) }) }) });
 });
 
 describe("authentication routing", () => {
+  it("lets an inactive account return to login without a redirect loop", async () => {
+    mocks.getClaims.mockResolvedValue({ data: { claims: { sub: "old-staff" } }, error: null });
+    mocks.employee.mockResolvedValue({ data: null });
+    expect((await updateSession(new NextRequest("https://gold.example/login"))).status).toBe(200);
+    expect(mocks.signOut).toHaveBeenCalledWith({ scope: "local" });
+  });
   it.each(["/", "/dashboard", "/inventory", "/sales"])("protects %s", async (path) => {
     mocks.getClaims.mockResolvedValue({ data: null, error: null });
     const response = await updateSession(new NextRequest(`https://gold.example${path}`));

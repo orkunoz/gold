@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type EmployeeRole = "owner" | "salesperson"
-export type InventoryStatus = "IN_STOCK" | "SOLD" | "RESERVED" | "REMOVED"
+export type InventoryStatus = "IN_STOCK" | "SOLD" | "REMOVED"
 export type PricingRuleType = "FIXED_AMOUNT" | "PERCENTAGE"
 export type EffectivePriceSource = "MANUAL" | "INVENTORY_FORMULA" | "PRICING_RULE" | "OWNER_PRICE_FALLBACK"
 
@@ -35,6 +35,7 @@ export type Database = {
           is_active: boolean
           role: EmployeeRole
           shop_id: string | null
+          username: string | null
           updated_at: string
         }
         Insert: {
@@ -46,6 +47,7 @@ export type Database = {
           is_active?: boolean
           role: EmployeeRole
           shop_id?: string | null
+          username?: string | null
           updated_at?: string
         }
         Update: {
@@ -57,6 +59,7 @@ export type Database = {
           is_active?: boolean
           role?: EmployeeRole
           shop_id?: string | null
+          username?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -434,6 +437,7 @@ export type Database = {
       admin_update_employee: { Args: { p_employee_id: string; p_full_name: string; p_role: string; p_shop_id: string | null; p_active: boolean }; Returns: undefined }
       admin_prepare_employee_invite: { Args: { p_email: string; p_full_name: string; p_role: string; p_shop_id: string | null }; Returns: Json }
       admin_finalize_employee_invite: { Args: { p_invitation_id: string; p_auth_user_id: string }; Returns: string }
+      admin_link_employee_account: { Args: { p_auth_user_id: string; p_username: string; p_full_name: string; p_role: string; p_shop_id: string }; Returns: string }
       calculate_selling_price: {
         Args: {
           p_category_id: string | null

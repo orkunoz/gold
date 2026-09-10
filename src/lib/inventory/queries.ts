@@ -8,7 +8,7 @@ import { applyExactBarcodeMatch } from "@/lib/inventory/scanner";
 
 export type CurrentEmployee = Pick<
   Tables<"employees">,
-  "id" | "full_name" | "role" | "shop_id" | "is_active"
+  "id" | "username" | "full_name" | "role" | "shop_id" | "is_active"
 >;
 
 export type InventoryFilters = {
@@ -26,7 +26,7 @@ export async function getCurrentEmployee(): Promise<CurrentEmployee> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("employees")
-    .select("id, full_name, role, shop_id, is_active")
+    .select("id, username, full_name, role, shop_id, is_active")
     .eq("auth_user_id", String(claims.sub))
     .single();
 

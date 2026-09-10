@@ -17,7 +17,14 @@ export async function updateSession(request: NextRequest) {
     },
   });
   const { data, error } = await supabase.auth.getClaims();
-  const signedIn = !error && Boolean(data?.claims?.sub);
+  let signedIn = !error && Boolean(data?.claims?.sub);
+  if (signedIn) {
+    const { data: employee } = await supabase.from("employees").select("is_active").eq("auth_user_id", String(data?.claims?.sub)).maybeSingle();
+    if (!employee?.is_active) {
+      await supabase.auth.signOut({ scope: "local" });
+      signedIn = false;
+    }
+  }
   const pathname = request.nextUrl.pathname;
   const login = pathname === "/login";
   if ((!signedIn && !login) || (signedIn && login)) {
