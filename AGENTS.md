@@ -56,6 +56,8 @@ Sales pricing fix: the authoritative effective-price resolver now uses manual `s
 
 Current access model and shop configuration: supported roles are only `owner` and `salesperson`; legacy `manager` rows/invitations are migrated to `salesperson`, and only Owners may mutate/import inventory or administer the app. Salespeople are assigned to one active shop and have shop-scoped read/sales access. Shop codes remain stable while display names are `MAIN` = Novovolynsk, `SHOP2` = Lutsk, and `SHOP3` = Kyiv. Sales register filter panels were removed; Inventory Status = Sold is the primary product lookup path.
 
+XLSX footer handling: when a source column is mapped to Price Per Gram (`Ціна-грам`), rows whose mapped cell is empty are excluded during server-side preview and revalidation, so spreadsheet total/footer rows are never imported as products. Imports that intentionally do not map Price Per Gram retain their flexible sparse-row behavior.
+
 ## Scope and next work
 
 The original Task 1 explicitly excluded database tables, inventory features, and sales features. Do not infer authorization to build the entire application from this handoff. Resume by inspecting the actual repository, checking setup and authentication, then agree the next milestone with the user. Schema and access-control design should precede business-data features.

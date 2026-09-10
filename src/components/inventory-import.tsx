@@ -84,7 +84,7 @@ export function InventoryImport({ employeeShopId, shops }: Props) {
         </select><p className="mt-2 text-sm text-stone-500">Detected headers on spreadsheet row {parsed.headerRow + 1}; {parsed.rows.length} data rows found.</p>
       </section>
 
-      <section><h2 className="text-lg font-semibold">3. Map columns</h2><p className="mt-1 text-sm text-stone-600">Choose what each spreadsheet column means. Every field is optional; unmapped values stay blank, while status and target shop use their operational defaults.</p>
+      <section><h2 className="text-lg font-semibold">3. Map columns</h2><p className="mt-1 text-sm text-stone-600">Choose what each spreadsheet column means. Every field is optional; unmapped values stay blank, while status and target shop use their operational defaults. When Price Per Gram is mapped, rows with an empty value in that column are ignored.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {parsed.headers.map((header, sourceIndex) => { const selected = IMPORT_FIELDS.find((field) => mapping[field] === sourceIndex) ?? ""; return <label key={`${header}-${sourceIndex}`} className="text-sm font-medium">{header}
             <select value={selected} onChange={(event) => { const target = event.target.value as typeof IMPORT_FIELDS[number] | ""; setMapping((current) => { const next = { ...current }; IMPORT_FIELDS.forEach((field) => { if (next[field] === sourceIndex || field === target) delete next[field]; }); if (target) next[target] = sourceIndex; return next; }); }} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5">

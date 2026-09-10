@@ -86,13 +86,16 @@ export function removeEmptySpreadsheetRows(rows: SpreadsheetRow[]) {
 }
 
 export function validateImportRows(rows: SpreadsheetRow[], context: Context): ImportPreview {
+  const candidates = rows
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => context.mapping.price_per_gram === undefined || text(mapped(row, context.mapping, "price_per_gram")) !== null);
   const barcodeCounts = new Map<string, number>();
-  rows.forEach((row) => {
+  candidates.forEach(({ row }) => {
     const barcode = text(mapped(row, context.mapping, "barcode"));
     if (barcode) barcodeCounts.set(barcode, (barcodeCounts.get(barcode) ?? 0) + 1);
   });
 
-  const validated: ImportRow[] = rows.map((row, index) => {
+  const validated: ImportRow[] = candidates.map(({ row, index }) => {
     const errors: string[] = [];
     const warnings: string[] = [];
     const barcode = text(mapped(row, context.mapping, "barcode"));

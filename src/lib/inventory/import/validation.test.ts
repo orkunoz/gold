@@ -41,6 +41,15 @@ describe("flexible inventory import validation", () => {
     const row = validateImportRows([["ignored"]], { ...base, mapping: {} }).rows[0];
     expect(row.item).toMatchObject({ shop_id: "main-id", status: "IN_STOCK", barcode: null, article_number: null });
   });
+  it("ignores a totals row when the mapped Price Per Gram cell is empty", () => {
+    const preview = validateImportRows([
+      ["Bracelet", "2", "A-1", "100"],
+      ["Total", "2", "TOTAL", "   "],
+    ], base);
+    expect(preview.summary).toMatchObject({ total: 1, ready: 1, warnings: 0, errors: 0 });
+    expect(preview.rows).toHaveLength(1);
+    expect(preview.rows[0]).toMatchObject({ sourceRow: 2, item: { article_number: "A-1", price_per_gram: 100 } });
+  });
   it("checks duplicate and existing non-null barcodes but permits blanks", () => {
     const context = { ...base, mapping: { barcode: 0 }, existingBarcodes: new Set(["EXISTS"]) };
     const preview = validateImportRows([["DUP"], ["DUP"], ["EXISTS"], [null], [null]], context);
