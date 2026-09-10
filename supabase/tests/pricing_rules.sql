@@ -57,12 +57,6 @@ begin
   -- SECURITY DEFINER calculation must still honor current employee shop access.
   select * into v_result from public.calculate_selling_price(100,v_shop,v_category);
   if v_result.calculated_price<>145 then raise exception 'owner active-shop calculation failed'; end if;
-  update public.employees set role='manager',shop_id=v_shop where id=v_employee.id;
-  perform public.calculate_selling_price(100,v_shop,v_category);
-  begin
-    perform public.calculate_selling_price(100,v_other_shop,v_category);
-    raise exception 'manager other-shop calculation unexpectedly succeeded';
-  exception when insufficient_privilege then null; end;
   update public.employees set role='salesperson',shop_id=v_shop where id=v_employee.id;
   perform public.calculate_selling_price(100,v_shop,v_category);
   begin

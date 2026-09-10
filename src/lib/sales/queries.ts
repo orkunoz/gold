@@ -14,7 +14,7 @@ export async function getSalesRegisterOptions(){
   const supabase=await createClient();
   const[{data:shops,error:shopError},{data:categories,error:categoryError},{data:employees,error:employeeError}]=await Promise.all([
     supabase.from("shops").select("id,name").order("name"),
-    supabase.from("product_categories").select("id,name").eq("is_active",true).order("name"),
+    supabase.rpc("get_sales_category_options"),
     supabase.from("employees").select("id,full_name").eq("is_active",true).order("full_name"),
   ]);
   if(shopError||categoryError||employeeError)throw new Error("Unable to load sales register filters.");

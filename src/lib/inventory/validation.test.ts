@@ -10,8 +10,12 @@ function form(overrides: Record<string, string> = {}) {
 
 describe("inventory form validation", () => {
   it("trims text and accepts valid optional values", () => {
-    const result = validateInventoryForm(form({ barcode: "  CODE-1  ", article_number: " A-7 ", weight_grams: "2.345", owner_price: "100" }));
-    expect(result).toMatchObject({ success: true, data: { barcode: "CODE-1", article_number: "A-7", weight_grams: 2.345, owner_price: 100, selling_price: null } });
+    const result = validateInventoryForm(form({ barcode: "  CODE-1  ", article_number: " A-7 ", category_name: "  Браслет   оф  ", weight_grams: "2.345", owner_price: "100" }));
+    expect(result).toMatchObject({ success: true, data: { barcode: "CODE-1", article_number: "A-7", category_name: "Браслет оф", weight_grams: 2.345, owner_price: 100, selling_price: null } });
+  });
+
+  it("stores a blank category as null", () => {
+    expect(validateInventoryForm(form({ category_name: "   " }))).toMatchObject({ success: true, data: { category_name: null } });
   });
 
   it("allows a null barcode but still requires a shop", () => {

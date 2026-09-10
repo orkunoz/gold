@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { EmployeeRole } from "@/lib/database.types";
 import { completeSaleAction, type SaleConfirmation } from "@/lib/sales/actions";
-import { addProductToCart, buildSaleRpcItems, cartTotal, checkoutShopLocked, checkoutShops, normalizeSalesBarcode, parseDiscountPercent, parseSalePrice, removeCartItem, updateCartDiscount, updateCartPrice, type CartItem, type CheckoutProduct } from "@/lib/sales/checkout";
+import { addProductToCart, buildSaleRpcItems, cartTotal, checkoutShops, discountedPrice, normalizeSalesBarcode, parseDiscountPercent, removeCartItem, updateCartDiscount, type CartItem, type CheckoutProduct } from "@/lib/sales/checkout";
 import { formatPrice } from "@/lib/inventory/format";
 import { InventoryStatus } from "@/components/inventory-status";
 import { effectivePriceSourceLabel } from "@/lib/pricing/model";
@@ -54,7 +54,7 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
       const foundItem=payload.item!;
       const result = addProductToCart(cart, foundItem);
       setCart(result.cart);
-      setMatches([]);setMessage(result.error ?? `${foundItem.barcode??foundItem.article_number??"Item"} added to the current sale.`);
+      setMatches([]);setMessage(result.error);
       if (scannerRef.current) scannerRef.current.value = "";
       refocusScanner(result.error !== null);
     } catch {
@@ -106,12 +106,12 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
   return <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div><p className="text-xs font-medium uppercase tracking-widest text-stone-500">Cashier</p><p className="mt-1 font-semibold">{employee.full_name || "Team member"}</p><p className="text-sm capitalize text-stone-500">{employee.role}</p></div>
-      <label className="min-w-64 text-sm font-medium">Shop
-        <select value={shopId} onChange={(event) => changeShop(event.target.value)} disabled={checkoutShopLocked(employee.role)} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 disabled:bg-stone-100">
+      {employee.role === "owner" ? <label className="min-w-64 text-sm font-medium">Shop
+        <select value={shopId} onChange={(event) => changeShop(event.target.value)} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5">
           {!availableShops.length ? <option value="">No active shop available</option> : null}
           {availableShops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}
         </select>
-      </label>
+      </label> : <div className="min-w-64 text-sm font-medium">Shop<p className="mt-2 rounded-lg border border-stone-200 bg-stone-100 px-3 py-2.5">{availableShops[0]?.name ?? "Assigned shop unavailable"}</p></div>}
     </div>
 
     <form onSubmit={scan} className="mt-6 rounded-xl border-2 border-amber-700 bg-amber-50 p-5">
@@ -123,14 +123,13 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
       </div>
       {message ? <p role="status" className="mt-4 rounded-lg border border-amber-300 bg-white px-4 py-3 font-medium text-stone-900">{message}</p> : null}
     </form>
-    {matches.length?<div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4"><h2 className="font-semibold">Choose physical item</h2><div className="mt-3 grid gap-3">{matches.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white p-3"><div><p className="font-medium">{item.category??"Uncategorized"} · Article {item.article_number??"—"}</p><p className="text-sm text-stone-500">Barcode {item.barcode??"—"} · {item.weight_grams??"—"} g · {item.status}</p></div><button type="button" onClick={()=>{const result=addProductToCart(cart,item);setCart(result.cart);setMessage(result.error??`${item.article_number??"Item"} added to the current sale.`);setMatches([]);refocusScanner();}} className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white">Add</button></div>)}</div></div>:null}
+    {matches.length?<div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4"><h2 className="font-semibold">Choose physical item</h2><div className="mt-3 grid gap-3">{matches.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white p-3"><div><p className="font-medium">{item.category??"Uncategorized"} · Article {item.article_number??"—"}</p><p className="text-sm text-stone-500">Barcode {item.barcode??"—"} · {item.weight_grams??"—"} g · {item.status}</p></div><button type="button" onClick={()=>{const result=addProductToCart(cart,item);setCart(result.cart);setMessage(result.error);setMatches([]);refocusScanner();}} className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white">Add</button></div>)}</div></div>:null}
 
     <div className="mt-6 overflow-hidden rounded-xl border border-stone-200">
       <div className="flex items-center justify-between bg-stone-50 px-4 py-3"><h2 className="font-semibold">Current sale</h2><span className="text-sm text-stone-500">{cart.length} item{cart.length === 1 ? "" : "s"}</span></div>
       {cart.length === 0 ? <p className="p-8 text-center text-sm text-stone-500">Scan an in-stock item to begin.</p> : <div className="overflow-x-auto"><table className="w-full min-w-[920px] text-left text-sm">
-        <thead className="border-y border-stone-200 bg-stone-50 text-xs uppercase text-stone-500"><tr>{["Item", "Details", "Weight", "Status", "List price", "Discount %", "Final sale price", ""].map((heading) => <th key={heading} className="px-4 py-3">{heading}</th>)}</tr></thead>
+        <thead className="border-y border-stone-200 bg-stone-50 text-xs uppercase text-stone-500"><tr>{["Product", "Details", "Weight", "Status", "List / effective price", "Discount %", "Sale price", ""].map((heading) => <th key={heading} className="px-4 py-3">{heading}</th>)}</tr></thead>
         <tbody className="divide-y divide-stone-100">{cart.map((item) => {
-          const priceError = parseSalePrice(item.finalPrice).error;
           const discountError=parseDiscountPercent(item.discountPercent).error;
           return <tr key={item.id}>
             <td className="px-4 py-3"><p className="font-semibold">{item.barcode??"No barcode"}</p><p className="text-xs text-stone-500">{item.article_number || "No article"}</p></td>
@@ -139,7 +138,7 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
             <td className="px-4 py-3"><InventoryStatus status={item.status} /></td>
             <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.listPrice)}<span className="block text-xs text-stone-500">{effectivePriceSourceLabel(item.source)}</span></td>
             <td className="px-4 py-3"><input aria-label={`Discount for ${item.barcode??item.article_number??"item"}`} type="number" min="0" max="100" step="0.01" inputMode="decimal" value={item.discountPercent} onChange={(event)=>setCart(updateCartDiscount(cart,item.id,event.target.value))} className={`w-24 rounded-lg border px-3 py-2 ${discountError?"border-red-500":"border-stone-300"}`} />{discountError?<p className="mt-1 text-xs text-red-700">{discountError}</p>:null}</td>
-            <td className="px-4 py-3"><input aria-label={`Final price for ${item.barcode??item.article_number??"item"}`} type="number" min="0" step="0.01" inputMode="decimal" value={item.finalPrice} onChange={(event) => setCart(updateCartPrice(cart, item.id, event.target.value))} className={`w-36 rounded-lg border px-3 py-2 ${priceError ? "border-red-500" : "border-stone-300"}`} />{priceError ? <p className="mt-1 max-w-48 text-xs text-red-700">{priceError}</p> : null}</td>
+            <td className="px-4 py-3 whitespace-nowrap font-semibold">{formatPrice(discountedPrice(item.listPrice, item.discountPercent))}</td>
             <td className="px-4 py-3 text-right"><button onClick={() => { setCart(removeCartItem(cart, item.id)); refocusScanner(); }} className="text-sm font-medium text-red-700 hover:underline">Remove</button></td>
           </tr>;
         })}</tbody>

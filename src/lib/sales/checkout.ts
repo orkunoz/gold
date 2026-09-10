@@ -20,7 +20,7 @@ export type CheckoutProduct = {
   status: InventoryStatus;
 };
 
-export type CartItem = CheckoutProduct & { listPrice: number | null; discountPercent: string; finalPrice: string };
+export type CartItem = CheckoutProduct & { listPrice: number | null; discountPercent: string };
 
 export function normalizeSalesBarcode(value: string) {
   return value.trim();
@@ -42,7 +42,7 @@ export function addProductToCart(cart: CartItem[], product: CheckoutProduct) {
   if (unavailable) return { cart, error: unavailable };
   if (cart.some((item) => item.id === product.id)) return { cart, error: "This item is already in the current sale." };
   const listPrice = defaultListPrice(product);
-  return { cart: [...cart, { ...product, listPrice, discountPercent: "0", finalPrice: listPrice === null ? "" : String(listPrice) }], error: null };
+  return { cart: [...cart, { ...product, listPrice, discountPercent: "0" }], error: null };
 }
 
 export function parseDiscountPercent(value: string) {
@@ -55,24 +55,12 @@ export function parseDiscountPercent(value: string) {
 
 export function discountedPrice(listPrice:number|null,discount:string){
   const parsed=parseDiscountPercent(discount);
-  if(listPrice===null||parsed.value===null)return "";
-  return String(Math.round(listPrice*(1-parsed.value/100)*100)/100);
+  if(listPrice===null||parsed.value===null)return null;
+  return Math.round(listPrice*(1-parsed.value/100)*100)/100;
 }
 
 export function updateCartDiscount(cart:CartItem[],id:string,discountPercent:string){
-  return cart.map(item=>item.id===id?{...item,discountPercent,finalPrice:discountedPrice(item.listPrice,discountPercent)}:item);
-}
-
-export function parseSalePrice(value: string) {
-  const normalized = value.trim().replace(",", ".");
-  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) return { value: null, error: "Enter a non-negative price with no more than 2 decimal places." };
-  const price = Number(normalized);
-  if (!Number.isFinite(price) || price > 999999999999.99) return { value: null, error: "Enter a price within the supported range." };
-  return { value: price, error: null };
-}
-
-export function updateCartPrice(cart: CartItem[], id: string, finalPrice: string) {
-  return cart.map((item) => item.id === id ? { ...item, finalPrice } : item);
+  return cart.map(item=>item.id===id?{...item,discountPercent}:item);
 }
 
 export function removeCartItem(cart: CartItem[], id: string) {
@@ -81,19 +69,18 @@ export function removeCartItem(cart: CartItem[], id: string) {
 
 export function buildSaleRpcItems(cart: CartItem[]): { value: Json | null; error: string | null } {
   if (cart.length === 0) return { value: null, error: "Add at least one item before completing the sale." };
-  const items: { inventory_item_id: string; discount_percent: number; sale_price: number }[] = [];
+  const items: { inventory_item_id: string; discount_percent: number }[] = [];
   for (const item of cart) {
-    const price = parseSalePrice(item.finalPrice);
     const discount=parseDiscountPercent(item.discountPercent);
     if(discount.error||discount.value===null)return {value:null,error:`Check the discount for ${item.barcode??item.article_number??"this item"}.`};
-    if (price.error || price.value === null) return { value: null, error: `Check the final price for ${item.barcode??item.article_number??"this item"}.` };
-    items.push({ inventory_item_id: item.id, discount_percent: discount.value, sale_price: price.value });
+    if (item.listPrice === null) return { value: null, error: `A list price is required for ${item.barcode??item.article_number??"this item"}.` };
+    items.push({ inventory_item_id: item.id, discount_percent: discount.value });
   }
   return { value: items, error: null };
 }
 
 export function cartTotal(cart: CartItem[]) {
-  return cart.reduce((total, item) => total + (parseSalePrice(item.finalPrice).value ?? 0), 0);
+  return cart.reduce((total, item) => total + (discountedPrice(item.listPrice, item.discountPercent) ?? 0), 0);
 }
 
 export function checkoutShopLocked(role: EmployeeRole) {

@@ -19,6 +19,13 @@ function databaseError(error: { code?: string } | null): InventoryActionState {
   return { error: "Unable to save this item. Please try again." };
 }
 
+async function resolveCategory(client: Awaited<ReturnType<typeof createClient>>, name: string | null) {
+  if (!name) return null;
+  const { data, error } = await client.rpc("resolve_product_category", { p_name: name });
+  if (error || !data) throw new Error("Unable to resolve product category.");
+  return data;
+}
+
 export async function createInventoryItem(
   _previous: InventoryActionState,
   formData: FormData,
@@ -29,9 +36,14 @@ export async function createInventoryItem(
   const validation = validateInventoryForm(formData);
   if (!validation.success) return { error: "Check the highlighted fields.", fieldErrors: validation.errors };
   const supabase = await createClient();
+  let categoryId: string | null;
+  try { categoryId = await resolveCategory(supabase, validation.data.category_name); }
+  catch { return { error: "Unable to create or select this category." }; }
+  const { category_name: categoryName, ...inventory } = validation.data;
+  void categoryName;
   const { data, error } = await supabase
     .from("inventory_items")
-    .insert({ ...validation.data, created_by: employee.id })
+    .insert({ ...inventory, category_id: categoryId, created_by: employee.id })
     .select("id")
     .single();
   if (error || !data) return databaseError(error);
@@ -51,9 +63,14 @@ export async function updateInventoryItem(
   const validation = validateInventoryForm(formData);
   if (!validation.success) return { error: "Check the highlighted fields.", fieldErrors: validation.errors };
   const supabase = await createClient();
+  let categoryId: string | null;
+  try { categoryId = await resolveCategory(supabase, validation.data.category_name); }
+  catch { return { error: "Unable to create or select this category." }; }
+  const { category_name: categoryName, ...inventory } = validation.data;
+  void categoryName;
   const { data, error } = await supabase
     .from("inventory_items")
-    .update(toInventoryUpdate(validation.data))
+    .update(toInventoryUpdate({ ...inventory, category_id: categoryId }))
     .eq("id", id)
     .select("id")
     .maybeSingle();

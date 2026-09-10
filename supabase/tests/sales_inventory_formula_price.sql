@@ -28,17 +28,20 @@ begin
   end if;
 
   select * into resolved from public.get_effective_inventory_price(manual_item_id);
-  if resolved.effective_price <> 17500 or resolved.source <> 'MANUAL' then
-    raise exception 'Manual selling price did not retain precedence';
+  if resolved.effective_price <> 18000 or resolved.source <> 'INVENTORY_FORMULA' then
+    raise exception 'Inventory formula did not retain precedence over legacy manual price';
   end if;
 
   select * into completed from public.complete_sale(
     shop_id,
-    jsonb_build_array(jsonb_build_object('inventory_item_id', formula_item_id, 'discount_percent', 10, 'sale_price', 13500)),
+    jsonb_build_array(jsonb_build_object('inventory_item_id', formula_item_id, 'discount_percent', 10)),
     'FORMULA PRICE ROLLBACK TEST'
   );
   if (select list_price from public.sale_items where sale_id = completed.sale_id) <> 15000 then
     raise exception 'Sale did not snapshot the Inventory formula list price';
+  end if;
+  if (select sale_price from public.sale_items where sale_id = completed.sale_id) <> 13500 then
+    raise exception 'Sale did not calculate the discounted sale price';
   end if;
 end
 $$;

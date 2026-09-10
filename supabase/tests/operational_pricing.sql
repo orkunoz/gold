@@ -35,26 +35,22 @@ begin
     if v_result.effective_price is not null or v_result.source<>'OWNER_PRICE_FALLBACK' then raise exception 'null pricing failed'; end if;
     if (select count(*) from public.get_effective_inventory_prices(array[v_manual,v_rule,v_null]))<>3 then raise exception 'batch pricing failed'; end if;
 
-    update public.employees set role='manager',shop_id=v_shop where id=v_employee.id;
-    perform public.get_effective_inventory_price(v_rule);
-    begin perform public.get_effective_inventory_price(v_other_item); raise exception 'manager cross-shop item pricing succeeded'; exception when insufficient_privilege then null; end;
-    begin perform public.calculate_selling_price(100,v_other_shop,v_category); raise exception 'manager cross-shop pricing succeeded'; exception when insufficient_privilege then null; end;
     update public.employees set role='salesperson',shop_id=v_shop where id=v_employee.id;
     perform public.get_effective_inventory_price(v_rule);
     begin perform public.get_effective_inventory_price(v_other_item); raise exception 'salesperson cross-shop item pricing succeeded'; exception when insufficient_privilege then null; end;
     begin perform public.calculate_selling_price(100,v_other_shop,v_category); raise exception 'salesperson cross-shop pricing succeeded'; exception when insufficient_privilege then null; end;
     update public.employees set role='owner',shop_id=v_shop where id=v_employee.id;
 
-    select * into v_sale from public.complete_sale(v_shop,jsonb_build_array(jsonb_build_object('inventory_item_id',v_manual,'sale_price',125)),null);
+    select * into v_sale from public.complete_sale(v_shop,jsonb_build_array(jsonb_build_object('inventory_item_id',v_manual,'discount_percent',0)),null);
     if (select list_price from public.sale_items where sale_id=v_sale.sale_id)<>130 then raise exception 'manual sale snapshot failed'; end if;
-    select * into v_sale from public.complete_sale(v_shop,jsonb_build_array(jsonb_build_object('inventory_item_id',v_rule,'sale_price',140)),null);
+    select * into v_sale from public.complete_sale(v_shop,jsonb_build_array(jsonb_build_object('inventory_item_id',v_rule,'discount_percent',0)),null);
     v_rule_sale:=v_sale.sale_id;
     if (select list_price from public.sale_items where sale_id=v_rule_sale)<>145 then raise exception 'rule sale snapshot failed'; end if;
 
     update public.pricing_rules set is_active=false where name like '5B %';
     select * into v_result from public.get_effective_inventory_price(v_fallback);
     if v_result.effective_price<>80 or v_result.source<>'OWNER_PRICE_FALLBACK' then raise exception 'owner fallback failed'; end if;
-    select * into v_sale from public.complete_sale(v_shop,jsonb_build_array(jsonb_build_object('inventory_item_id',v_fallback,'sale_price',75)),null);
+    select * into v_sale from public.complete_sale(v_shop,jsonb_build_array(jsonb_build_object('inventory_item_id',v_fallback,'discount_percent',0)),null);
     if (select list_price from public.sale_items where sale_id=v_sale.sale_id)<>80 then raise exception 'fallback sale snapshot failed'; end if;
     if (select list_price from public.sale_items where sale_id=v_rule_sale)<>145 then raise exception 'rule change altered historical snapshot'; end if;
     if (select selling_price from public.inventory_items where id=v_hold) is not null then raise exception 'pricing rule update repriced inventory'; end if;

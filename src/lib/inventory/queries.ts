@@ -5,7 +5,6 @@ import type { EmployeeRole, InventoryStatus, Tables } from "@/lib/database.types
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { applyExactBarcodeMatch } from "@/lib/inventory/scanner";
-import { getEffectivePrice } from "@/lib/pricing/effective";
 
 export type CurrentEmployee = Pick<
   Tables<"employees">,
@@ -38,12 +37,12 @@ export async function getInventoryOptions() {
   const supabase = await createClient();
   const [{ data: categories, error: categoryError }, { data: shops, error: shopError }] =
     await Promise.all([
-      supabase.from("product_categories").select("id, name").eq("is_active", true).order("name"),
+      supabase.rpc("get_inventory_category_options"),
       supabase.from("shops").select("id, name, code").eq("is_active", true).order("name"),
     ]);
 
   if (categoryError || shopError) throw new Error("Unable to load inventory options.");
-  return { categories: categories ?? [], shops: shops ?? [] };
+  return { categories: (categories ?? []).map(({ id, name }) => ({ id, name })), shops: shops ?? [] };
 }
 
 function safeSearch(value: string | undefined) {
@@ -94,12 +93,7 @@ export async function getInventoryItem(id: string) {
     .maybeSingle();
   if (error) throw new Error("Unable to load this inventory item.");
   if (!data) notFound();
-  const [pricing, { data: calculation, error: calculationError }] = await Promise.all([
-    getEffectivePrice(supabase, data.id),
-    supabase.rpc("calculate_selling_price", { p_owner_price: data.owner_price, p_shop_id: data.shop_id, p_category_id: data.category_id }).single(),
-  ]);
-  if (calculationError || !calculation) throw new Error("Unable to calculate this inventory item's price.");
-  return { ...data, pricing: { ...pricing, calculated_price: calculation.calculated_price } };
+  return data;
 }
 
 export async function getInventoryHistory(id:string){

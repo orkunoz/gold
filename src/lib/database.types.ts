@@ -481,6 +481,8 @@ export type Database = {
           source: EffectivePriceSource
         }[]
       }
+      get_inventory_category_options: { Args: never; Returns: { id: string; name: string; product_count: number }[] }
+      get_sales_category_options: { Args: never; Returns: { name: string; product_count: number }[] }
       get_dashboard_report: {
         Args: { p_period?: string; p_shop_id?: string | null }
         Returns: Json
@@ -498,6 +500,7 @@ export type Database = {
       is_active_employee: { Args: never; Returns: boolean }
       is_owner: { Args: never; Returns: boolean }
       import_inventory_items: { Args:{p_items:Json}; Returns:number }
+      resolve_product_category: { Args:{p_name:string}; Returns:string|null }
     }
     Enums: {
       [_ in never]: never

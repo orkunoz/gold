@@ -1,9 +1,9 @@
-import type { EmployeeRole, InventoryStatus, TablesInsert } from "@/lib/database.types";
+import type { InventoryStatus } from "@/lib/database.types";
 import { IMPORT_FIELDS, type ColumnMapping, type ImportPreview, type ImportRow, type SpreadsheetCell, type SpreadsheetRow } from "./types";
 
 type Category = { id: string; name: string };
 type Shop = { id: string; name: string; code: string | null };
-type Context = { mapping: ColumnMapping; targetShopId: string; role: EmployeeRole; employeeShopId: string | null; categories: Category[]; shops: Shop[]; existingBarcodes: Set<string>; headerRow?: number };
+type Context = { mapping: ColumnMapping; targetShopId: string; categories: Category[]; shops: Shop[]; existingBarcodes: Set<string>; headerRow?: number };
 
 function text(value: SpreadsheetCell | undefined) {
   if (value === null || value === undefined || value === "") return null;
@@ -42,13 +42,16 @@ function normalized(value: string) {
   return value.toLocaleLowerCase("uk-UA").replace(/\s+/g, " ").trim();
 }
 
-export function matchCategory(value: SpreadsheetCell | undefined, categories: Category[]) {
+export function normalizeCategoryName(value: SpreadsheetCell | undefined) {
   const name = text(value);
+  return name ? name.replace(/\s+/g, " ") : null;
+}
+
+export function matchCategory(value: SpreadsheetCell | undefined, categories: Category[]) {
+  const name = normalizeCategoryName(value);
   if (!name) return { id: null as string | null };
-  const aliases: Record<string,string>={"каблучка":"ring","каблучки":"ring","сережки":"earrings","ланцюжок":"chain","ланцюг":"chain","браслет":"bracelet","браслети":"bracelet","підвіска":"pendant","кольє":"necklace","намисто":"necklace"};
-  const target=aliases[normalized(name)]??normalized(name);
-  const category = categories.find((candidate) => normalized(candidate.name) === target);
-  return category ? { id: category.id, name: category.name } : { id: null, name, warning: `Unknown category “${name}”` };
+  const category = categories.find((candidate) => normalized(candidate.name) === normalized(name));
+  return category ? { id: category.id, name: category.name } : { id: null, name };
 }
 
 export function normalizeImportedMetal(value: SpreadsheetCell | undefined) {
@@ -112,7 +115,6 @@ export function validateImportRows(rows: SpreadsheetRow[], context: Context): Im
     if (weight.error) warnings.push("Invalid weight; storing blank"); else if (weight.value !== null && weight.value < 0) errors.push("Weight cannot be negative");
     if (pricePerGram.error) warnings.push("Invalid price per gram; storing blank"); else if (pricePerGram.value !== null && pricePerGram.value < 0) errors.push("Price per gram cannot be negative");
     const category = matchCategory(mapped(row, context.mapping, "category"), context.categories);
-    if (category.warning) warnings.push(category.warning);
     const metal = normalizeImportedMetal(mapped(row, context.mapping, "metal"));
     if (metal.warning) warnings.push(metal.warning);
     const status = normalizeImportedStatus(mapped(row, context.mapping, "status"));
@@ -143,9 +145,9 @@ export function validMapping(input: unknown): input is ColumnMapping {
   return Object.entries(input).every(([field, index]) => IMPORT_FIELDS.includes(field as typeof IMPORT_FIELDS[number]) && Number.isInteger(index) && Number(index) >= 0);
 }
 
-export function toInsert(item: NonNullable<ImportRow["item"]>, createdBy: string): TablesInsert<"inventory_items"> {
+export function toInsert(item: NonNullable<ImportRow["item"]>, createdBy: string) {
   return {
-    shop_id: item.shop_id, barcode: item.barcode, article_number: item.article_number, category_id: item.category_id,
+    shop_id: item.shop_id, barcode: item.barcode, article_number: item.article_number, category_name: item.category_name,
     metal: item.metal, producer: item.producer, size: item.size, weight_grams: item.weight_grams,
     price_per_gram: item.price_per_gram, price: item.price, discount: item.discount, notes: item.notes,
     status: item.status, created_by: createdBy,

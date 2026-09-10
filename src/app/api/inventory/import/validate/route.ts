@@ -9,7 +9,6 @@ export async function POST(request: Request) {
   try { input = await request.json(); } catch { return NextResponse.json({ error: "Invalid import request." }, { status: 400 }); }
   const payload = parseImportPayload(input);
   if (!payload) return NextResponse.json({ error: "Invalid rows, mapping, or target shop." }, { status: 400 });
-  try { return NextResponse.json(await buildImportPreview(payload, employee)); }
+  try { return NextResponse.json(await buildImportPreview(payload)); }
   catch { return NextResponse.json({ error: "Unable to validate this import." }, { status: 500 }); }
 }
-

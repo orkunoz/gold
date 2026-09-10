@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   if (!payload) return NextResponse.json({ error: "Invalid rows, mapping, or target shop." }, { status: 400 });
 
   try {
-    const preview = await buildImportPreview(payload, employee);
+    const preview = await buildImportPreview(payload);
     const valid = preview.rows.filter((row) => row.classification !== "Error" && row.item);
     const failures: { row: number; message: string }[] = [];
     let imported = 0;

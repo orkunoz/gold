@@ -17,7 +17,7 @@ export default async function EditInventoryItemPage({ params }: { params: Promis
     <h1 className="mt-3 text-3xl font-semibold tracking-tight">Edit product</h1>
     <p className="mt-2 break-all text-sm text-stone-600">Barcode: {item.barcode ?? "Not assigned"}</p>
     <div className="mt-8 rounded-xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
-      <InventoryForm action={action} {...options} item={item} cancelHref={`/inventory/${id}`} />
+      <InventoryForm action={action} {...options} item={item} categoryName={item.product_categories?.name ?? null} cancelHref={`/inventory/${id}`} />
     </div>
   </section>;
 }

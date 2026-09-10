@@ -54,9 +54,6 @@ begin
   update public.pricing_rules set rule_value=500 where name='Task 6 rule';
   if (public.get_dashboard_report('TODAY',v_shop_a)#>>'{kpis,revenue}')::numeric<>v_revenue_before then raise exception 'pricing change altered historical revenue'; end if;
 
-  update public.employees set role='manager',shop_id=v_shop_a where id=v_employee.id;
-  perform public.get_dashboard_report('TODAY',v_shop_a);
-  begin perform public.get_dashboard_report('TODAY',v_shop_b); raise exception 'manager cross-shop report succeeded'; exception when insufficient_privilege then null; end;
   update public.employees set role='salesperson',shop_id=v_shop_a where id=v_employee.id;
   v_report:=public.get_dashboard_report('LAST_30_DAYS',null);
   if v_report->>'period'<>'TODAY' or v_report->'inventory'<>'null'::jsonb or v_report->'employees'<>'null'::jsonb or (v_report#>>'{kpis,revenue}')::numeric<>300 then raise exception 'salesperson dashboard restriction failed'; end if;

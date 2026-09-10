@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { getInventoryOptions, type CurrentEmployee } from "@/lib/inventory/queries";
+import { getInventoryOptions } from "@/lib/inventory/queries";
 import { MAX_IMPORT_ROWS } from "./parser";
 import { validMapping, validateImportRows } from "./validation";
 import type { ColumnMapping, SpreadsheetRow } from "./types";
@@ -17,7 +17,7 @@ export function parseImportPayload(input: unknown): ImportPayload | null {
   return { rows: payload.rows, mapping: payload.mapping, targetShopId: payload.targetShopId, headerRow: Number.isInteger(payload.headerRow) ? payload.headerRow : 0 };
 }
 
-export async function buildImportPreview(payload: ImportPayload, employee: CurrentEmployee) {
+export async function buildImportPreview(payload: ImportPayload) {
   const supabase = await createClient();
   const options = await getInventoryOptions();
   const barcodeIndex = payload.mapping.barcode;
@@ -29,8 +29,7 @@ export async function buildImportPreview(payload: ImportPayload, employee: Curre
     data?.forEach((item) => { if (item.barcode) existingBarcodes.add(item.barcode); });
   }
   return validateImportRows(payload.rows, {
-    mapping: payload.mapping, targetShopId: payload.targetShopId, role: employee.role,
-    employeeShopId: employee.shop_id, categories: options.categories, shops: options.shops,
+    mapping: payload.mapping, targetShopId: payload.targetShopId, categories: options.categories, shops: options.shops,
     existingBarcodes, headerRow: payload.headerRow,
   });
 }

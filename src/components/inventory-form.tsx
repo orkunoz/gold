@@ -14,6 +14,7 @@ type Props = {
   categories: Pick<Tables<"product_categories">, "id" | "name">[];
   shops: Pick<Tables<"shops">, "id" | "name" | "code">[];
   item?: Tables<"inventory_items">;
+  categoryName?: string | null;
   cancelHref: string;
 };
 
@@ -24,7 +25,7 @@ function FieldError({ message }: { message?: string }) {
 const inputClass = "mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-amber-700";
 const labelClass = "block text-sm font-medium text-stone-800";
 
-export function InventoryForm({ action, categories, shops, item, cancelHref }: Props) {
+export function InventoryForm({ action, categories, shops, item, categoryName, cancelHref }: Props) {
   const [state, formAction, pending] = useActionState(action, INITIAL_INVENTORY_STATE);
   return <form action={formAction} className="space-y-8" aria-busy={pending}>
     {state.error ? <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{state.error}</div> : null}
@@ -49,10 +50,9 @@ export function InventoryForm({ action, categories, shops, item, cancelHref }: P
       </label>
 
       <label className={labelClass}>Category
-        <select name="category_id" defaultValue={item?.category_id ?? ""} className={inputClass}>
-          <option value="">No category</option>
-          {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-        </select>
+        <input name="category_name" list="inventory-category-options" defaultValue={categoryName ?? ""} placeholder="Select or enter a new category" className={inputClass} />
+        <datalist id="inventory-category-options">{categories.map((category) => <option key={category.id} value={category.name} />)}</datalist>
+        <span className="mt-1 block text-xs font-normal text-stone-500">Choose an existing category or type a new one.</span>
       </label>
 
       <label className={labelClass}>Metal
@@ -91,16 +91,8 @@ export function InventoryForm({ action, categories, shops, item, cancelHref }: P
         <span className="mt-1 block text-xs font-normal text-stone-500">Informational only; it does not alter the effective price.</span>
       </label>
 
-      <label className={labelClass}>Owner/base price, UAH
-        <input name="owner_price" type="number" min="0" step="0.01" inputMode="decimal" defaultValue={item?.owner_price ?? ""} className={inputClass} />
-        <FieldError message={state.fieldErrors?.owner_price} />
-      </label>
-
-      <label className={labelClass}>Manual customer price override, UAH
-        <input name="selling_price" type="number" min="0" step="0.01" inputMode="decimal" defaultValue={item?.selling_price ?? ""} className={inputClass} />
-        <span className="mt-1 block text-xs font-normal text-stone-500">Leave blank to use the automatic pricing rule.</span>
-        <FieldError message={state.fieldErrors?.selling_price} />
-      </label>
+      <input type="hidden" name="owner_price" value={item?.owner_price ?? ""} />
+      <input type="hidden" name="selling_price" value={item?.selling_price ?? ""} />
 
       <label className={labelClass}>Status <span className="text-red-700">*</span>
         <select name="status" required defaultValue={(item?.status ?? "IN_STOCK") as InventoryStatus} className={inputClass}>

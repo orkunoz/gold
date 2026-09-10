@@ -4,7 +4,7 @@ import { INVENTORY_STATUSES } from "./constants";
 export type InventoryFormValues = Record<string, string>;
 export type InventoryFormErrors = Partial<Record<string, string>>;
 
-type ValidatedInventory = Omit<TablesInsert<"inventory_items">, "created_by">;
+type ValidatedInventory = Omit<TablesInsert<"inventory_items">, "created_by" | "category_id"> & { category_name: string | null };
 
 export type InventoryValidationResult =
   | { success: true; data: ValidatedInventory }
@@ -14,7 +14,7 @@ const TEXT_FIELDS = [
   "shop_id",
   "barcode",
   "article_number",
-  "category_id",
+  "category_name",
   "gold_fineness",
   "gold_color",
   "metal",
@@ -84,7 +84,7 @@ export function validateInventoryForm(formData: FormData): InventoryValidationRe
       shop_id: values.shop_id,
       barcode: nullableText(values.barcode),
       article_number: nullableText(values.article_number),
-      category_id: nullableText(values.category_id),
+      category_name: nullableText(values.category_name)?.replace(/\s+/g, " ") ?? null,
       gold_fineness: nullableText(values.gold_fineness),
       gold_color: nullableText(values.gold_color),
       metal: nullableText(values.metal) as "Gold" | "Silver" | null,
@@ -102,6 +102,6 @@ export function validateInventoryForm(formData: FormData): InventoryValidationRe
   };
 }
 
-export function toInventoryUpdate(data: ValidatedInventory): TablesUpdate<"inventory_items"> {
+export function toInventoryUpdate(data: Omit<ValidatedInventory, "category_name"> & { category_id: string | null }): TablesUpdate<"inventory_items"> {
   return data;
 }

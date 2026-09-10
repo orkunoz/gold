@@ -27,11 +27,11 @@ begin
     raise exception 'invalid metal succeeded';
   exception when check_violation then null; end;
   begin
-    insert into public.inventory_items(shop_id,price) values(v_shop,-1);
-    raise exception 'negative source price succeeded';
+    insert into public.inventory_items(shop_id,price_per_gram) values(v_shop,-1);
+    raise exception 'negative price per gram succeeded';
   exception when check_violation then null; end;
 
-  select * into v_sale from public.complete_sale(v_shop,jsonb_build_array(jsonb_build_object('inventory_item_id',v_sellable,'sale_price',100)),'TASK 10 ROLLBACK');
+  select * into v_sale from public.complete_sale(v_shop,jsonb_build_array(jsonb_build_object('inventory_item_id',v_sellable,'discount_percent',0)),'TASK 10 ROLLBACK');
   if (select status from public.inventory_items where id=v_sellable)<>'SOLD'
     or not exists(select 1 from public.sale_items where sale_id=v_sale.sale_id and inventory_item_id=v_sellable)
   then raise exception 'sale regression failed'; end if;
