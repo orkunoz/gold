@@ -52,6 +52,8 @@ Task 10 makes XLSX inventory mapping source-column-driven with no required workb
 
 Sales checkout lookup accepts an exact barcode or exact article. Since article numbers may repeat, multiple article matches are presented for explicit physical-item selection. Discount is a numeric per-product percentage input and remains validated database-side by `complete_sale`.
 
+Sales pricing fix: the authoritative effective-price resolver now uses manual `selling_price`, then the Inventory formula price (`weight_grams × price_per_gram`), then pricing rules, then `owner_price`. Checkout therefore fills both List price and Final sale price from the Inventory formula by default, and `complete_sale` snapshots the same value.
+
 ## Scope and next work
 
 The original Task 1 explicitly excluded database tables, inventory features, and sales features. Do not infer authorization to build the entire application from this handoff. Resume by inspecting the actual repository, checking setup and authentication, then agree the next milestone with the user. Schema and access-control design should precede business-data features.

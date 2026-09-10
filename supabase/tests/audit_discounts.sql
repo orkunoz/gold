@@ -14,7 +14,7 @@ begin
  if (select count(*) from public.inventory_item_history where inventory_item_id=item and field_name in('Producer','Weight'))<>2 then raise exception 'field history failed'; end if;
  select * into result from public.complete_sale(sh,jsonb_build_array(jsonb_build_object('inventory_item_id',item,'discount_percent',10,'sale_price',18000)),null);
  select * into sale_item from public.sale_items where sale_id=result.sale_id;
- if sale_item.discount_percent<>10 or sale_item.list_price<>20000 or sale_item.sale_price<>18000 or sale_item.producer<>'Changed' or sale_item.barcode<>'AUDIT-ITEM' then raise exception 'discount/snapshot failed'; end if;
+ if sale_item.discount_percent<>10 or sale_item.list_price<>24000 or sale_item.sale_price<>18000 or sale_item.producer<>'Changed' or sale_item.barcode<>'AUDIT-ITEM' then raise exception 'discount/snapshot failed'; end if;
  if not exists(select 1 from public.inventory_item_history where inventory_item_id=item and field_name='Status' and source='SALE' and sale_id=result.sale_id) then raise exception 'sale history failed'; end if;
  if has_table_privilege('authenticated','public.inventory_item_history','UPDATE') or has_table_privilege('authenticated','public.inventory_item_history','DELETE') or has_table_privilege('anon','public.inventory_item_history','SELECT') then raise exception 'history grants are unsafe'; end if;
  perform public.get_sold_products_register(sh,'Audit Ring','Changed','Gold',e.id,null,null,'AUDIT',1,50);

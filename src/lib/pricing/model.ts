@@ -10,6 +10,7 @@ export type EffectivePrice = {
 
 export function effectivePriceSourceLabel(source: EffectivePriceSource) {
   if (source === "MANUAL") return "Manual override";
+  if (source === "INVENTORY_FORMULA") return "Weight × price per gram";
   if (source === "PRICING_RULE") return "Pricing rule";
   return "Owner/base fallback";
 }

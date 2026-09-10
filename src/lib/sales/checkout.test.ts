@@ -23,6 +23,9 @@ describe("sales checkout", () => {
   });
 
   it("uses the server-resolved effective price and allows a missing price to be entered", () => {
+    expect(addProductToCart([], product({ selling_price: null, effective_price: 15000, source: "INVENTORY_FORMULA" }))).toMatchObject({
+      cart: [{ listPrice: 15000, finalPrice: "15000", source: "INVENTORY_FORMULA" }],
+    });
     expect(defaultListPrice(product({ selling_price: null, effective_price: 115, source: "PRICING_RULE" }))).toBe(115);
     expect(addProductToCart([], product({ selling_price: null, owner_price: null, effective_price: null, source: "OWNER_PRICE_FALLBACK" })).cart[0].finalPrice).toBe("");
   });

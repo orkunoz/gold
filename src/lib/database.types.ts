@@ -9,7 +9,7 @@ export type Json =
 export type EmployeeRole = "owner" | "manager" | "salesperson"
 export type InventoryStatus = "IN_STOCK" | "SOLD" | "RESERVED" | "REMOVED"
 export type PricingRuleType = "FIXED_AMOUNT" | "PERCENTAGE"
-export type EffectivePriceSource = "MANUAL" | "PRICING_RULE" | "OWNER_PRICE_FALLBACK"
+export type EffectivePriceSource = "MANUAL" | "INVENTORY_FORMULA" | "PRICING_RULE" | "OWNER_PRICE_FALLBACK"
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
