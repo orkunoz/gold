@@ -50,6 +50,8 @@ Task 9 adds the `get_sales_register` hardened RPC and `/sales` shop/category URL
 
 Task 10 makes XLSX inventory mapping source-column-driven with no required workbook column. Nullable fields include metal, producer, price_per_gram, discount, and barcode; non-null barcodes remain globally unique. Inventory `price` is calculated as weight × price per gram and remains separate from owner/manual/rule operational pricing. Import uses an authorized RPC and supports Ukrainian header/category aliases including `Виріб`. Product History is append-only and trigger-created, including sale-linked SOLD events. Checkout stores validated per-line discounts plus immutable product/price snapshots. Sales offers database-paginated Products and transaction views. The Inventory register uses the requested 13-column layout, filtered totals, metal filtering, and page-continuous ordinals.
 
+Sales checkout lookup accepts an exact barcode or exact article. Since article numbers may repeat, multiple article matches are presented for explicit physical-item selection. Discount is a numeric per-product percentage input and remains validated database-side by `complete_sale`.
+
 ## Scope and next work
 
 The original Task 1 explicitly excluded database tables, inventory features, and sales features. Do not infer authorization to build the entire application from this handoff. Resume by inspecting the actual repository, checking setup and authentication, then agree the next milestone with the user. Schema and access-control design should precede business-data features.

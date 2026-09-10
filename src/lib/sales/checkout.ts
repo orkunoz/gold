@@ -3,7 +3,7 @@ import type { EffectivePriceSource, EmployeeRole, InventoryStatus, Json, Pricing
 export type CheckoutProduct = {
   id: string;
   shop_id: string;
-  barcode: string;
+  barcode: string | null;
   article_number: string | null;
   category: string | null;
   gold_fineness: string | null;
@@ -85,8 +85,8 @@ export function buildSaleRpcItems(cart: CartItem[]): { value: Json | null; error
   for (const item of cart) {
     const price = parseSalePrice(item.finalPrice);
     const discount=parseDiscountPercent(item.discountPercent);
-    if(discount.error||discount.value===null)return {value:null,error:`Check the discount for ${item.barcode}.`};
-    if (price.error || price.value === null) return { value: null, error: `Check the final price for ${item.barcode}.` };
+    if(discount.error||discount.value===null)return {value:null,error:`Check the discount for ${item.barcode??item.article_number??"this item"}.`};
+    if (price.error || price.value === null) return { value: null, error: `Check the final price for ${item.barcode??item.article_number??"this item"}.` };
     items.push({ inventory_item_id: item.id, discount_percent: discount.value, sale_price: price.value });
   }
   return { value: items, error: null };

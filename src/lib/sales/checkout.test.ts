@@ -9,6 +9,8 @@ describe("sales checkout", () => {
     expect(addProductToCart([], product())).toMatchObject({ error: null, cart: [{ id: "item-1", listPrice: 120, discountPercent:"0", finalPrice: "120" }] });
   });
 
+  it("supports an article-only item without a barcode",()=>expect(addProductToCart([],product({barcode:null,article_number:"ARTICLE-7"}))).toMatchObject({error:null,cart:[{article_number:"ARTICLE-7",barcode:null}]}));
+
   it.each([
     ["SOLD", "already sold"], ["RESERVED", "reserved"], ["REMOVED", "removed"],
   ] as const)("rejects %s products", (status, message) => {

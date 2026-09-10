@@ -20,6 +20,7 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
   const [message, setMessage] = useState<string | null>(null);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [confirmation, setConfirmation] = useState<SaleConfirmation | null>(null);
+  const [matches,setMatches]=useState<CheckoutProduct[]>([]);
   const [isPending, startTransition] = useTransition();
   const scannerRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -42,16 +43,18 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
     setMessage("Looking up barcode…");
     setIsLookingUp(true);
     try {
-      const response = await fetch(`/api/sales/lookup?barcode=${encodeURIComponent(barcode)}&shop_id=${encodeURIComponent(shopId)}`);
-      const payload = await response.json() as { item?: CheckoutProduct; error?: string };
-      if (!response.ok || !payload.item) {
-        setMessage(response.status === 404 ? "Barcode not found." : payload.error ?? "Barcode lookup failed.");
+      const response = await fetch(`/api/sales/lookup?code=${encodeURIComponent(barcode)}&shop_id=${encodeURIComponent(shopId)}`);
+      const payload = await response.json() as { item?: CheckoutProduct; items?:CheckoutProduct[]; error?: string };
+      if (!response.ok || (!payload.item&&!payload.items?.length)) {
+        setMessage(response.status === 404 ? "Barcode or article not found." : payload.error ?? "Item lookup failed.");
         refocusScanner(true);
         return;
       }
-      const result = addProductToCart(cart, payload.item);
+      if(payload.items){setMatches(payload.items);setMessage(`${payload.items.length} physical items use this article. Choose the correct item.`);refocusScanner();return;}
+      const foundItem=payload.item!;
+      const result = addProductToCart(cart, foundItem);
       setCart(result.cart);
-      setMessage(result.error ?? `${payload.item.barcode} added to the current sale.`);
+      setMatches([]);setMessage(result.error ?? `${foundItem.barcode??foundItem.article_number??"Item"} added to the current sale.`);
       if (scannerRef.current) scannerRef.current.value = "";
       refocusScanner(result.error !== null);
     } catch {
@@ -66,6 +69,7 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
     setShopId(nextShopId);
     setCart([]);
     setConfirmation(null);
+    setMatches([]);
     setMessage(cart.length ? "The current sale was cleared because the shop changed." : null);
     refocusScanner();
   }
@@ -111,14 +115,15 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
     </div>
 
     <form onSubmit={scan} className="mt-6 rounded-xl border-2 border-amber-700 bg-amber-50 p-5">
-      <label htmlFor="sales-barcode" className="block text-lg font-semibold">Scan barcode</label>
-      <p className="mt-1 text-sm text-stone-600">Scan with a USB scanner or type the exact barcode and press Enter.</p>
+      <label htmlFor="sales-barcode" className="block text-lg font-semibold">Barcode or article</label>
+      <p className="mt-1 text-sm text-stone-600">Scan a barcode or type an exact article number and press Enter.</p>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-        <input ref={scannerRef} id="sales-barcode" type="search" autoComplete="off" spellCheck={false} placeholder="Scan or type barcode" className="min-w-0 flex-1 rounded-lg border border-amber-800 bg-white px-4 py-3 text-lg font-medium outline-none ring-amber-500 focus:ring-2" />
+        <input ref={scannerRef} id="sales-barcode" type="search" autoComplete="off" spellCheck={false} placeholder="Scan barcode or type article" className="min-w-0 flex-1 rounded-lg border border-amber-800 bg-white px-4 py-3 text-lg font-medium outline-none ring-amber-500 focus:ring-2" />
         <button disabled={isPending || isLookingUp} className="rounded-lg bg-amber-800 px-6 py-3 font-medium text-white disabled:opacity-50">{isLookingUp ? "Looking up…" : "Add item"}</button>
       </div>
       {message ? <p role="status" className="mt-4 rounded-lg border border-amber-300 bg-white px-4 py-3 font-medium text-stone-900">{message}</p> : null}
     </form>
+    {matches.length?<div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4"><h2 className="font-semibold">Choose physical item</h2><div className="mt-3 grid gap-3">{matches.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white p-3"><div><p className="font-medium">{item.category??"Uncategorized"} · Article {item.article_number??"—"}</p><p className="text-sm text-stone-500">Barcode {item.barcode??"—"} · {item.weight_grams??"—"} g · {item.status}</p></div><button type="button" onClick={()=>{const result=addProductToCart(cart,item);setCart(result.cart);setMessage(result.error??`${item.article_number??"Item"} added to the current sale.`);setMatches([]);refocusScanner();}} className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white">Add</button></div>)}</div></div>:null}
 
     <div className="mt-6 overflow-hidden rounded-xl border border-stone-200">
       <div className="flex items-center justify-between bg-stone-50 px-4 py-3"><h2 className="font-semibold">Current sale</h2><span className="text-sm text-stone-500">{cart.length} item{cart.length === 1 ? "" : "s"}</span></div>
@@ -128,13 +133,13 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
           const priceError = parseSalePrice(item.finalPrice).error;
           const discountError=parseDiscountPercent(item.discountPercent).error;
           return <tr key={item.id}>
-            <td className="px-4 py-3"><p className="font-semibold">{item.barcode}</p><p className="text-xs text-stone-500">{item.article_number || "No article"}</p></td>
+            <td className="px-4 py-3"><p className="font-semibold">{item.barcode??"No barcode"}</p><p className="text-xs text-stone-500">{item.article_number || "No article"}</p></td>
             <td className="px-4 py-3"><p>{item.category || "Uncategorized"}</p><p className="text-xs text-stone-500">{[item.gold_fineness, item.gold_color, item.size && `Size ${item.size}`].filter(Boolean).join(" · ") || "—"}</p></td>
             <td className="px-4 py-3">{item.weight_grams === null ? "—" : `${item.weight_grams} g`}</td>
             <td className="px-4 py-3"><InventoryStatus status={item.status} /></td>
             <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.listPrice)}<span className="block text-xs text-stone-500">{effectivePriceSourceLabel(item.source)}</span></td>
-            <td className="px-4 py-3"><input aria-label={`Discount for ${item.barcode}`} inputMode="decimal" value={item.discountPercent} onChange={(event)=>setCart(updateCartDiscount(cart,item.id,event.target.value))} className={`w-24 rounded-lg border px-3 py-2 ${discountError?"border-red-500":"border-stone-300"}`} />{discountError?<p className="mt-1 text-xs text-red-700">{discountError}</p>:null}</td>
-            <td className="px-4 py-3"><input aria-label={`Final price for ${item.barcode}`} inputMode="decimal" value={item.finalPrice} onChange={(event) => setCart(updateCartPrice(cart, item.id, event.target.value))} className={`w-36 rounded-lg border px-3 py-2 ${priceError ? "border-red-500" : "border-stone-300"}`} />{priceError ? <p className="mt-1 max-w-48 text-xs text-red-700">{priceError}</p> : null}</td>
+            <td className="px-4 py-3"><input aria-label={`Discount for ${item.barcode??item.article_number??"item"}`} type="number" min="0" max="100" step="0.01" inputMode="decimal" value={item.discountPercent} onChange={(event)=>setCart(updateCartDiscount(cart,item.id,event.target.value))} className={`w-24 rounded-lg border px-3 py-2 ${discountError?"border-red-500":"border-stone-300"}`} />{discountError?<p className="mt-1 text-xs text-red-700">{discountError}</p>:null}</td>
+            <td className="px-4 py-3"><input aria-label={`Final price for ${item.barcode??item.article_number??"item"}`} type="number" min="0" step="0.01" inputMode="decimal" value={item.finalPrice} onChange={(event) => setCart(updateCartPrice(cart, item.id, event.target.value))} className={`w-36 rounded-lg border px-3 py-2 ${priceError ? "border-red-500" : "border-stone-300"}`} />{priceError ? <p className="mt-1 max-w-48 text-xs text-red-700">{priceError}</p> : null}</td>
             <td className="px-4 py-3 text-right"><button onClick={() => { setCart(removeCartItem(cart, item.id)); refocusScanner(); }} className="text-sm font-medium text-red-700 hover:underline">Remove</button></td>
           </tr>;
         })}</tbody>
