@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { EmployeeRole, Tables } from "@/lib/database.types";
+import type { Tables } from "@/lib/database.types";
 import { IMPORT_FIELDS, type ColumnMapping, type ImportPreview, type ParsedSheet } from "@/lib/inventory/import/types";
 
 type Result = { imported: number; skipped: number; duplicates: number; failed: number; failures: { row: number; message: string }[] };
-type Props = { role: EmployeeRole; employeeShopId: string | null; shops: Pick<Tables<"shops">, "id" | "name" | "code">[] };
+type Props = { employeeShopId: string | null; shops: Pick<Tables<"shops">, "id" | "name" | "code">[] };
 
 const fieldLabels: Record<typeof IMPORT_FIELDS[number], string> = {
   category: "Product Category", metal: "Metal", producer: "Producer", size: "Size",
@@ -21,7 +21,7 @@ async function jsonResponse<T>(response: Response): Promise<T> {
   return body;
 }
 
-export function InventoryImport({ role, employeeShopId, shops }: Props) {
+export function InventoryImport({ employeeShopId, shops }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [parsed, setParsed] = useState<ParsedSheet | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping>({});
@@ -95,7 +95,7 @@ export function InventoryImport({ role, employeeShopId, shops }: Props) {
       </section>
 
       <section><h2 className="text-lg font-semibold">Target shop</h2>
-        {role === "manager" ? <p className="mt-2 text-sm text-stone-700">{shops.find((shop) => shop.id === employeeShopId)?.name ?? "Assigned shop"}</p> : <select value={targetShopId} onChange={(event) => setTargetShopId(event.target.value)} className="mt-3 w-full max-w-md rounded-lg border border-stone-300 bg-white px-3 py-2.5"><option value="">Select shop</option>{shops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}</select>}
+        <select value={targetShopId} onChange={(event) => setTargetShopId(event.target.value)} className="mt-3 w-full max-w-md rounded-lg border border-stone-300 bg-white px-3 py-2.5"><option value="">Select shop</option>{shops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}</select>
       </section>
       <button disabled={busy} onClick={() => void validate()} className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">{busy ? "Working…" : "Validate and preview"}</button></> : null}
 

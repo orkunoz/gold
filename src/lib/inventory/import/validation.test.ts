@@ -48,9 +48,8 @@ describe("flexible inventory import validation", () => {
     expect(validateImportRows([["bad", "oops"]], context).rows[0]).toMatchObject({ classification: "Warning", item: { weight_grams: null, price_per_gram: null, price: null } });
     expect(validateImportRows([["-1", "-2"]], context).rows[0].errors).toHaveLength(2);
   });
-  it("uses mapped shop when valid and enforces a manager's assignment", () => {
+  it("uses a mapped shop when valid", () => {
     const context = { ...base, mapping: { shop: 0 } };
     expect(validateImportRows([["OTHER"]], context).rows[0].item?.shop_id).toBe("other-id");
-    expect(validateImportRows([["OTHER"]], { ...context, role: "manager" }).rows[0].errors).toContain("Managers may import only to their assigned shop");
   });
 });

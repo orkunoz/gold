@@ -28,10 +28,6 @@ export async function createInventoryItem(
 
   const validation = validateInventoryForm(formData);
   if (!validation.success) return { error: "Check the highlighted fields.", fieldErrors: validation.errors };
-  if (employee.role === "manager" && validation.data.shop_id !== employee.shop_id) {
-    return { error: "Managers can add inventory only to their assigned shop.", fieldErrors: { shop_id: "Select your assigned shop." } };
-  }
-
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("inventory_items")
@@ -54,10 +50,6 @@ export async function updateInventoryItem(
 
   const validation = validateInventoryForm(formData);
   if (!validation.success) return { error: "Check the highlighted fields.", fieldErrors: validation.errors };
-  if (employee.role === "manager" && validation.data.shop_id !== employee.shop_id) {
-    return { error: "Managers can edit inventory only in their assigned shop.", fieldErrors: { shop_id: "Select your assigned shop." } };
-  }
-
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("inventory_items")

@@ -68,8 +68,7 @@ describe("sales checkout", () => {
     const shops = [{ id: "shop-1", name: "One" }, { id: "shop-2", name: "Two" }];
     expect(checkoutShopLocked("owner")).toBe(false);
     expect(checkoutShops("owner", "shop-1", shops)).toHaveLength(2);
-    expect(checkoutShopLocked("manager")).toBe(true);
-    expect(checkoutShops("manager", "shop-1", shops)).toEqual([shops[0]]);
     expect(checkoutShopLocked("salesperson")).toBe(true);
+    expect(checkoutShops("salesperson", "shop-1", shops)).toEqual([shops[0]]);
   });
 });

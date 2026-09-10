@@ -106,7 +106,6 @@ export function validateImportRows(rows: SpreadsheetRow[], context: Context): Im
       else shopId = shop.id;
     }
     if (!context.shops.some((shop) => shop.id === shopId)) errors.push("Invalid target shop");
-    if (context.role === "manager" && shopId !== context.employeeShopId) errors.push("Managers may import only to their assigned shop");
 
     const weight = parseImportedNumber(mapped(row, context.mapping, "weight_grams"));
     const pricePerGram = parseImportedNumber(mapped(row, context.mapping, "price_per_gram"));

@@ -110,5 +110,5 @@ export async function getInventoryHistory(id:string){
 }
 
 export function canManageInventory(role: EmployeeRole) {
-  return role === "owner" || role === "manager";
+  return role === "owner";
 }

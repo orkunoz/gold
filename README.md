@@ -104,16 +104,15 @@ This privileged bootstrap is intentionally performed through the SQL Editor: bef
 ### Authorization model
 
 - Owners can read and administer shops, employees, categories, and all inventory.
-- Managers can read, create, and update inventory belonging to their assigned shop. Moving an item to another shop is rejected by RLS. Managers cannot administer shops, employees, or categories.
 - Salespeople can read inventory for their assigned shop and their own employee record, but cannot write inventory or administrative records.
-- Active managers and salespeople can read their assigned shop and active employees can read categories.
+- Active salespeople can read their assigned shop and active employees can read categories.
 - Unauthenticated and inactive users have no application-table access.
 - Only owners can delete inventory records. Normal business workflows must change status to `SOLD` or `REMOVED`, not delete rows.
 - `SOLD` is protected history: ordinary authenticated inserts and updates cannot create, modify, or reverse a sold inventory row. Only the atomic `complete_sale` RPC may set it.
 
 RLS helpers use hardened, schema-qualified functions to look up the current active employee without recursive policies. Authorization remains enforced in PostgreSQL; protected pages alone are not a data-access boundary.
 
-After applying the migration, verify with separate owner, manager, and salesperson test accounts. Confirm that each role can perform only the operations above, that a manager cannot access another shop, and that anonymous API requests return no rows.
+After applying the migration, verify with separate Owner and Salesperson test accounts. Confirm that each role can perform only the operations above, that a salesperson cannot access another shop, and that anonymous API requests return no rows.
 
 ## Checks
 
@@ -135,7 +134,7 @@ The intended V1 architecture is this Next.js application on Vercel over HTTPS, b
 
 Open `/inventory` to view accessible inventory in pages of 50, newest first. Filter by partial barcode, article number, category, status, free text, and—for owners—shop. The separate scanner field receives focus and performs exact barcode lookup on Enter.
 
-Owners and managers see manual add/edit controls. Managers remain restricted to their assigned shop by both Server Action checks and PostgreSQL RLS. Salespeople have read-only inventory access. Duplicate barcodes and invalid or negative numeric values produce safe form errors. Normal removal is represented by the `REMOVED` status; the UI does not expose deletion.
+Owners see manual add/edit controls. Salespeople have read-only inventory access for their assigned shop. Duplicate barcodes and invalid or negative numeric values produce safe form errors. Normal removal is represented by the `REMOVED` status; the UI does not expose deletion.
 
 Prices are displayed in UAH and remain manually entered stored values. Task 3A does not derive prices from weight or any other rule.
 
@@ -147,12 +146,12 @@ A match opens the complete product detail view without changing its inventory st
 
 ## Excel inventory import
 
-Owners and managers can open **Import inventory** from `/inventory`. The guided flow is Upload → Sheet → Map → Preview → Results:
+Owners can open **Import inventory** from `/inventory`. The guided flow is Upload → Sheet → Map → Preview → Results:
 
 1. Upload a standard `.xlsx` file no larger than 5 MB.
 2. Select a worksheet when the workbook contains multiple sheets.
 3. Review and edit the detected header mapping. Each spreadsheet source column can map to one Gold field or **Do not import**; no workbook column is mandatory.
-4. Select the target shop. Managers are locked to their assigned shop; owners may choose any accessible active shop.
+4. Select the target active shop.
 5. Validate and review every row before importing valid rows in batches of 100.
 
 The importer recognizes common English and Ukrainian headers, including `Артикул`, `Штрихкод`, `Штрих-код`, `Код`, `Виріб`, `Метал`, `Виробник`, `Вага`, `Розмір`, `Ціна`, `Ціна грн`, `Знижка`, `Примітка`, and `Статус`. Mappings always remain editable.
@@ -169,7 +168,7 @@ Workbook formulas are not calculated and macros are not executed. Uploaded data 
 
 ## Sales database and transaction
 
-Task 4A adds permanent `sales` headers and `sale_items` price snapshots. Each physical inventory item can appear in `sale_items` only once. Foreign keys use restrictive deletion behavior, values have non-negative constraints, and authenticated clients receive read-only table grants governed by shop-scoped RLS. Owners may read all sales; managers and salespeople may read sales for their assigned shop. Ordinary clients cannot insert, update, or delete sales history.
+Task 4A adds permanent `sales` headers and `sale_items` price snapshots. Each physical inventory item can appear in `sale_items` only once. Foreign keys use restrictive deletion behavior, values have non-negative constraints, and authenticated clients receive read-only table grants governed by shop-scoped RLS. Owners may read all sales; salespeople may read sales for their assigned shop. Ordinary clients cannot insert, update, or delete sales history.
 
 Sales are created only through the authenticated `complete_sale(p_shop_id, p_items, p_notes)` RPC. Each JSON item contains exactly an `inventory_item_id` and final `sale_price`; the database resolves the active employee from `auth.uid()`, verifies role and active-shop access, rejects duplicate/missing/wrong-shop/non-`IN_STOCK` items, and locks inventory rows in deterministic UUID order. It generates the sale number, snapshots the authoritative effective list price, calculates totals, inserts all history rows, and marks every item `SOLD` in one transaction. Any error rolls back the sale, line items, and all status changes.
 
@@ -191,13 +190,13 @@ Do not send employee IDs, sale numbers, list prices, totals, or target statuses;
 
 ## Cashier checkout
 
-Open `/sales` for the scanner-first checkout. The page shows the current employee and shop, a focused exact-barcode field, the client-only current cart, editable final prices, a client-side total, optional notes up to 5000 characters, and the completion control. Owners may choose among accessible active shops; managers and salespeople are locked to their assigned shop. Changing an owner’s shop clears the unfinished cart to avoid mixing stock.
+Open `/sales` for the scanner-first checkout. The page shows the current employee and shop, a focused exact-barcode field, the client-only current cart, editable final prices, a client-side total, optional notes up to 5000 characters, and the completion control. Owners may choose among accessible active shops; salespeople are locked to their assigned shop. Changing an owner’s shop clears the unfinished cart to avoid mixing stock.
 
 USB scanners can type a barcode and send Enter. Only exact, RLS-accessible `IN_STOCK` products enter the cart. `SOLD`, `RESERVED`, and `REMOVED` items show specific warnings; duplicate scans do not duplicate a physical item. Each line shows product details, its database-resolved effective list price and source, an editable non-negative final price with two-decimal validation, and a remove action. Removing or editing a line changes only browser state and never writes a price back to inventory.
 
 **Complete Sale** is disabled for an empty cart and guarded against double submission. The server sends only the shop, item IDs/final prices, and optional notes to `complete_sale`; it never inserts sales rows or marks inventory `SOLD` directly. The RPC remains authoritative for authorization, availability, price snapshots, totals, locking, and atomic writes. Failure keeps the cart and states that no partial sale was created. Success clears the cart and shows the generated sale number, time, item count, authoritative total, and links to begin again or view the read-only detail.
 
-The read-only Sales Register appears below checkout in pages of 25, newest first. Owners may filter all history by any accessible shop and product category; managers and salespeople remain database-restricted to their assigned shop and may filter by category. Shop, category, and page remain in URL query parameters. Category matching uses sale existence semantics, so a multi-item sale appears once, while its Products column summarizes every line as values such as `Bracelet × 2, Ring × 1`. `/sales/[id]` continues to show the immutable header, notes, totals, employee/shop, and item-level barcode/article/category/weight plus list and final price snapshots. There are no edit or delete actions.
+The read-only Sales Register appears below checkout in pages of 25, newest first, without a filter panel. Owners see all history; salespeople remain database-restricted to their assigned shop. The Inventory page's Status = Sold filter is the primary way to find sold products. `/sales/[id]` continues to show the immutable header, notes, totals, employee/shop, and item-level barcode/article/category/weight plus list and final price snapshots. There are no edit or delete actions.
 
 ## Task 9 demo data
 
@@ -209,7 +208,7 @@ The read-only Sales Register appears below checkout in pages of 25, newest first
 
 Owners have a **Pricing** navigation item and Owner-only `/pricing` management pages. Rules support `FIXED_AMOUNT` (owner price plus a configured UAH amount) and `PERCENTAGE` (owner price plus a configured percentage), with Global, Shop, Category, or Shop + Category scope. Resolution selects exactly one active/current rule in this order: Shop + Category, Shop, Category, Global; higher priority wins within a scope, followed deterministically by newest creation time and ID.
 
-`calculate_selling_price(owner_price, shop_id, category_id)` performs PostgreSQL numeric arithmetic and rounds to two decimals. Null owner price returns null; no matching rule returns owner price unchanged. When a shop is supplied, the function requires the current employee to have access to that shop and requires the shop to exist and be active. Managers and salespeople therefore cannot probe another shop's pricing through the `SECURITY DEFINER` function. Rules can have optional start/end times and are retired with `is_active=false`, never deletion. Only Owners can read or mutate the rule table; active employees use the hardened calculation function without direct rule visibility. The original `created_by` attribution cannot be changed after insertion.
+`calculate_selling_price(owner_price, shop_id, category_id)` performs PostgreSQL numeric arithmetic and rounds to two decimals. Null owner price returns null; no matching rule returns owner price unchanged. When a shop is supplied, the function requires the current employee to have access to that shop and requires the shop to exist and be active. Salespeople therefore cannot probe another shop's pricing through the `SECURITY DEFINER` function. Rules can have optional start/end times and are retired with `is_active=false`, never deletion. Only Owners can read or mutate the rule table; active employees use the hardened calculation function without direct rule visibility. The original `created_by` attribution cannot be changed after insertion.
 
 The create/edit form validates scope, values, priority, dates, and notes server-side and includes an informational price preview. There is no repricing trigger or mass inventory update.
 
@@ -219,7 +218,7 @@ Checkout defaults both List price and the editable Final sale price to the effec
 
 ## Business dashboard
 
-`/dashboard` uses one authenticated `get_dashboard_report` RPC rather than loading raw sales and inventory into the browser. Owners can report across all active shops or select one shop. Managers are database-restricted to their assigned active shop. Salespeople receive a deliberately limited view: today's shop revenue, sales, items, sold weight, average sale, and recent sales; inventory valuation and comparison data are omitted by the RPC itself.
+`/dashboard` uses one authenticated `get_dashboard_report` RPC rather than loading raw sales and inventory into the browser. Owners can report across all active shops or select one shop. Salespeople receive a deliberately limited view for their assigned active shop: today's revenue, sales, items, sold weight, average sale, and recent sales; inventory valuation and comparison data are omitted by the RPC itself.
 
 Reporting periods are Today, Last 7 days, This month (the default), and Last 30 days. PostgreSQL calculates inclusive local-day starts and the exclusive next-day boundary using the `Europe/Kyiv` IANA timezone, including daylight-saving changes. Sales KPIs use immutable `sales` and `sale_items` history: revenue, sale/item counts, physical sold weight, average sale, daily revenue, category totals, employee totals, and Owner all-shop comparison. Recent sales link to their read-only details.
 
@@ -229,7 +228,7 @@ Current inventory KPIs are separate from the selected sales period. They include
 
 Owners have an **Administration** navigation area with shop and employee pages. Shop codes are required, normalized to uppercase, and unique. Shops can be created, renamed, activated, and deactivated but not deleted. Deactivation is blocked while active employees are assigned or `IN_STOCK`/`RESERVED` inventory remains; historical shops, sales, and sold/removed stock keep their original references and names.
 
-Employees remain linked authoritatively by immutable `auth_user_id`. Owners can edit display names, the fixed roles `owner`/`manager`/`salesperson`, active-shop assignments, and active status; records are never deleted. Active managers and salespeople require one active shop. Database-level serialized protection prevents deactivating or downgrading the last active Owner, including concurrent requests. Inactive employees immediately fail existing operational authorization checks, while historical sales retain their attribution.
+Employees remain linked authoritatively by immutable `auth_user_id`. Owners can edit display names, the fixed roles `owner`/`salesperson`, active-shop assignments, and active status; records are never deleted. Active salespeople require one active shop. Database-level serialized protection prevents deactivating or downgrading the last active Owner, including concurrent requests. Inactive employees immediately fail existing operational authorization checks, while historical sales retain their attribution.
 
 Employee onboarding uses a recoverable two-step invitation. An Owner-only database RPC first records a normalized pending invitation, then a server-only Supabase Admin client finds or invites the exact email identity, and a second Owner-only RPC verifies that `auth.users` email before linking the employee. Finalization revalidates the stored role and shop immediately before insertion, so a shop deactivated after preparation cannot produce an invalid active employee; the invitation remains pending and safe to retry. Configure `SUPABASE_SERVICE_ROLE_KEY` only in the server environment; never expose it with a `NEXT_PUBLIC_` name or commit it. Without that variable, shop/employee administration still works but the invitation action shows a configuration message. Real invitation delivery requires a controlled second email acceptance test and is intentionally not exercised by automated tests.
 
