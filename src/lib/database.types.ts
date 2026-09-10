@@ -430,6 +430,15 @@ export type Database = {
         Args: { p_period?: string; p_shop_id?: string | null }
         Returns: Json
       }
+      get_sales_register: {
+        Args: {
+          p_category_filter?: string | null
+          p_page?: number
+          p_page_size?: number
+          p_shop_id?: string | null
+        }
+        Returns: Json
+      }
       is_active_employee: { Args: never; Returns: boolean }
       is_owner: { Args: never; Returns: boolean }
     }

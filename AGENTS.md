@@ -46,6 +46,8 @@ Task 8 is a production-readiness milestone, not a feature milestone. The target 
 
 Task 8 verification found no tracked credential-like files or matching credential patterns in Git history, no npm vulnerabilities, no Supabase schema-lint errors, no migration drift, and no performance-advisor findings. All five hosted rollback-only SQL suites pass. Security-advisor warnings for authenticated `SECURITY DEFINER` functions are expected for the deliberately exposed hardened RPC interface; leaked-password protection remains a manual Supabase Auth setting to enable if supported by the production plan.
 
+Task 9 adds the `get_sales_register` hardened RPC and `/sales` shop/category URL filters with one aggregated row per sale. Owner may query all or one shop; manager/salesperson are forced to their assigned shop in PostgreSQL. Exact-target SQL scripts seed, verify, and optionally remove the clearly marked `DEMO-*` dataset without deleting Shop2/Shop3. Hosted seeding was run twice to verify idempotence: Shop2/Shop3 are active, 20 demo pieces exist (10 `SOLD`, 10 `IN_STOCK`), and 10 demo sales/lines have consistent totals and snapshots.
+
 ## Scope and next work
 
 The original Task 1 explicitly excluded database tables, inventory features, and sales features. Do not infer authorization to build the entire application from this handoff. Resume by inspecting the actual repository, checking setup and authentication, then agree the next milestone with the user. Schema and access-control design should precede business-data features.

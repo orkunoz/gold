@@ -191,7 +191,13 @@ USB scanners can type a barcode and send Enter. Only exact, RLS-accessible `IN_S
 
 **Complete Sale** is disabled for an empty cart and guarded against double submission. The server sends only the shop, item IDs/final prices, and optional notes to `complete_sale`; it never inserts sales rows or marks inventory `SOLD` directly. The RPC remains authoritative for authorization, availability, price snapshots, totals, locking, and atomic writes. Failure keeps the cart and states that no partial sale was created. Success clears the cart and shows the generated sale number, time, item count, authoritative total, and links to begin again or view the read-only detail.
 
-Recent RLS-accessible sales appear below checkout in pages of 25. `/sales/[id]` shows the immutable header, notes, totals, employee/shop, and item-level barcode/article/category/weight plus list and final price snapshots. There are no edit or delete actions. Task 4B does not add formulas, discounts, returns/refunds, payments, receipts, transfers, customers, analytics, camera scanning, or persistent draft carts.
+The read-only Sales Register appears below checkout in pages of 25, newest first. Owners may filter all history by any accessible shop and product category; managers and salespeople remain database-restricted to their assigned shop and may filter by category. Shop, category, and page remain in URL query parameters. Category matching uses sale existence semantics, so a multi-item sale appears once, while its Products column summarizes every line as values such as `Bracelet × 2, Ring × 1`. `/sales/[id]` continues to show the immutable header, notes, totals, employee/shop, and item-level barcode/article/category/weight plus list and final price snapshots. There are no edit or delete actions.
+
+## Task 9 demo data
+
+`scripts/seed-demo-data.sql` is the explicit idempotent production demo seed. It ensures active `Shop2` (`SHOP2`) and `Shop3` (`SHOP3`), keeps the pre-existing primary shop unchanged, inserts only exact `DEMO-001`–`DEMO-020` inventory with matching `DEMO-A001`–`DEMO-A020` articles and `DEMO DATA — SAFE TO REMOVE` notes, and creates exact `DEMO-SALE-001`–`DEMO-SALE-010` historical sales. It aborts on identifier collisions with non-demo records and verifies 20 unique items, 10 `SOLD`, 10 `IN_STOCK`, ten one-item sales, and matching totals/snapshots before committing. Running it again is safe and does not duplicate records.
+
+`scripts/verify-demo-data.sql` performs read-only hosted assertions. `scripts/remove-demo-data.sql` is manual-only cleanup: it checks the same exact markers, then removes demo sale items, sales, and inventory in foreign-key order. It intentionally keeps Shop2 and Shop3. Never broaden these predicates, run the cleanup automatically, or use a database reset against production.
 
 ## Pricing rules foundation
 
