@@ -20,7 +20,7 @@ describe("inventory form validation", () => {
     expect(validateInventoryForm(form({ barcode: "" }))).toMatchObject({ success: true, data: { barcode: null } });
   });
 
-  it.each(["weight_grams", "owner_price", "selling_price", "price_per_gram", "price"])("rejects invalid %s", (field) => {
+  it.each(["weight_grams", "owner_price", "selling_price", "price_per_gram"])("rejects invalid %s", (field) => {
     const result = validateInventoryForm(form({ [field]: "-1" }));
     expect(result).toMatchObject({ success: false, errors: { [field]: expect.any(String) } });
   });

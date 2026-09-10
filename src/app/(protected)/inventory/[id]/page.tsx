@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { InventoryStatus } from "@/components/inventory-status";
-import { displayValue, formatDate, formatPrice } from "@/lib/inventory/format";
-import { canManageInventory, getCurrentEmployee, getInventoryItem } from "@/lib/inventory/queries";
+import { displayValue, formatDate, formatDateTime, formatPrice } from "@/lib/inventory/format";
+import { canManageInventory, getCurrentEmployee, getInventoryHistory, getInventoryItem } from "@/lib/inventory/queries";
 import { scanAnotherHref, scanStatusWarning } from "@/lib/inventory/scanner";
 import { effectivePriceSourceLabel } from "@/lib/pricing/model";
 
@@ -10,12 +10,12 @@ export const metadata = { title: "Product details" };
 export default async function InventoryItemPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ from?: string }> }) {
   const { id } = await params;
   const fromScanner = (await searchParams).from === "scan";
-  const [item, employee] = await Promise.all([getInventoryItem(id), getCurrentEmployee()]);
+  const [item, employee, history] = await Promise.all([getInventoryItem(id), getCurrentEmployee(),getInventoryHistory(id)]);
   const statusWarning = scanStatusWarning(item.status);
   const details = [
     ["Article number", displayValue(item.article_number)], ["Category", item.product_categories?.name ?? "—"],
     ["Shop", item.shops?.name ?? "—"], ["Metal", displayValue(item.metal)], ["Producer", displayValue(item.producer)],
-    ["Price per gram", formatPrice(item.price_per_gram)], ["Imported/source price", formatPrice(item.price)], ["Discount", displayValue(item.discount)],
+    ["Price per gram", formatPrice(item.price_per_gram)], ["Inventory price", formatPrice(item.price)], ["Discount", displayValue(item.discount)],
     ["Gold fineness", displayValue(item.gold_fineness)],
     ["Gold color", displayValue(item.gold_color)], ["Weight", item.weight_grams === null ? "—" : `${item.weight_grams} g`],
     ["Size", displayValue(item.size)], ["Received", formatDate(item.received_at)],
@@ -45,5 +45,6 @@ export default async function InventoryItemPage({ params, searchParams }: { para
       {details.map(([label, value]) => <div key={label} className="bg-white p-5"><dt className="text-xs font-medium uppercase tracking-wide text-stone-500">{label}</dt><dd className="mt-2 break-words text-sm font-medium text-stone-900">{value}</dd></div>)}
     </dl>
     <div className="mt-6 rounded-xl border border-stone-200 bg-white p-6"><h2 className="font-medium">Notes</h2><p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-600">{item.notes || "No notes."}</p></div>
+    <div className="mt-8 rounded-xl border border-stone-200 bg-white p-6"><h2 className="text-lg font-semibold">History</h2>{history.length===0?<p className="mt-3 text-sm text-stone-500">No recorded changes.</p>:<ol className="mt-4 divide-y divide-stone-100">{history.map(entry=><li key={entry.id} className="py-4"><div className="flex flex-wrap justify-between gap-2"><p className="font-medium">{entry.field_name}</p><time className="text-xs text-stone-500">{formatDateTime(entry.changed_at)}</time></div><p className="mt-1 text-sm text-stone-700">{entry.old_value??"—"} → {entry.new_value??"—"}</p><p className="mt-1 text-xs text-stone-500">{entry.source.replaceAll("_"," ")} · Changed by {entry.employees?.full_name??"System"}{entry.sales?.sale_number?<> · <Link className="text-amber-900 hover:underline" href={`/sales/${entry.sale_id}`}>{entry.sales.sale_number}</Link></>:null}</p></li>)}</ol>}</div>
   </section>;
 }

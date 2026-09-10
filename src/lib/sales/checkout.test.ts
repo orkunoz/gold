@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { addProductToCart, buildSaleRpcItems, cartAfterCompletion, checkoutShopLocked, checkoutShops, defaultListPrice, normalizeSalesBarcode, parseSalePrice, removeCartItem, updateCartPrice, type CheckoutProduct } from "./checkout";
+import { addProductToCart, buildSaleRpcItems, cartAfterCompletion, checkoutShopLocked, checkoutShops, defaultListPrice, discountedPrice, normalizeSalesBarcode, parseDiscountPercent, parseSalePrice, removeCartItem, updateCartDiscount, updateCartPrice, type CheckoutProduct } from "./checkout";
 
 const product = (overrides: Partial<CheckoutProduct> = {}): CheckoutProduct => ({ id: "item-1", shop_id: "shop-1", barcode: "ABC-1", article_number: "ART", category: "Ring", gold_fineness: "585", gold_color: "Yellow", weight_grams: 2.5, size: "17", owner_price: 100, selling_price: 120, effective_price: 120, source: "MANUAL", pricing_rule_id: null, rule_type: null, rule_value: null, status: "IN_STOCK", ...overrides });
 
 describe("sales checkout", () => {
   it("trims scans and adds an exact IN_STOCK product with the customer price", () => {
     expect(normalizeSalesBarcode("  AbC-1\n")).toBe("AbC-1");
-    expect(addProductToCart([], product())).toMatchObject({ error: null, cart: [{ id: "item-1", listPrice: 120, finalPrice: "120" }] });
+    expect(addProductToCart([], product())).toMatchObject({ error: null, cart: [{ id: "item-1", listPrice: 120, discountPercent:"0", finalPrice: "120" }] });
   });
 
   it.each([
@@ -41,8 +41,16 @@ describe("sales checkout", () => {
 
   it("builds an RPC payload containing only item id and final price", () => {
     const cart = updateCartPrice(addProductToCart([], product()).cart, "item-1", "99.50");
-    expect(buildSaleRpcItems(cart)).toEqual({ value: [{ inventory_item_id: "item-1", sale_price: 99.5 }], error: null });
+    expect(buildSaleRpcItems(cart)).toEqual({ value: [{ inventory_item_id: "item-1", discount_percent:0, sale_price: 99.5 }], error: null });
     expect(buildSaleRpcItems([]).error).toContain("at least one");
+  });
+
+  it("validates and applies per-item discounts",()=>{
+    expect(parseDiscountPercent("12.5")).toEqual({value:12.5,error:null});
+    expect(parseDiscountPercent("-1").error).toBeTruthy(); expect(parseDiscountPercent("101").error).toBeTruthy();
+    expect(discountedPrice(200,"10")).toBe("180"); expect(discountedPrice(200,"100")).toBe("0");
+    const cart=updateCartPrice(addProductToCart([],product({effective_price:200})).cart,"item-1","175");
+    expect(updateCartDiscount(cart,"item-1","10")[0].finalPrice).toBe("180");
   });
 
   it("clears the cart only after successful completion", () => {

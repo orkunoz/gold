@@ -86,12 +86,6 @@ export function InventoryForm({ action, categories, shops, item, cancelHref }: P
         <FieldError message={state.fieldErrors?.price_per_gram} />
       </label>
 
-      <label className={labelClass}>Imported/source price, UAH
-        <input name="price" type="number" min="0" step="0.01" inputMode="decimal" defaultValue={item?.price ?? ""} className={inputClass} />
-        <span className="mt-1 block text-xs font-normal text-stone-500">Source information only; it does not replace operational pricing.</span>
-        <FieldError message={state.fieldErrors?.price} />
-      </label>
-
       <label className={labelClass}>Discount
         <input name="discount" defaultValue={item?.discount ?? ""} className={inputClass} />
         <span className="mt-1 block text-xs font-normal text-stone-500">Informational only; it does not alter the effective price.</span>

@@ -45,7 +45,9 @@ function normalized(value: string) {
 export function matchCategory(value: SpreadsheetCell | undefined, categories: Category[]) {
   const name = text(value);
   if (!name) return { id: null as string | null };
-  const category = categories.find((candidate) => normalized(candidate.name) === normalized(name));
+  const aliases: Record<string,string>={"каблучка":"ring","каблучки":"ring","сережки":"earrings","ланцюжок":"chain","ланцюг":"chain","браслет":"bracelet","браслети":"bracelet","підвіска":"pendant","кольє":"necklace","намисто":"necklace"};
+  const target=aliases[normalized(name)]??normalized(name);
+  const category = categories.find((candidate) => normalized(candidate.name) === target);
   return category ? { id: category.id, name: category.name } : { id: null, name, warning: `Unknown category “${name}”` };
 }
 
@@ -68,6 +70,8 @@ export function normalizeImportedStatus(value: SpreadsheetCell | undefined) {
   };
   return aliases[key] ? { value: aliases[key] } : { value: "IN_STOCK" as InventoryStatus, warning: `Unknown status “${raw}”; using IN_STOCK` };
 }
+
+export function calculateInventoryPrice(weight:number|null,pricePerGram:number|null){return weight===null||pricePerGram===null?null:Math.round(weight*pricePerGram*100)/100;}
 
 function mapped(row: SpreadsheetRow, mapping: ColumnMapping, field: keyof ColumnMapping) {
   const index = mapping[field];
@@ -106,10 +110,8 @@ export function validateImportRows(rows: SpreadsheetRow[], context: Context): Im
 
     const weight = parseImportedNumber(mapped(row, context.mapping, "weight_grams"));
     const pricePerGram = parseImportedNumber(mapped(row, context.mapping, "price_per_gram"));
-    const price = parseImportedNumber(mapped(row, context.mapping, "price"));
     if (weight.error) warnings.push("Invalid weight; storing blank"); else if (weight.value !== null && weight.value < 0) errors.push("Weight cannot be negative");
     if (pricePerGram.error) warnings.push("Invalid price per gram; storing blank"); else if (pricePerGram.value !== null && pricePerGram.value < 0) errors.push("Price per gram cannot be negative");
-    if (price.error) warnings.push("Invalid price; storing blank"); else if (price.value !== null && price.value < 0) errors.push("Price cannot be negative");
     const category = matchCategory(mapped(row, context.mapping, "category"), context.categories);
     if (category.warning) warnings.push(category.warning);
     const metal = normalizeImportedMetal(mapped(row, context.mapping, "metal"));
@@ -122,7 +124,8 @@ export function validateImportRows(rows: SpreadsheetRow[], context: Context): Im
       shop_id: shopId, shop_name: context.shops.find((shop) => shop.id === shopId)?.name ?? "Unknown", barcode, article_number: text(mapped(row, context.mapping, "article_number")), category_id: category.id, category_name: category.name ?? null,
       metal: metal.value, producer: text(mapped(row, context.mapping, "producer")),
       weight_grams: weight.error ? null : weight.value, size: text(mapped(row, context.mapping, "size")),
-      price_per_gram: pricePerGram.error ? null : pricePerGram.value, price: price.error ? null : price.value,
+      price_per_gram: pricePerGram.error ? null : pricePerGram.value,
+      price: weight.error || pricePerGram.error ? null : calculateInventoryPrice(weight.value,pricePerGram.value),
       discount: text(mapped(row, context.mapping, "discount")), status: status.value, notes: text(mapped(row, context.mapping, "notes")),
     } : null;
     return { sourceRow: index + (context.headerRow ?? 0) + 2, classification: errors.length ? "Error" : warnings.length ? "Warning" : "Ready", errors, warnings, item };

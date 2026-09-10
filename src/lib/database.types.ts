@@ -265,28 +265,58 @@ export type Database = {
       }
       sale_items: {
         Row: {
+          article_number: string | null
+          barcode: string | null
+          category_name: string | null
           created_at: string
+          discount_percent: number
           id: string
           inventory_item_id: string
           list_price: number | null
+          metal: string | null
+          notes: string | null
+          price_per_gram: number | null
+          producer: string | null
           sale_id: string
           sale_price: number
+          size: string | null
+          weight_grams: number | null
         }
         Insert: {
+          article_number?: string | null
+          barcode?: string | null
+          category_name?: string | null
           created_at?: string
+          discount_percent?: number
           id?: string
           inventory_item_id: string
           list_price?: number | null
+          metal?: string | null
+          notes?: string | null
+          price_per_gram?: number | null
+          producer?: string | null
           sale_id: string
           sale_price: number
+          size?: string | null
+          weight_grams?: number | null
         }
         Update: {
+          article_number?: string | null
+          barcode?: string | null
+          category_name?: string | null
           created_at?: string
+          discount_percent?: number
           id?: string
           inventory_item_id?: string
           list_price?: number | null
+          metal?: string | null
+          notes?: string | null
+          price_per_gram?: number | null
+          producer?: string | null
           sale_id?: string
           sale_price?: number
+          size?: string | null
+          weight_grams?: number | null
         }
         Relationships: [
           {
@@ -303,6 +333,16 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      inventory_item_history: {
+        Row: { id:string; inventory_item_id:string; field_name:string; old_value:string|null; new_value:string|null; changed_by_employee_id:string|null; changed_at:string; source:string; sale_id:string|null }
+        Insert: { id?:string; inventory_item_id:string; field_name:string; old_value?:string|null; new_value?:string|null; changed_by_employee_id?:string|null; changed_at?:string; source:string; sale_id?:string|null }
+        Update: { id?:string; inventory_item_id?:string; field_name?:string; old_value?:string|null; new_value?:string|null; changed_by_employee_id?:string|null; changed_at?:string; source?:string; sale_id?:string|null }
+        Relationships: [
+          { foreignKeyName:"inventory_item_history_changed_by_employee_id_fkey"; columns:["changed_by_employee_id"]; isOneToOne:false; referencedRelation:"employees"; referencedColumns:["id"] },
+          { foreignKeyName:"inventory_item_history_inventory_item_id_fkey"; columns:["inventory_item_id"]; isOneToOne:false; referencedRelation:"inventory_items"; referencedColumns:["id"] },
+          { foreignKeyName:"inventory_item_history_sale_id_fkey"; columns:["sale_id"]; isOneToOne:false; referencedRelation:"sales"; referencedColumns:["id"] },
         ]
       }
       sales: {
@@ -454,8 +494,10 @@ export type Database = {
         }
         Returns: Json
       }
+      get_sold_products_register: { Args: { p_shop_id?:string|null; p_category?:string|null; p_producer?:string|null; p_metal?:string|null; p_employee_id?:string|null; p_from?:string|null; p_to?:string|null; p_search?:string|null; p_page?:number; p_page_size?:number }; Returns: Json }
       is_active_employee: { Args: never; Returns: boolean }
       is_owner: { Args: never; Returns: boolean }
+      import_inventory_items: { Args:{p_items:Json}; Returns:number }
     }
     Enums: {
       [_ in never]: never

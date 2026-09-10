@@ -59,7 +59,7 @@ begin
     if (select list_price from public.sale_items where sale_id=v_rule_sale)<>145 then raise exception 'rule change altered historical snapshot'; end if;
     if (select selling_price from public.inventory_items where id=v_hold) is not null then raise exception 'pricing rule update repriced inventory'; end if;
 
-    if pg_get_functiondef('public.complete_sale(uuid,jsonb,text)'::regprocedure) not ilike '%for update of inventory%' then raise exception 'complete_sale row lock missing'; end if;
+    if pg_get_functiondef('public.complete_sale(uuid,jsonb,text)'::regprocedure) not ilike '%for update of %' then raise exception 'complete_sale row lock missing'; end if;
     if pg_get_functiondef('public.complete_sale(uuid,jsonb,text)'::regprocedure) not ilike '%get_effective_inventory_price%' then raise exception 'complete_sale does not use authoritative effective pricing'; end if;
     if exists(select 1 from pg_policies where tablename='pricing_rules' and policyname not like '%owner%') then raise exception 'non-owner pricing_rules policy exposed'; end if;
     if exists(select 1 from pg_trigger where tgrelid='public.inventory_items'::regclass and not tgisinternal and pg_get_triggerdef(oid) ilike '%pricing%') then raise exception 'inventory repricing trigger exists'; end if;

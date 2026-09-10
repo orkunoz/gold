@@ -2,7 +2,7 @@ import type { InventoryStatus } from "@/lib/database.types";
 
 export const IMPORT_FIELDS = [
   "category", "metal", "producer", "size", "weight_grams", "price_per_gram",
-  "article_number", "price", "discount", "notes", "status", "shop", "barcode",
+  "article_number", "discount", "notes", "status", "shop", "barcode",
 ] as const;
 
 export type ImportField = typeof IMPORT_FIELDS[number];

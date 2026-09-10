@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { matchCategory, normalizeImportedMetal, parseImportedDate, parseImportedNumber, removeEmptySpreadsheetRows, validateImportRows } from "./validation";
+import { calculateInventoryPrice, matchCategory, normalizeImportedMetal, parseImportedDate, parseImportedNumber, removeEmptySpreadsheetRows, validateImportRows } from "./validation";
 
-const categories = [{ id: "ring-id", name: "Ring" }, { id: "earrings-id", name: "Earrings" }];
+const categories = [{ id: "ring-id", name: "Ring" }, { id: "earrings-id", name: "Earrings" },{id:"bracelet-id",name:"Bracelet"}];
 const shops = [{ id: "main-id", name: "Main Shop", code: "MAIN" }, { id: "other-id", name: "Other", code: "OTHER" }];
-const base = { mapping: { category: 0, weight_grams: 1, article_number: 2, price: 3 }, targetShopId: "main-id", role: "owner" as const, employeeShopId: "main-id", categories, shops, existingBarcodes: new Set<string>() };
+const base = { mapping: { category: 0, weight_grams: 1, article_number: 2, price_per_gram: 3 }, targetShopId: "main-id", role: "owner" as const, employeeShopId: "main-id", categories, shops, existingBarcodes: new Set<string>() };
 
 describe("Excel value parsing", () => {
   it("parses localized numbers without accepting malformed data", () => {
@@ -16,18 +16,20 @@ describe("Excel value parsing", () => {
     expect(matchCategory(" ring ", categories)).toEqual({ id: "ring-id", name: "Ring" });
     expect(matchCategory("Rign", categories)).toMatchObject({ id: null, warning: expect.any(String) });
   });
+  it.each([["Каблучка","ring-id"],["Сережки","earrings-id"],["Браслет","bracelet-id"]])("normalizes category value %s",(value,id)=>expect(matchCategory(value,categories)).toMatchObject({id}));
   it.each([["Gold", "Gold"], ["gold", "Gold"], ["Золото", "Gold"], ["SILVER", "Silver"], ["Срібло", "Silver"]])("normalizes metal %s", (input, expected) => expect(normalizeImportedMetal(input)).toEqual({ value: expected }));
   it("keeps absent metal null and warns on unknown metal", () => {
     expect(normalizeImportedMetal(null)).toEqual({ value: null });
     expect(normalizeImportedMetal("Platinum")).toMatchObject({ value: null, warning: expect.any(String) });
   });
   it("removes completely blank spreadsheet rows", () => expect(removeEmptySpreadsheetRows([[null, "  "], [null, "Ring"]])).toEqual([[null, "Ring"]]));
+  it("calculates price only when weight and price per gram exist",()=>{expect(calculateInventoryPrice(3.25,6000)).toBe(19500);expect(calculateInventoryPrice(null,6000)).toBeNull();expect(calculateInventoryPrice(3.25,null)).toBeNull();});
 });
 
 describe("flexible inventory import validation", () => {
   it("imports a sparse workbook and leaves unmapped fields null", () => {
     const row = validateImportRows([["Ring", "2,5", "A-1", "100"]], base).rows[0];
-    expect(row).toMatchObject({ classification: "Ready", item: { shop_id: "main-id", category_id: "ring-id", weight_grams: 2.5, article_number: "A-1", price: 100, barcode: null, metal: null, producer: null, price_per_gram: null, discount: null, status: "IN_STOCK" } });
+    expect(row).toMatchObject({ classification: "Ready", item: { shop_id: "main-id", category_id: "ring-id", weight_grams: 2.5, article_number: "A-1", price: 250, barcode: null, metal: null, producer: null, price_per_gram: 100, discount: null, status: "IN_STOCK" } });
   });
   it("accepts no mapped columns and applies operational defaults", () => {
     const row = validateImportRows([["ignored"]], { ...base, mapping: {} }).rows[0];
@@ -42,9 +44,9 @@ describe("flexible inventory import validation", () => {
     expect(preview.summary).toMatchObject({ total: 5, errors: 3, duplicates: 3 });
   });
   it("warns and stores null for malformed optional numbers, but rejects negatives", () => {
-    const context = { ...base, mapping: { weight_grams: 0, price_per_gram: 1, price: 2 } };
-    expect(validateImportRows([["bad", "oops", "no"]], context).rows[0]).toMatchObject({ classification: "Warning", item: { weight_grams: null, price_per_gram: null, price: null } });
-    expect(validateImportRows([["-1", "-2", "-3"]], context).rows[0].errors).toHaveLength(3);
+    const context = { ...base, mapping: { weight_grams: 0, price_per_gram: 1 } };
+    expect(validateImportRows([["bad", "oops"]], context).rows[0]).toMatchObject({ classification: "Warning", item: { weight_grams: null, price_per_gram: null, price: null } });
+    expect(validateImportRows([["-1", "-2"]], context).rows[0].errors).toHaveLength(2);
   });
   it("uses mapped shop when valid and enforces a manager's assignment", () => {
     const context = { ...base, mapping: { shop: 0 } };

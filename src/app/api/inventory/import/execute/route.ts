@@ -22,10 +22,10 @@ export async function POST(request: Request) {
     const supabase = await createClient();
     for (const batch of batchImportRows(valid)) {
       const inserts = batch.map((row) => toInsert(row.item!, employee.id));
-      const { error } = await supabase.from("inventory_items").insert(inserts);
+      const { error } = await supabase.rpc("import_inventory_items",{p_items:inserts});
       if (!error) { imported += batch.length; continue; }
       for (let itemIndex = 0; itemIndex < batch.length; itemIndex += 1) {
-        const { error: rowError } = await supabase.from("inventory_items").insert(inserts[itemIndex]);
+        const { error: rowError } = await supabase.rpc("import_inventory_items",{p_items:[inserts[itemIndex]]});
         if (rowError) failures.push({ row: batch[itemIndex].sourceRow, message: rowError.code === "23505" ? "Barcode already exists" : "Database rejected this row" });
         else imported += 1;
       }

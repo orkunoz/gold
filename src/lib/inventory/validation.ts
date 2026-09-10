@@ -24,7 +24,6 @@ const TEXT_FIELDS = [
   "owner_price",
   "selling_price",
   "price_per_gram",
-  "price",
   "discount",
   "status",
   "received_at",
@@ -69,7 +68,6 @@ export function validateInventoryForm(formData: FormData): InventoryValidationRe
   const ownerPrice = parseNonnegativeNumber("owner_price", "Owner price", values, errors);
   const sellingPrice = parseNonnegativeNumber("selling_price", "Selling price", values, errors);
   const pricePerGram = parseNonnegativeNumber("price_per_gram", "Price per gram", values, errors);
-  const price = parseNonnegativeNumber("price", "Price", values, errors);
 
   let receivedAt: string | null = null;
   if (values.received_at) {
@@ -96,7 +94,6 @@ export function validateInventoryForm(formData: FormData): InventoryValidationRe
       owner_price: ownerPrice,
       selling_price: sellingPrice,
       price_per_gram: pricePerGram,
-      price,
       discount: nullableText(values.discount),
       status,
       received_at: receivedAt,

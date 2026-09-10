@@ -114,24 +114,23 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
       </div> : <div className="overflow-x-auto">
         <table className="min-w-[1750px] w-full text-left text-sm">
           <thead className="border-b border-stone-200 bg-stone-50 text-xs uppercase tracking-wide text-stone-500"><tr>
-            {["Number", "Product Category", "Metal", "Producer", "Size", "Weight", "Price Per Gram", "Article Number", "Price", "Discount", "Note", "Status", "Shop", "Barcode"].map((heading) => <th key={heading} className="px-4 py-3 font-medium">{heading}</th>)}
+            {["Number", "Product Category", "Producer", "Size", "Article", "Weight", "Price per Gram", "Price", "Discount", "Status", "Shop", "Barcode", "Notes"].map((heading) => <th key={heading} className="px-4 py-3 font-medium">{heading}</th>)}
           </tr></thead>
           <tbody className="divide-y divide-stone-100">
             {items.map((item, index) => <tr key={item.id} className="hover:bg-amber-50/40">
               <td className="px-4 py-3 font-medium"><Link href={`/inventory/${item.id}`} className="text-amber-900 underline-offset-4 hover:underline">{inventoryOrdinal(page, pageSize, index)}</Link></td>
               <td className="px-4 py-3">{item.product_categories?.name ?? "—"}</td>
-              <td className="px-4 py-3">{displayValue(item.metal)}</td>
               <td className="px-4 py-3">{displayValue(item.producer)}</td>
               <td className="px-4 py-3">{displayValue(item.size)}</td>
+              <td className="px-4 py-3">{displayValue(item.article_number)}</td>
               <td className="px-4 py-3">{item.weight_grams === null ? "—" : `${item.weight_grams} g`}</td>
               <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.price_per_gram)}</td>
-              <td className="px-4 py-3">{displayValue(item.article_number)}</td>
               <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.price)}</td>
               <td className="px-4 py-3">{displayValue(item.discount)}</td>
-              <td className="max-w-80 px-4 py-3"><span className="line-clamp-2">{displayValue(item.notes)}</span></td>
               <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
               <td className="px-4 py-3">{item.shops?.name ?? "—"}</td>
               <td className="px-4 py-3 font-medium">{displayValue(item.barcode)}</td>
+              <td className="max-w-80 px-4 py-3"><span className="line-clamp-2">{displayValue(item.notes)}</span></td>
             </tr>)}
           </tbody>
         </table>
