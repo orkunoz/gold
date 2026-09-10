@@ -4,15 +4,16 @@ const aliases: Record<ImportField, string[]> = {
   barcode: ["barcode", "bar code", "штрихкод", "штрих код", "штрих-код", "код"],
   article_number: ["article", "article number", "article no", "артикул", "номер артикула"],
   category: ["category", "product", "product category", "виріб", "вироб", "категорія", "найменування"],
-  gold_fineness: ["gold fineness", "fineness", "purity", "проба"],
-  gold_color: ["gold color", "color", "colour", "колір", "цвет"],
+  metal: ["metal", "метал", "металл"],
+  producer: ["producer", "manufacturer", "виробник", "производитель"],
   weight_grams: ["weight", "weight grams", "weight g", "вага", "вага г", "вес"],
   size: ["size", "розмір", "размер"],
-  owner_price: ["owner price", "base price", "price", "ціна", "ціна грн", "цена"],
-  selling_price: ["selling price", "sale price", "retail price", "ціна продажу", "продажна ціна"],
-  received_at: ["received", "received date", "date", "дата", "дата отримання"],
+  price_per_gram: ["price per gram", "price/g", "ціна грам", "ціна за грам", "цена грам"],
+  price: ["price", "ціна", "ціна грн", "цена"],
+  discount: ["discount", "знижка", "скидка"],
   notes: ["notes", "note", "comment", "примітка", "примітки", "коментар"],
   shop: ["shop", "store", "location", "магазин", "крамниця"],
+  status: ["status", "статус"],
 };
 
 export function normalizeHeader(value: unknown) {
@@ -53,4 +54,3 @@ export function uniqueHeaders(row: SpreadsheetRow) {
     return count === 1 ? base : `${base} (${count})`;
   });
 }
-

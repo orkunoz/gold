@@ -38,8 +38,9 @@ export function InventoryForm({ action, categories, shops, item, cancelHref }: P
         <FieldError message={state.fieldErrors?.shop_id} />
       </label>
 
-      <label className={labelClass}>Barcode <span className="text-red-700">*</span>
-        <input name="barcode" required maxLength={200} autoFocus={!item} defaultValue={item?.barcode ?? ""} className={inputClass} />
+      <label className={labelClass}>Barcode
+        <input name="barcode" maxLength={200} autoFocus={!item} defaultValue={item?.barcode ?? ""} className={inputClass} />
+        <span className="mt-1 block text-xs font-normal text-stone-500">Optional. A non-empty barcode must be unique and enables scanner lookup.</span>
         <FieldError message={state.fieldErrors?.barcode} />
       </label>
 
@@ -52,6 +53,15 @@ export function InventoryForm({ action, categories, shops, item, cancelHref }: P
           <option value="">No category</option>
           {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
         </select>
+      </label>
+
+      <label className={labelClass}>Metal
+        <select name="metal" defaultValue={item?.metal ?? ""} className={inputClass}><option value="">Not specified</option><option value="Gold">Gold</option><option value="Silver">Silver</option></select>
+        <FieldError message={state.fieldErrors?.metal} />
+      </label>
+
+      <label className={labelClass}>Producer
+        <input name="producer" defaultValue={item?.producer ?? ""} className={inputClass} />
       </label>
 
       <label className={labelClass}>Gold fineness
@@ -69,6 +79,22 @@ export function InventoryForm({ action, categories, shops, item, cancelHref }: P
 
       <label className={labelClass}>Size
         <input name="size" defaultValue={item?.size ?? ""} className={inputClass} />
+      </label>
+
+      <label className={labelClass}>Price per gram, UAH
+        <input name="price_per_gram" type="number" min="0" step="0.01" inputMode="decimal" defaultValue={item?.price_per_gram ?? ""} className={inputClass} />
+        <FieldError message={state.fieldErrors?.price_per_gram} />
+      </label>
+
+      <label className={labelClass}>Imported/source price, UAH
+        <input name="price" type="number" min="0" step="0.01" inputMode="decimal" defaultValue={item?.price ?? ""} className={inputClass} />
+        <span className="mt-1 block text-xs font-normal text-stone-500">Source information only; it does not replace operational pricing.</span>
+        <FieldError message={state.fieldErrors?.price} />
+      </label>
+
+      <label className={labelClass}>Discount
+        <input name="discount" defaultValue={item?.discount ?? ""} className={inputClass} />
+        <span className="mt-1 block text-xs font-normal text-stone-500">Informational only; it does not alter the effective price.</span>
       </label>
 
       <label className={labelClass}>Owner/base price, UAH

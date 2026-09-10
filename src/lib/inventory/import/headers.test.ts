@@ -8,9 +8,9 @@ describe("Excel header mapping", () => {
   });
 
   it("suggests Ukrainian and English aliases", () => {
-    expect(suggestColumnMapping(["Штрихкод", "Артикул", "Виріб", "Проба", "Колір", "Вага", "Розмір", "Ціна", "Примітка", "Дата"]))
-      .toMatchObject({ barcode: 0, article_number: 1, category: 2, gold_fineness: 3, gold_color: 4, weight_grams: 5, size: 6, owner_price: 7, notes: 8, received_at: 9 });
-    expect(suggestColumnMapping(["Barcode", "Selling Price", "Shop"])).toEqual({ barcode: 0, selling_price: 1, shop: 2 });
+    expect(suggestColumnMapping(["Штрихкод", "Артикул", "Виріб", "Метал", "Виробник", "Вага", "Розмір", "Ціна", "Знижка", "Примітка", "Статус"]))
+      .toMatchObject({ barcode: 0, article_number: 1, category: 2, metal: 3, producer: 4, weight_grams: 5, size: 6, price: 7, discount: 8, notes: 9, status: 10 });
+    expect(suggestColumnMapping(["Barcode", "Price Per Gram", "Shop"])).toEqual({ barcode: 0, price_per_gram: 1, shop: 2 });
   });
 
   it("normalizes punctuation and makes duplicate headers unique", () => {

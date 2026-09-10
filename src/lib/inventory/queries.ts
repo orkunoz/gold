@@ -5,7 +5,7 @@ import type { EmployeeRole, InventoryStatus, Tables } from "@/lib/database.types
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { applyExactBarcodeMatch } from "@/lib/inventory/scanner";
-import { getEffectivePrice, getEffectivePrices } from "@/lib/pricing/effective";
+import { getEffectivePrice } from "@/lib/pricing/effective";
 
 export type CurrentEmployee = Pick<
   Tables<"employees">,
@@ -16,6 +16,7 @@ export type InventoryFilters = {
   barcode?: string;
   article?: string;
   category?: string;
+  metal?: "Gold" | "Silver";
   status?: InventoryStatus;
   shop?: string;
   search?: string;
@@ -64,15 +65,14 @@ export async function getInventoryItems(filters: InventoryFilters, page = 1, pag
   if (barcode) query = query.ilike("barcode", `%${barcode}%`);
   if (article) query = query.ilike("article_number", `%${article}%`);
   if (filters.category) query = query.eq("category_id", filters.category);
+  if (filters.metal) query = query.eq("metal", filters.metal);
   if (filters.status) query = query.eq("status", filters.status);
   if (filters.shop) query = query.eq("shop_id", filters.shop);
-  if (search) query = query.or(`barcode.ilike.%${search}%,article_number.ilike.%${search}%,notes.ilike.%${search}%`);
+  if (search) query = query.or(`barcode.ilike.%${search}%,article_number.ilike.%${search}%,producer.ilike.%${search}%,notes.ilike.%${search}%`);
 
   const { data, error, count } = await query;
   if (error) throw new Error("Unable to load inventory.");
-  const items = data ?? [];
-  const prices = await getEffectivePrices(supabase, items.map((item) => item.id));
-  return { items: items.map((item) => ({ ...item, pricing: prices.get(item.id) ?? null })), count: count ?? 0, page, pageSize };
+  return { items: data ?? [], count: count ?? 0, page, pageSize };
 }
 
 export async function findInventoryItemByBarcode(barcode: string) {

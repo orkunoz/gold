@@ -4,7 +4,8 @@ import type { InventoryStatus } from "@/lib/database.types";
 import { InventoryStatus as StatusBadge } from "@/components/inventory-status";
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { INVENTORY_STATUSES, STATUS_LABELS } from "@/lib/inventory/constants";
-import { displayValue, formatDate, formatPrice } from "@/lib/inventory/format";
+import { displayValue, formatPrice } from "@/lib/inventory/format";
+import { inventoryOrdinal, inventoryResultSummary } from "@/lib/inventory/pagination";
 import {
   canManageInventory,
   findInventoryItemByBarcode,
@@ -13,7 +14,6 @@ import {
   getInventoryOptions,
   type InventoryFilters,
 } from "@/lib/inventory/queries";
-import { effectivePriceSourceLabel } from "@/lib/pricing/model";
 
 export const metadata = { title: "Inventory" };
 
@@ -39,6 +39,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
     barcode: exactMode ? "" : barcode,
     article: parameter(params, "article"),
     category: parameter(params, "category"),
+    metal: (["Gold", "Silver"] as const).find((value) => value === parameter(params, "metal")),
     shop: parameter(params, "shop"),
     search: parameter(params, "search"),
     status: INVENTORY_STATUSES.includes(rawStatus as InventoryStatus) ? rawStatus as InventoryStatus : undefined,
@@ -60,7 +61,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
       <div>
         <p className="text-xs font-medium uppercase tracking-widest text-stone-500">Stock workspace</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">Inventory</h1>
-        <p className="mt-2 text-sm text-stone-600">{count} item{count === 1 ? "" : "s"} found · newest first</p>
+        <p className="mt-2 text-base font-medium text-stone-700">{inventoryResultSummary(page, pageSize, count, items.length)}</p>
       </div>
       {canManage ? <div className="flex flex-wrap gap-3"><Link href="/inventory/import" className="rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-sm font-medium text-stone-800 hover:bg-stone-100">Import inventory</Link><Link href="/inventory/new" className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-stone-700">Add product</Link></div> : null}
     </div>
@@ -87,6 +88,9 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
             {INVENTORY_STATUSES.map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
           </select>
         </label>
+        <label className="text-sm font-medium">Metal
+          <select name="metal" defaultValue={filters.metal} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5"><option value="">All metals</option><option value="Gold">Gold</option><option value="Silver">Silver</option></select>
+        </label>
         {employee.role === "owner" ? <label className="text-sm font-medium">Shop
           <select name="shop" defaultValue={filters.shop} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5">
             <option value="">All shops</option>
@@ -94,7 +98,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
           </select>
         </label> : null}
         <label className="text-sm font-medium lg:col-span-2">Text search
-          <input name="search" defaultValue={filters.search} placeholder="Barcode, article, or notes" className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2.5" />
+          <input name="search" defaultValue={filters.search} placeholder="Barcode, article, producer, or notes" className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2.5" />
         </label>
       </div>
       <div className="mt-5 flex flex-wrap gap-3">
@@ -108,25 +112,26 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
         <h2 className="font-medium">No inventory items found</h2>
         <p className="mt-2 text-sm text-stone-600">Try clearing filters{canManage ? " or add the first product" : ""}.</p>
       </div> : <div className="overflow-x-auto">
-        <table className="min-w-[1280px] w-full text-left text-sm">
+        <table className="min-w-[1750px] w-full text-left text-sm">
           <thead className="border-b border-stone-200 bg-stone-50 text-xs uppercase tracking-wide text-stone-500"><tr>
-            {["Barcode", "Article", "Category", "Fineness", "Color", "Weight", "Size", "Owner/base", "Manual override", "Customer price", "Status", "Shop", "Received"].map((heading) => <th key={heading} className="px-4 py-3 font-medium">{heading}</th>)}
+            {["Number", "Product Category", "Metal", "Producer", "Size", "Weight", "Price Per Gram", "Article Number", "Price", "Discount", "Note", "Status", "Shop", "Barcode"].map((heading) => <th key={heading} className="px-4 py-3 font-medium">{heading}</th>)}
           </tr></thead>
           <tbody className="divide-y divide-stone-100">
-            {items.map((item) => <tr key={item.id} className="hover:bg-amber-50/40">
-              <td className="px-4 py-3 font-medium"><Link href={`/inventory/${item.id}`} className="text-amber-900 underline-offset-4 hover:underline">{item.barcode}</Link></td>
-              <td className="px-4 py-3">{displayValue(item.article_number)}</td>
+            {items.map((item, index) => <tr key={item.id} className="hover:bg-amber-50/40">
+              <td className="px-4 py-3 font-medium"><Link href={`/inventory/${item.id}`} className="text-amber-900 underline-offset-4 hover:underline">{inventoryOrdinal(page, pageSize, index)}</Link></td>
               <td className="px-4 py-3">{item.product_categories?.name ?? "—"}</td>
-              <td className="px-4 py-3">{displayValue(item.gold_fineness)}</td>
-              <td className="px-4 py-3">{displayValue(item.gold_color)}</td>
-              <td className="px-4 py-3">{item.weight_grams === null ? "—" : `${item.weight_grams} g`}</td>
+              <td className="px-4 py-3">{displayValue(item.metal)}</td>
+              <td className="px-4 py-3">{displayValue(item.producer)}</td>
               <td className="px-4 py-3">{displayValue(item.size)}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.owner_price)}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.selling_price)}</td>
-              <td className="px-4 py-3 whitespace-nowrap"><span className="font-medium">{formatPrice(item.pricing?.effective_price ?? null)}</span>{item.pricing ? <span className="block text-xs text-stone-500">{effectivePriceSourceLabel(item.pricing.source)}</span> : null}</td>
+              <td className="px-4 py-3">{item.weight_grams === null ? "—" : `${item.weight_grams} g`}</td>
+              <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.price_per_gram)}</td>
+              <td className="px-4 py-3">{displayValue(item.article_number)}</td>
+              <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.price)}</td>
+              <td className="px-4 py-3">{displayValue(item.discount)}</td>
+              <td className="max-w-80 px-4 py-3"><span className="line-clamp-2">{displayValue(item.notes)}</span></td>
               <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
               <td className="px-4 py-3">{item.shops?.name ?? "—"}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{formatDate(item.received_at)}</td>
+              <td className="px-4 py-3 font-medium">{displayValue(item.barcode)}</td>
             </tr>)}
           </tbody>
         </table>

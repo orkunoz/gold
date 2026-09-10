@@ -14,7 +14,9 @@ export default async function InventoryItemPage({ params, searchParams }: { para
   const statusWarning = scanStatusWarning(item.status);
   const details = [
     ["Article number", displayValue(item.article_number)], ["Category", item.product_categories?.name ?? "—"],
-    ["Shop", item.shops?.name ?? "—"], ["Gold fineness", displayValue(item.gold_fineness)],
+    ["Shop", item.shops?.name ?? "—"], ["Metal", displayValue(item.metal)], ["Producer", displayValue(item.producer)],
+    ["Price per gram", formatPrice(item.price_per_gram)], ["Imported/source price", formatPrice(item.price)], ["Discount", displayValue(item.discount)],
+    ["Gold fineness", displayValue(item.gold_fineness)],
     ["Gold color", displayValue(item.gold_color)], ["Weight", item.weight_grams === null ? "—" : `${item.weight_grams} g`],
     ["Size", displayValue(item.size)], ["Received", formatDate(item.received_at)],
     ["Created", formatDate(item.created_at)], ["Last updated", formatDate(item.updated_at)],
@@ -26,8 +28,8 @@ export default async function InventoryItemPage({ params, searchParams }: { para
       {fromScanner ? <Link href={scanAnotherHref()} className="text-sm font-semibold text-amber-900 hover:underline">Scan another item</Link> : null}
     </div>
     <div className="mt-8 flex flex-wrap items-start justify-between gap-4">
-      <div><p className="text-xs font-medium uppercase tracking-widest text-stone-500">Product barcode</p>
-        <h1 className="mt-3 break-all text-3xl font-semibold tracking-tight">{item.barcode}</h1>
+      <div><p className="text-xs font-medium uppercase tracking-widest text-stone-500">{item.barcode ? "Product barcode" : "Inventory item"}</p>
+        <h1 className="mt-3 break-all text-3xl font-semibold tracking-tight">{item.barcode ?? item.article_number ?? "Unbarcoded product"}</h1>
         <div className="mt-4"><InventoryStatus status={item.status} /></div></div>
       {canManageInventory(employee.role) ? <Link href={`/inventory/${item.id}/edit`} className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-stone-700">Edit product</Link> : null}
     </div>

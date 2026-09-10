@@ -151,15 +151,17 @@ Owners and managers can open **Import inventory** from `/inventory`. The guided 
 
 1. Upload a standard `.xlsx` file no larger than 5 MB.
 2. Select a worksheet when the workbook contains multiple sheets.
-3. Review and edit the detected header mapping. Barcode is the only required imported column.
+3. Review and edit the detected header mapping. Each spreadsheet source column can map to one Gold field or **Do not import**; no workbook column is mandatory.
 4. Select the target shop. Managers are locked to their assigned shop; owners may choose any accessible active shop.
 5. Validate and review every row before importing valid rows in batches of 100.
 
-The importer recognizes common English and Ukrainian headers, including `Артикул`, `Штрихкод`, `Штрих-код`, `Код`, `Виріб`, `Проба`, `Колір`, `Вага`, `Розмір`, `Ціна`, `Ціна грн`, `Примітка`, and `Дата`. Mappings always remain editable.
+The importer recognizes common English and Ukrainian headers, including `Артикул`, `Штрихкод`, `Штрих-код`, `Код`, `Виріб`, `Метал`, `Виробник`, `Вага`, `Розмір`, `Ціна`, `Ціна грн`, `Знижка`, `Примітка`, and `Статус`. Mappings always remain editable.
 
-Rows with missing or duplicate barcodes, existing database barcodes, malformed or negative numbers, invalid dates, or invalid shops are not imported. Unknown categories are imported without a category and shown as warnings; categories are never automatically created. Existing products are never overwritten. New items default to `IN_STOCK` and record the importing employee in `created_by`.
+The flexible targets are Product Category, Metal, Producer, Size, Weight, Price Per Gram, Article Number, Price, Discount, Note, Status, Shop, and Barcode. Unmapped optional values are stored as `NULL`; status defaults to `IN_STOCK`, and an unmapped shop uses the selected target shop. Blank rows are ignored. Unknown categories and metals, and malformed optional numbers, are previewed as warnings and stored blank. Negative numeric values, invalid shops, duplicate non-null barcodes, existing database barcodes, and attempts to import `SOLD` are errors. Categories and shops are never created from spreadsheet text. Existing products are never overwritten, and accepted items record the importing employee in `created_by`.
 
-Workbook formulas are not calculated and macros are not executed. Uploaded data is parsed on the server and validated again immediately before insertion; the browser preview is not trusted. Only `.xlsx` is supported. Inventory results are paginated at 50 rows per page.
+`inventory_items.price` is the imported/source Price and `discount` is informational source data. Neither changes the operational customer price. Existing `owner_price`, manual `selling_price`, dynamic pricing-rule precedence, checkout behavior, and immutable sale snapshots remain separate and unchanged. Barcode is optional; multiple null barcodes are allowed, while every non-null barcode remains globally unique and scanner-compatible.
+
+Workbook formulas are not calculated and macros are not executed. Uploaded data is parsed on the server and validated again immediately before insertion; the browser preview is not trusted. Only `.xlsx` is supported. Inventory results are paginated at 50 rows per page, show the exact database count for the current filters, and use a display-only Number that starts at 1 for each filtered result and continues across its pages.
 
 ## Sales database and transaction
 

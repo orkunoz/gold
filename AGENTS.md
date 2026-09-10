@@ -48,6 +48,8 @@ Task 8 verification found no tracked credential-like files or matching credentia
 
 Task 9 adds the `get_sales_register` hardened RPC and `/sales` shop/category URL filters with one aggregated row per sale. Owner may query all or one shop; manager/salesperson are forced to their assigned shop in PostgreSQL. Exact-target SQL scripts seed, verify, and optionally remove the clearly marked `DEMO-*` dataset without deleting Shop2/Shop3. Hosted seeding was run twice to verify idempotence: Shop2/Shop3 are active, 20 demo pieces exist (10 `SOLD`, 10 `IN_STOCK`), and 10 demo sales/lines have consistent totals and snapshots.
 
+Task 10 makes XLSX inventory mapping source-column-driven with no required workbook column. New nullable source fields are metal, producer, price_per_gram, price, and discount; barcode is nullable but non-null values remain globally unique. Status defaults to IN_STOCK and shop remains required through the selected target or validated mapping. Imported price/discount are informational and do not change owner/manual/rule pricing or historical sale snapshots. The Inventory register uses the requested 14-column layout, database-backed filtered totals, metal filtering, and page-continuous display ordinals.
+
 ## Scope and next work
 
 The original Task 1 explicitly excluded database tables, inventory features, and sales features. Do not infer authorization to build the entire application from this handoff. Resume by inspecting the actual repository, checking setup and authentication, then agree the next milestone with the user. Schema and access-control design should precede business-data features.

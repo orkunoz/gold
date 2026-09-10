@@ -13,20 +13,20 @@ export function parseImportPayload(input: unknown): ImportPayload | null {
   const payload = input as Partial<ImportPayload>;
   if (!Array.isArray(payload.rows) || payload.rows.length > MAX_IMPORT_ROWS || !validMapping(payload.mapping) || typeof payload.targetShopId !== "string") return null;
   const safeRows = payload.rows.every((row) => Array.isArray(row) && row.length <= 100 && row.every((cell) => cell === null || ["string", "number", "boolean"].includes(typeof cell)));
-  if (!safeRows || payload.mapping.barcode === undefined) return null;
+  if (!safeRows) return null;
   return { rows: payload.rows, mapping: payload.mapping, targetShopId: payload.targetShopId, headerRow: Number.isInteger(payload.headerRow) ? payload.headerRow : 0 };
 }
 
 export async function buildImportPreview(payload: ImportPayload, employee: CurrentEmployee) {
   const supabase = await createClient();
   const options = await getInventoryOptions();
-  const barcodeIndex = payload.mapping.barcode!;
-  const barcodes = [...new Set(payload.rows.map((row) => String(row[barcodeIndex] ?? "").trim()).filter(Boolean))];
+  const barcodeIndex = payload.mapping.barcode;
+  const barcodes = barcodeIndex === undefined ? [] : [...new Set(payload.rows.map((row) => String(row[barcodeIndex] ?? "").trim()).filter(Boolean))];
   const existingBarcodes = new Set<string>();
   for (let index = 0; index < barcodes.length; index += 200) {
     const { data, error } = await supabase.from("inventory_items").select("barcode").in("barcode", barcodes.slice(index, index + 200));
     if (error) throw new Error("Unable to check existing barcodes.");
-    data?.forEach((item) => existingBarcodes.add(item.barcode));
+    data?.forEach((item) => { if (item.barcode) existingBarcodes.add(item.barcode); });
   }
   return validateImportRows(payload.rows, {
     mapping: payload.mapping, targetShopId: payload.targetShopId, role: employee.role,

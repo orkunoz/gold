@@ -3,6 +3,7 @@ import "server-only";
 import readXlsxFile from "read-excel-file/node";
 import { detectHeaderRow, suggestColumnMapping, uniqueHeaders } from "./headers";
 import type { ParsedSheet, SpreadsheetCell, SpreadsheetRow } from "./types";
+import { removeEmptySpreadsheetRows } from "./validation";
 
 export const MAX_IMPORT_FILE_SIZE = 5 * 1024 * 1024;
 export const MAX_IMPORT_ROWS = 5000;
@@ -34,8 +35,7 @@ export async function parseInventoryWorkbook(file: File, requestedSheet?: string
   const allRows = selected.data.map((row) => row.map(cellValue)) as SpreadsheetRow[];
   const headerRow = detectHeaderRow(allRows);
   const headers = uniqueHeaders(allRows[headerRow] ?? []);
-  const rows = allRows.slice(headerRow + 1).filter((row) => row.some((cell) => cell !== null && String(cell).trim() !== ""));
+  const rows = removeEmptySpreadsheetRows(allRows.slice(headerRow + 1));
   if (rows.length > MAX_IMPORT_ROWS) throw new Error(`A worksheet may contain at most ${MAX_IMPORT_ROWS.toLocaleString()} data rows.`);
   return { sheetNames: workbook.map((sheet) => sheet.sheet), selectedSheet: selected.sheet, headerRow, headers, suggestedMapping: suggestColumnMapping(headers), rows };
 }
-

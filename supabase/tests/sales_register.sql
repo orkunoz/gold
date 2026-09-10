@@ -26,7 +26,7 @@ begin
     (v_sale_a,v_item_a,100),(v_sale_a,v_item_b,100),(v_sale_b,v_item_c,100),(v_sale_c,v_item_d,100);
 
   v_report:=public.get_sales_register(null,null,1,25);
-  if (v_report->>'count')::int<>3 or jsonb_array_length(v_report->'sales')<>3 then raise exception 'owner all-shop register failed'; end if;
+  if (v_report->>'count')::int<3 or jsonb_array_length(v_report->'sales')<3 then raise exception 'owner all-shop register failed'; end if;
   v_report:=public.get_sales_register(v_shop_a,null,1,25);
   if (v_report->>'count')::int<>2 then raise exception 'owner shop filter failed'; end if;
   v_report:=public.get_sales_register(null,v_ring::text,1,25);

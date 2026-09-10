@@ -72,15 +72,20 @@ export type Database = {
       inventory_items: {
         Row: {
           article_number: string | null
-          barcode: string
+          barcode: string | null
           category_id: string | null
           created_at: string
           created_by: string | null
+          discount: string | null
           gold_color: string | null
           gold_fineness: string | null
           id: string
           notes: string | null
           owner_price: number | null
+          metal: string | null
+          price: number | null
+          price_per_gram: number | null
+          producer: string | null
           received_at: string | null
           selling_price: number | null
           shop_id: string
@@ -91,15 +96,20 @@ export type Database = {
         }
         Insert: {
           article_number?: string | null
-          barcode: string
+          barcode?: string | null
           category_id?: string | null
           created_at?: string
           created_by?: string | null
+          discount?: string | null
           gold_color?: string | null
           gold_fineness?: string | null
           id?: string
           notes?: string | null
           owner_price?: number | null
+          metal?: string | null
+          price?: number | null
+          price_per_gram?: number | null
+          producer?: string | null
           received_at?: string | null
           selling_price?: number | null
           shop_id: string
@@ -110,15 +120,20 @@ export type Database = {
         }
         Update: {
           article_number?: string | null
-          barcode?: string
+          barcode?: string | null
           category_id?: string | null
           created_at?: string
           created_by?: string | null
+          discount?: string | null
           gold_color?: string | null
           gold_fineness?: string | null
           id?: string
           notes?: string | null
           owner_price?: number | null
+          metal?: string | null
+          price?: number | null
+          price_per_gram?: number | null
+          producer?: string | null
           received_at?: string | null
           selling_price?: number | null
           shop_id?: string

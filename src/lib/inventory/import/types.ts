@@ -1,8 +1,8 @@
 import type { InventoryStatus } from "@/lib/database.types";
 
 export const IMPORT_FIELDS = [
-  "barcode", "article_number", "category", "gold_fineness", "gold_color",
-  "weight_grams", "size", "owner_price", "selling_price", "received_at", "notes", "shop",
+  "category", "metal", "producer", "size", "weight_grams", "price_per_gram",
+  "article_number", "price", "discount", "notes", "status", "shop", "barcode",
 ] as const;
 
 export type ImportField = typeof IMPORT_FIELDS[number];
@@ -26,18 +26,20 @@ export type ImportRow = {
   errors: string[];
   item: {
     shop_id: string;
-    barcode: string;
+    barcode: string | null;
     article_number: string | null;
     category_id: string | null;
-    gold_fineness: string | null;
-    gold_color: string | null;
+    category_name: string | null;
+    metal: "Gold" | "Silver" | null;
+    producer: string | null;
     weight_grams: number | null;
     size: string | null;
-    owner_price: number | null;
-    selling_price: number | null;
+    price_per_gram: number | null;
+    price: number | null;
+    discount: string | null;
     status: InventoryStatus;
-    received_at: string | null;
     notes: string | null;
+    shop_name: string;
   } | null;
 };
 
@@ -45,4 +47,3 @@ export type ImportPreview = {
   rows: ImportRow[];
   summary: { total: number; ready: number; warnings: number; errors: number; duplicates: number };
 };
-

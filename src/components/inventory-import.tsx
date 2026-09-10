@@ -9,10 +9,10 @@ type Result = { imported: number; skipped: number; duplicates: number; failed: n
 type Props = { role: EmployeeRole; employeeShopId: string | null; shops: Pick<Tables<"shops">, "id" | "name" | "code">[] };
 
 const fieldLabels: Record<typeof IMPORT_FIELDS[number], string> = {
-  barcode: "Barcode (required)", article_number: "Article number", category: "Category / product",
-  gold_fineness: "Gold fineness", gold_color: "Gold color", weight_grams: "Weight, grams",
-  size: "Size", owner_price: "Owner/base price", selling_price: "Manual customer price override",
-  received_at: "Received date", notes: "Notes", shop: "Shop (optional override)",
+  category: "Product Category", metal: "Metal", producer: "Producer", size: "Size",
+  weight_grams: "Weight", price_per_gram: "Price Per Gram", article_number: "Article Number",
+  price: "Price", discount: "Discount", notes: "Note", status: "Status",
+  shop: "Shop", barcode: "Barcode",
 };
 
 async function jsonResponse<T>(response: Response): Promise<T> {
@@ -50,7 +50,7 @@ export function InventoryImport({ role, employeeShopId, shops }: Props) {
   const payload = useMemo(() => parsed ? { rows: parsed.rows, mapping, targetShopId, headerRow: parsed.headerRow } : null, [parsed, mapping, targetShopId]);
 
   async function validate() {
-    if (!payload || mapping.barcode === undefined) { setError("Map a spreadsheet column to Barcode before validating."); return; }
+    if (!payload) return;
     if (!targetShopId) { setError("Select a target shop."); return; }
     setBusy(true); setError("");
     try { setPreview(await jsonResponse<ImportPreview>(await fetch("/api/inventory/import/validate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }))); }
@@ -84,13 +84,13 @@ export function InventoryImport({ role, employeeShopId, shops }: Props) {
         </select><p className="mt-2 text-sm text-stone-500">Detected headers on spreadsheet row {parsed.headerRow + 1}; {parsed.rows.length} data rows found.</p>
       </section>
 
-      <section><h2 className="text-lg font-semibold">3. Map columns</h2><p className="mt-1 text-sm text-stone-600">Suggested mappings are editable. Leave optional fields unmapped.</p>
+      <section><h2 className="text-lg font-semibold">3. Map columns</h2><p className="mt-1 text-sm text-stone-600">Choose what each spreadsheet column means. Every field is optional; unmapped values stay blank, while status and target shop use their operational defaults.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {IMPORT_FIELDS.map((field) => <label key={field} className="text-sm font-medium">{fieldLabels[field]}
-            <select value={mapping[field] ?? ""} onChange={(event) => setMapping((current) => ({ ...current, [field]: event.target.value === "" ? undefined : Number(event.target.value) }))} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5">
-              <option value="">Not mapped</option>{parsed.headers.map((header, index) => <option key={`${header}-${index}`} value={index}>{header}</option>)}
+          {parsed.headers.map((header, sourceIndex) => { const selected = IMPORT_FIELDS.find((field) => mapping[field] === sourceIndex) ?? ""; return <label key={`${header}-${sourceIndex}`} className="text-sm font-medium">{header}
+            <select value={selected} onChange={(event) => { const target = event.target.value as typeof IMPORT_FIELDS[number] | ""; setMapping((current) => { const next = { ...current }; IMPORT_FIELDS.forEach((field) => { if (next[field] === sourceIndex || field === target) delete next[field]; }); if (target) next[target] = sourceIndex; return next; }); }} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5">
+              <option value="">Do not import</option>{IMPORT_FIELDS.map((field) => <option key={field} value={field}>{fieldLabels[field]}</option>)}
             </select>
-          </label>)}
+          </label>; })}
         </div>
       </section>
 
@@ -101,7 +101,7 @@ export function InventoryImport({ role, employeeShopId, shops }: Props) {
 
       {preview ? <section className="border-t border-stone-200 pt-8"><h2 className="text-lg font-semibold">4. Import preview</h2>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">{Object.entries(preview.summary).map(([label, value]) => <div key={label} className="rounded-lg bg-stone-100 p-3"><div className="text-2xl font-semibold">{value}</div><div className="text-xs capitalize text-stone-600">{label}</div></div>)}</div>
-        <div className="mt-5 max-h-96 overflow-auto rounded-lg border border-stone-200"><table className="w-full min-w-[760px] text-left text-sm"><thead className="sticky top-0 bg-stone-50"><tr>{["Row", "Status", "Barcode", "Article", "Category", "Issues"].map((heading) => <th key={heading} className="px-3 py-2">{heading}</th>)}</tr></thead><tbody className="divide-y divide-stone-100">{preview.rows.slice(0, 200).map((row) => <tr key={row.sourceRow}><td className="px-3 py-2">{row.sourceRow}</td><td className="px-3 py-2 font-medium">{row.classification}</td><td className="px-3 py-2">{row.item?.barcode ?? "—"}</td><td className="px-3 py-2">{row.item?.article_number ?? "—"}</td><td className="px-3 py-2">{row.item?.category_id ? "Matched" : "—"}</td><td className="px-3 py-2 text-xs text-stone-600">{[...row.errors, ...row.warnings].join("; ") || "—"}</td></tr>)}</tbody></table></div>
+        <div className="mt-5 max-h-96 overflow-auto rounded-lg border border-stone-200"><table className="w-full min-w-[1500px] text-left text-sm"><thead className="sticky top-0 bg-stone-50"><tr>{["Row", "Result", "Category", "Metal", "Producer", "Size", "Weight", "Price/g", "Article", "Price", "Discount", "Note", "Status", "Shop", "Barcode", "Issues"].map((heading) => <th key={heading} className="px-3 py-2">{heading}</th>)}</tr></thead><tbody className="divide-y divide-stone-100">{preview.rows.slice(0, 200).map((row) => <tr key={row.sourceRow}><td className="px-3 py-2">{row.sourceRow}</td><td className="px-3 py-2 font-medium">{row.classification}</td><td className="px-3 py-2">{row.item?.category_name ?? "—"}</td><td className="px-3 py-2">{row.item?.metal ?? "—"}</td><td className="px-3 py-2">{row.item?.producer ?? "—"}</td><td className="px-3 py-2">{row.item?.size ?? "—"}</td><td className="px-3 py-2">{row.item?.weight_grams ?? "—"}</td><td className="px-3 py-2">{row.item?.price_per_gram ?? "—"}</td><td className="px-3 py-2">{row.item?.article_number ?? "—"}</td><td className="px-3 py-2">{row.item?.price ?? "—"}</td><td className="px-3 py-2">{row.item?.discount ?? "—"}</td><td className="px-3 py-2">{row.item?.notes ?? "—"}</td><td className="px-3 py-2">{row.item?.status ?? "—"}</td><td className="px-3 py-2">{row.item?.shop_name ?? "—"}</td><td className="px-3 py-2">{row.item?.barcode ?? "—"}</td><td className="px-3 py-2 text-xs text-stone-600">{[...row.errors, ...row.warnings].join("; ") || "—"}</td></tr>)}</tbody></table></div>
         {preview.rows.length > 200 ? <p className="mt-2 text-sm text-stone-500">Showing the first 200 preview rows.</p> : null}
         <button disabled={busy || importable === 0} onClick={() => void execute()} className="mt-5 rounded-lg bg-emerald-800 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">{busy ? "Importing…" : `Import ${importable} valid product${importable === 1 ? "" : "s"}`}</button>
       </section> : null}
