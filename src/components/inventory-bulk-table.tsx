@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import type { Tables } from "@/lib/database.types";
 import { bulkMoveInventoryItems } from "@/lib/inventory/actions";
@@ -11,10 +12,10 @@ import { inventoryOrdinal } from "@/lib/inventory/pagination";
 type Item=Tables<"inventory_items">&{product_categories:{name:string}|null;shops:{name:string;code:string|null}|null};
 type Shop={id:string;name:string};
 export function InventoryBulkTable({items,shops,page,pageSize,canManage}:{items:Item[];shops:Shop[];page:number;pageSize:number;canManage:boolean}){
-  const[selected,setSelected]=useState<string[]>([]);const[destination,setDestination]=useState("");const[state,setState]=useState({error:"",success:""});const[pending,startTransition]=useTransition();const dialog=useRef<HTMLDialogElement>(null);
+  const router=useRouter();const[selected,setSelected]=useState<string[]>([]);const[destination,setDestination]=useState("");const[state,setState]=useState({error:"",success:""});const[pending,startTransition]=useTransition();const dialog=useRef<HTMLDialogElement>(null);
   const allSelected=items.length>0&&selected.length===items.length;
   function toggle(id:string){setSelected(current=>current.includes(id)?current.filter(value=>value!==id):[...current,id]);setState({error:"",success:""});}
-  function confirm(){dialog.current?.close();startTransition(async()=>{const result=await bulkMoveInventoryItems(selected,destination||null);setState({error:result.error,success:result.success??""});if(!result.error)setSelected([]);});}
+  function confirm(){dialog.current?.close();startTransition(async()=>{const result=await bulkMoveInventoryItems(selected,destination||null);setState({error:result.error,success:result.success??""});if(!result.error){setSelected([]);router.refresh();}});}
   return <>
     {canManage?<div className="flex flex-wrap items-center gap-3 border-b border-stone-200 bg-stone-50 px-4 py-3"><button type="button" onClick={()=>setSelected(allSelected?[]:items.map(item=>item.id))} className="text-sm font-medium text-amber-900">{allSelected?"Clear selection":"Select all on current page"}</button>{selected.length?<><button type="button" onClick={()=>setSelected([])} className="text-sm text-stone-600">Clear selection</button><span className="text-sm font-medium">{selected.length} selected</span><label className="ml-auto text-sm font-medium">Bulk Actions: Move to Shop <select aria-label="Destination shop" value={destination} onChange={event=>setDestination(event.target.value)} className="ml-2 rounded-lg border border-stone-300 bg-white px-3 py-2"><option value="">Unassigned</option>{shops.map(shop=><option key={shop.id} value={shop.id}>{shop.name}</option>)}</select></label><button type="button" disabled={pending} onClick={()=>dialog.current?.showModal()} className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{pending?"Moving…":"Move selected"}</button></>:null}</div>:null}
     {state.error?<p role="alert" className="m-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">{state.error}</p>:null}{state.success?<p role="status" className="m-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{state.success}</p>:null}

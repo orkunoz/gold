@@ -104,6 +104,5 @@ export async function bulkMoveInventoryItems(ids: string[], shopId: string | nul
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("bulk_move_inventory_items", { p_inventory_item_ids: uniqueIds, p_shop_id: shopId });
   if (error) return { error: error.message };
-  revalidatePath("/inventory");
   return { error: "", success: `${data ?? 0} product${data === 1 ? "" : "s"} moved.` };
 }
