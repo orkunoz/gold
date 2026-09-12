@@ -31,3 +31,10 @@ export async function resetEmployeePassword(id:string,_state:AdminState,form:For
   try{const admin=createAdminClient();const result=await admin.auth.admin.updateUserById(data.auth_user_id,{password});if(result.error)throw result.error;}catch{return{error:"Password reset failed. Please try again."};}
   return{error:"",success:`Password reset for ${data.username??"account"}.`};
 }
+export async function deleteEmployeeAccount(id:string){
+  await requireOwner();const db=await createClient();const{data:authUserId,error}=await db.rpc("admin_prepare_account_deletion",{p_employee_id:id});
+  if(error||!authUserId)redirect(`/admin/employees?error=${encodeURIComponent(friendlyAdminError(error?.message??"Account not found."))}`);
+  try{const result=await createAdminClient().auth.admin.deleteUser(authUserId);if(result.error)throw result.error;}catch{redirect(`/admin/employees?error=${encodeURIComponent("Account deletion failed. Please try again.")}`);}
+  revalidatePath("/admin");redirect("/admin/employees");
+}
+export async function deleteShop(id:string){await requireOwner();const db=await createClient();const{error}=await db.rpc("admin_delete_shop",{p_shop_id:id});if(error)redirect(`/admin/shops?error=${encodeURIComponent(friendlyAdminError(error.message))}`);revalidatePath("/admin");revalidatePath("/inventory");redirect("/admin/shops");}

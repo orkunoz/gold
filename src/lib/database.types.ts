@@ -20,8 +20,8 @@ export type Database = {
   public: {
     Tables: {
       employee_invitations: {
-        Row: { id: string; email: string; full_name: string; role: EmployeeRole; shop_id: string | null; status: string; created_by: string; auth_user_id: string | null; created_at: string; accepted_at: string | null }
-        Insert: { id?: string; email: string; full_name: string; role: EmployeeRole; shop_id?: string | null; status?: string; created_by: string; auth_user_id?: string | null; created_at?: string; accepted_at?: string | null }
+        Row: { id: string; email: string; full_name: string; role: EmployeeRole; shop_id: string | null; status: string; created_by: string | null; auth_user_id: string | null; created_at: string; accepted_at: string | null }
+        Insert: { id?: string; email: string; full_name: string; role: EmployeeRole; shop_id?: string | null; status?: string; created_by?: string | null; auth_user_id?: string | null; created_at?: string; accepted_at?: string | null }
         Update: { id?: string; email?: string; full_name?: string; role?: EmployeeRole; shop_id?: string | null; status?: string; created_by?: string; auth_user_id?: string | null; created_at?: string; accepted_at?: string | null }
         Relationships: []
       }
@@ -91,7 +91,7 @@ export type Database = {
           producer: string | null
           received_at: string | null
           selling_price: number | null
-          shop_id: string
+          shop_id: string | null
           size: string | null
           status: InventoryStatus
           updated_at: string
@@ -115,7 +115,7 @@ export type Database = {
           producer?: string | null
           received_at?: string | null
           selling_price?: number | null
-          shop_id: string
+          shop_id?: string | null
           size?: string | null
           status?: InventoryStatus
           updated_at?: string
@@ -139,7 +139,7 @@ export type Database = {
           producer?: string | null
           received_at?: string | null
           selling_price?: number | null
-          shop_id?: string
+          shop_id?: string | null
           size?: string | null
           status?: InventoryStatus
           updated_at?: string
@@ -339,9 +339,9 @@ export type Database = {
         ]
       }
       inventory_item_history: {
-        Row: { id:string; inventory_item_id:string; field_name:string; old_value:string|null; new_value:string|null; changed_by_employee_id:string|null; changed_at:string; source:string; sale_id:string|null }
-        Insert: { id?:string; inventory_item_id:string; field_name:string; old_value?:string|null; new_value?:string|null; changed_by_employee_id?:string|null; changed_at?:string; source:string; sale_id?:string|null }
-        Update: { id?:string; inventory_item_id?:string; field_name?:string; old_value?:string|null; new_value?:string|null; changed_by_employee_id?:string|null; changed_at?:string; source?:string; sale_id?:string|null }
+        Row: { id:string; inventory_item_id:string; field_name:string; old_value:string|null; new_value:string|null; changed_by_employee_id:string|null; changed_by_name:string|null; changed_by_username:string|null; changed_at:string; source:string; sale_id:string|null }
+        Insert: { id?:string; inventory_item_id:string; field_name:string; old_value?:string|null; new_value?:string|null; changed_by_employee_id?:string|null; changed_by_name?:string|null; changed_by_username?:string|null; changed_at?:string; source:string; sale_id?:string|null }
+        Update: { id?:string; inventory_item_id?:string; field_name?:string; old_value?:string|null; new_value?:string|null; changed_by_employee_id?:string|null; changed_by_name?:string|null; changed_by_username?:string|null; changed_at?:string; source?:string; sale_id?:string|null }
         Relationships: [
           { foreignKeyName:"inventory_item_history_changed_by_employee_id_fkey"; columns:["changed_by_employee_id"]; isOneToOne:false; referencedRelation:"employees"; referencedColumns:["id"] },
           { foreignKeyName:"inventory_item_history_inventory_item_id_fkey"; columns:["inventory_item_id"]; isOneToOne:false; referencedRelation:"inventory_items"; referencedColumns:["id"] },
@@ -351,11 +351,14 @@ export type Database = {
       sales: {
         Row: {
           created_at: string
-          employee_id: string
+          employee_id: string | null
+          employee_name: string
+          employee_username: string | null
           id: string
           notes: string | null
           sale_number: string
-          shop_id: string
+          shop_id: string | null
+          shop_name: string
           sold_at: string
           total_list_price: number | null
           total_sale_price: number
@@ -363,21 +366,27 @@ export type Database = {
         Insert: {
           created_at?: string
           employee_id: string
+          employee_name?: string
+          employee_username?: string | null
           id?: string
           notes?: string | null
           sale_number: string
           shop_id: string
+          shop_name?: string
           sold_at?: string
           total_list_price?: number | null
           total_sale_price: number
         }
         Update: {
           created_at?: string
-          employee_id?: string
+          employee_id?: string | null
+          employee_name?: string
+          employee_username?: string | null
           id?: string
           notes?: string | null
           sale_number?: string
-          shop_id?: string
+          shop_id?: string | null
+          shop_name?: string
           sold_at?: string
           total_list_price?: number | null
           total_sale_price?: number
@@ -434,6 +443,8 @@ export type Database = {
       admin_create_shop: { Args: { p_name: string; p_code: string }; Returns: string }
       admin_update_shop: { Args: { p_shop_id: string; p_name: string; p_code: string }; Returns: undefined }
       admin_set_shop_active: { Args: { p_shop_id: string; p_active: boolean }; Returns: undefined }
+      admin_delete_shop: { Args: { p_shop_id: string }; Returns: undefined }
+      admin_prepare_account_deletion: { Args: { p_employee_id: string }; Returns: string }
       admin_update_employee: { Args: { p_employee_id: string; p_full_name: string; p_role: string; p_shop_id: string | null; p_active: boolean }; Returns: undefined }
       admin_prepare_employee_invite: { Args: { p_email: string; p_full_name: string; p_role: string; p_shop_id: string | null }; Returns: Json }
       admin_finalize_employee_invite: { Args: { p_invitation_id: string; p_auth_user_id: string }; Returns: string }

@@ -12,7 +12,7 @@ import { effectivePriceSourceLabel } from "@/lib/pricing/model";
 
 type Shop = { id: string; name: string };
 
-export function SalesCheckout({ employee, shops }: { employee: { full_name: string | null; role: EmployeeRole; shop_id: string | null }; shops: Shop[] }) {
+export function SalesCheckout({ employee, shops }: { employee: { username?:string|null; full_name: string | null; role: EmployeeRole; shop_id: string | null }; shops: Shop[] }) {
   const availableShops = checkoutShops(employee.role, employee.shop_id, shops);
   const [shopId, setShopId] = useState(employee.role === "owner" ? availableShops[0]?.id ?? "" : employee.shop_id ?? "");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -120,14 +120,13 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
   </section>;
 
   return <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div><p className="text-xs font-medium uppercase tracking-widest text-stone-500">Cashier</p><p className="mt-1 font-semibold">{employee.full_name || "Team member"}</p><p className="text-sm capitalize text-stone-500">{employee.role}</p></div>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
       {employee.role === "owner" ? <label className="min-w-64 text-sm font-medium">Shop
         <select value={shopId} onChange={(event) => changeShop(event.target.value)} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5">
           {!availableShops.length ? <option value="">No active shop available</option> : null}
           {availableShops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}
         </select>
-      </label> : <div className="min-w-64 text-sm font-medium">Shop<p className="mt-2 rounded-lg border border-stone-200 bg-stone-100 px-3 py-2.5">{availableShops[0]?.name ?? "Assigned shop unavailable"}</p></div>}
+      </label> : <div className="min-w-64 text-sm font-medium">Shop<p className="mt-2 rounded-lg border border-stone-200 bg-stone-100 px-3 py-2.5">{availableShops[0]?.name ?? "Unassigned"}</p></div>}<p className="pb-2.5 text-sm font-medium">{employee.username||employee.full_name||"Account"} · {employee.role==="owner"?"Owner":availableShops[0]?.name??"Unassigned"}</p>
     </div>
 
     <form onSubmit={scan} className="mt-6 rounded-xl border-2 border-amber-700 bg-amber-50 p-5">

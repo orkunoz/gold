@@ -18,9 +18,9 @@ describe("inventory form validation", () => {
     expect(validateInventoryForm(form({ category_name: "   " }))).toMatchObject({ success: true, data: { category_name: null } });
   });
 
-  it("allows a null barcode but still requires a shop", () => {
+  it("allows an unassigned shop and a null barcode", () => {
     const result = validateInventoryForm(form({ barcode: "", shop_id: "" }));
-    expect(result).toMatchObject({ success: false, errors: { shop_id: expect.any(String) } });
+    expect(result).toMatchObject({ success: true, data: { shop_id:null,barcode:null } });
     expect(validateInventoryForm(form({ barcode: "" }))).toMatchObject({ success: true, data: { barcode: null } });
   });
 

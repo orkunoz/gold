@@ -51,6 +51,7 @@ Database migrations are not applied by GitHub Actions or Vercel.
 - [ ] Owner can reset that disposable account password; the old password stops working and the new password works.
 - [ ] Routine account creation cannot create another Owner or a second active Salesperson for a shop.
 - [ ] Production Owner credentials are never changed for testing.
+- [ ] Owner permanent account deletion removes the Auth identity, blocks future login, and preserves sale/audit snapshots; the last active Owner remains protected.
 
 ### Inventory and import
 
@@ -61,6 +62,8 @@ Database migrations are not applied by GitHub Actions or Vercel.
 - [ ] Original XLSX source-row references remain stable after blank rows.
 - [ ] Blank mapped gram-price footer rows are visibly counted as skipped.
 - [ ] Malformed nonblank optional gram price warns, stores null, and does not create a formula price.
+- [ ] `Ціна(грн)` remains unmapped for both standard workbook layouts; formula Price is Weight × Price per Gram.
+- [ ] Permanent shop deletion leaves current products and Salespeople Unassigned while historical sales retain the original shop snapshot.
 
 ### Checkout and reporting
 

@@ -30,7 +30,7 @@ One `inventory_items` row represents one physical item (not an article-level qua
 | Fields | Meaning / nullability |
 | --- | --- |
 | id | Required generated UUID primary key |
-| shop_id | Required shop FK |
+| shop_id | Nullable shop FK; NULL displays as Unassigned and cannot be checked out |
 | status | Required text CHECK; default IN_STOCK; IN_STOCK/SOLD/REMOVED only |
 | created_at, updated_at | Required database timestamps; update trigger maintains updated_at |
 | created_by | Nullable employee FK |
@@ -47,7 +47,7 @@ One `inventory_items` row represents one physical item (not an article-level qua
 | discount | Nullable source/import text; informational, not checkout discount_percent |
 | received_at, notes | Nullable received timestamp and notes |
 
-The list shows Number, Product Category, Producer, Size, Article, Weight, Price per Gram, Price, Discount, Status, Shop, Barcode, Notes. Database pagination is 50 items/page, newest first; row numbers continue across pages. Filters include partial barcode/article, category, metal, status, text and Owner shop. The Inventory scanner is a separate exact, trimmed, case-sensitive barcode search; it opens item details and refocuses appropriately. Salespeople cannot add/edit/import.
+The list columns are exactly Nr, Product Category, Producer, Metal, Size, Weight, Price per Gram, Article, Price (UAH), Notes, Status, Shop, Barcode. Database pagination is 50 items/page, newest first; row numbers continue across pages and the filtered result count is in the table footer. Filters include partial barcode/article, category, metal, status, text and Owner shop. Inventory has no separate scanner panel; Sales checkout retains scanning. Salespeople cannot add/edit/import.
 
 Manual add/edit allows an existing category or new category text directly; blank category is NULL. Category resolution normalizes surrounding/repeated whitespace, matches case-insensitively, preserves spelling of the existing category, and safely handles concurrent creation. `Браслет` and `Браслет оф` are distinct.
 
@@ -73,7 +73,7 @@ Implementation: `src/lib/inventory/import`, `src/components/inventory-import.tsx
 
 - Standard `.xlsx` only (not `.xls`), ZIP signature check, nonempty, maximum 5 MiB, maximum 5,000 data rows, maximum 100 columns in submitted rows. Cell text trimmed and capped at 2,000 characters; date cells converted to ISO. Uses read-excel-file.
 - Worksheet selection; header detection examines first 20 rows; duplicate/empty headers get usable display labels. Mapping is editable and source-column-driven. No product column is required; an empty mapping can produce a sparse item using operational defaults.
-- Current mapped fields: barcode, article_number, category, metal, producer, weight_grams, size, price_per_gram, discount, notes, shop, status. Missing/unmapped optional values become NULL; no invented attributes or legacy price values. `price` is derived, not imported as a total price. Legacy fineness/color/owner_price/selling_price/received_at are not current XLSX mapping targets.
+- Current mapped fields: barcode, article_number, category, metal, producer, weight_grams, size, price_per_gram, discount, notes, shop, status. Missing/unmapped optional values become NULL; no invented attributes or legacy price values. Type 1 may contain Metal without Producer; Type 2 may contain Producer without Metal. `Ціна(грн)` is deliberately suggested as Do not import. `price` is derived from Weight × Price per Gram, never imported as a total price.
 - `Виріб` and variants map to Product Category, not article or producer. `Виробник` maps to producer. Ukrainian/English header aliases normalize case, spaces and punctuation; `Ціна-грам` maps to price_per_gram.
 - Target shop is selected from active accessible shops. A nonblank mapped Shop cell overrides target using case-insensitive normalized shop name/code matching. Unknown shop is a row error; do not silently create shops from XLSX.
 - Blank/unmapped status defaults to IN_STOCK. English and Ukrainian aliases support IN_STOCK/SOLD/REMOVED. SOLD import is rejected: only complete_sale creates it. Unknown status warns and defaults to IN_STOCK. Removed reservation strings are no longer recognized aliases.
@@ -88,7 +88,7 @@ Implementation: `src/lib/inventory/import`, `src/components/inventory-import.tsx
 
 Implementation: `/sales`, `sales-checkout.tsx`, `lib/sales/{checkout,actions}.ts`, `/api/sales/lookup`.
 
-- Exact trimmed barcode lookup in selected shop first, then exact article lookup (up to 50 matching physical items). Multiple article matches require selection of the physical item.
+- Exact trimmed barcode lookup in selected shop first, then exact article lookup in bounded pages of 50. Multiple article matches require selection of the physical item.
 - Owner selects active shop; changing shop clears the local cart. Salesperson shop is fixed read-only. Lookup server and complete_sale reject other-shop requests.
 - Successful lookup adds item, clears/refocuses scanner and shows no “added to current sale” success banner. Errors remain for not found, duplicate cart, SOLD, REMOVED, wrong shop, missing price and failures.
 - Discount defaults to 0; decimal percentage accepted, 0–100. Item amount = list price × (1 − discount / 100), rounded to two decimals. Current Total sums these amounts and updates on add/remove/discount change. Final Sale Price input does not exist. Cart is local component state; simply adding/removing an item does not mutate inventory.
@@ -106,7 +106,7 @@ Implementation: `/sales`, `sales-checkout.tsx`, `lib/sales/{checkout,actions}.ts
 - Owner: All shops/one active shop selector; Revenue, Items sold, Gold weight sold; in-stock count/weight, Total value, missing-price count and status summary; daily revenue chart, category performance, shop performance for All shops, recent sales.
 - Salesperson: only assigned active shop; selectable reporting period; Revenue, Items sold, Gold weight sold and recent sales for that shop. No other-shop selector, inventory valuation, category/employee comparisons or cross-shop report. RPC rejects another shop ID even if UI is bypassed.
 - Sales count and Average Sale KPI cards removed. Customer Value UI renamed Total value; internal JSON key remains customer_value for compatibility.
-- Shop revenue aggregates sale lines to avoid multiplying a multi-item header total. Some dashboard weight/category joins still use protected inventory rows rather than snapshots; preserve SOLD protections when considering future changes.
+- Shop revenue, category, and sold-weight reporting use immutable sale/sale-item snapshots rather than mutable inventory rows.
 - Employee breakdown is intentionally absent. The Owner dashboard renders category and shop comparisons only; the empty Employee sales panel and `employees` response property were removed.
 
 ## Administration / Auth
@@ -115,10 +115,10 @@ Implementation: `/sales`, `sales-checkout.tsx`, `lib/sales/{checkout,actions}.ts
 - Username input trimmed/lowercased; 3–32 ASCII characters matching `^[a-z0-9][a-z0-9_-]{2,31}$`; deterministic internal email alias derived in signIn. Users enter username, not email. No public username lookup/enumeration endpoint; errors generic.
 - Current operational usernames: admin (Owner, no shop), kamin → Kamin, horokhiv → Horokhiv, novovolynsk → Novovolynsk, volodymyr → Volodymyr. These are identifiers, not credentials; obtain passwords securely from the Owner. Legacy employees are inactive, not deleted. Active shop options last observed are these four locations; old shop identities can remain inactive.
 - Auth session uses verified getClaims and Supabase SSR cookie refresh. Proxy checks active employee and locally signs out inactive/unlinked sessions to avoid login/dashboard loops. Protected pages and each mutation independently authorize. Authenticated responses are private/no-store.
-- `/admin` is Owner-only. Shops support create/edit/activate/deactivate. Deactivation blocks active assigned employees and IN_STOCK inventory.
+- `/admin` is Owner-only. Shops support create/edit/activate/deactivate and permanent deletion with a confirmation dialog. Permanent deletion sets current inventory and account assignments to NULL/Unassigned, deletes shop-scoped compatibility pricing rules, and preserves immutable sale shop snapshots.
 - `/admin/employees` is labeled Accounts; creation still uses the legacy route `/admin/employees/invite` but is a direct Create Account form, not email invitation. Fields: username/password/confirmation/shop; role fixed salesperson; initial display name=username. Edit supports display name, role, active flag, shop. Auth identity/username are not editable in UI.
 - Server action requires active Owner, validates username and password confirmation/6–72 character bounds, uses server-only Auth Admin createUser with confirmed internal email, then calls `admin_link_employee_account`. Existing exact matches support retry; conflicting identity/role/shop is rejected. If new Auth creation succeeds and linking fails, it attempts to remove only that newly created Auth user. Existing passwords are not changed by retry; use reset action.
-- Password reset is an Owner-only server action using Auth Admin updateUserById, with confirmation UI and new-password validation. Existing password is never retrieved/displayed. Edit page currently offers reset for Owner as well as salesperson records.
+- Password reset is an Owner-only server action using Auth Admin updateUserById, with confirmation UI and new-password validation. Permanent account deletion first authorizes against a hardened Owner RPC, then hard-deletes the Supabase Auth identity; the employee row cascades away while sale/audit actor snapshots remain. Existing password is never retrieved/displayed.
 - Normal create flow cannot create extra Owners. Partial indexes enforce one active Owner and one active salesperson per shop; serialized last-active-Owner protection remains. Any future Owner replacement requires a controlled, tested transition, not deleting the old Owner first.
 - Old employee_invitations table and preparation/finalization RPCs remain for database compatibility; the old invitation server action and user-facing invitation terminology are removed.
 
@@ -141,7 +141,7 @@ Critical constraints: role/status CHECKs, nonnegative amounts, allowed metals, g
 
 ### Applied migrations
 
-All 20 migrations through `20260912150000_historical_dashboard_snapshots.sql` matched hosted production after the September 12 cleanup release. The final migration makes historical dashboard category and weight metrics use immutable `sale_items` snapshots. Never edit an already applied migration.
+All 22 migrations through `20260912203000_task13_lint_cleanup.sql` matched hosted production after Task 13. The Task 13 migrations add deletion-safe historical snapshots/unassigned semantics and retain the validation RPC signature without lint warnings. Never edit an already applied migration.
 
 | Version | Purpose |
 | --- | --- |
@@ -165,6 +165,8 @@ All 20 migrations through `20260912150000_historical_dashboard_snapshots.sql` ma
 | 20260910210000 | Usernames, three-state inventory, dashboard periods, account link |
 | 20260910220000 | Account-link integrity and shop revenue fix |
 | 20260912150000 | Historical dashboard category/weight snapshot reporting |
+| 20260912200000 | Account/shop deletion, unassigned current records, immutable actor/shop snapshots |
+| 20260912203000 | Task 13 validation-function lint cleanup |
 
 ### Production data safety / completed cleanup
 
@@ -190,7 +192,7 @@ Assets are portable: `public/zlata-logo.png` is the supplied logo, used via next
 
 Completed/deployed: Task 11 category/pricing/role simplification and footer rule; Task 12 username accounts, requested four shop assignments, old-account deactivation, one-time archived cleanup, three statuses, simplified dashboard, checkout-only Sales, Zlata logo/theme and inactive-session redirect fix. Vercel deployment for functional commit 555725a reported success. New account credentials and RPC access were verified without storing secrets.
 
-Cleanup validation on September 12: npm ci (0 vulnerabilities), clean lint/typecheck, 94 passing unit tests across 15 files, and successful webpack production build. The new computer was linked to the existing hosted Gold project (`xxkqpduwueefpgmnjhgn`); pre-release parity showed only `20260912150000` pending, its dry-run listed no seeds or roles, and DB lint found no schema errors. The reviewed forward-only migration was applied, after which all 20 migrations matched and DB lint again found no errors. Docker-dependent rollback SQL suites were explicitly deferred by the Owner and were not run; do not imply they passed.
+Task 13 validation on September 12: npm ci (0 vulnerabilities), clean lint/typecheck, 100 passing unit/static UI tests across 16 files, and successful webpack production build. The linked existing Gold project is `xxkqpduwueefpgmnjhgn`. Each Task 13 migration was dry-run separately with no seeds/roles, both were applied, all 22 migrations matched afterward, and final DB lint found no issues. Docker-dependent rollback SQL suites, including the new Task 13 suite, were explicitly deferred by the Owner and were not run; do not imply they passed.
 
 Live acceptance completed September 12: Owner login/dashboard; Kamin login, assigned-shop dashboard/checkout, missing Administration navigation and direct /admin redirect; Volodymyr login and inventory; categories include Браслет оф; status options have only three states; checkout formula 38,320 UAH with 10% discount became 34,488 UAH; successful add cleared/refocused scanner without success banner. No final-price input or Sales Register. Test cart removed and signed out, with no completed test sale or persistent product mutation.
 
@@ -205,7 +207,7 @@ Cleanup implementation completed locally after Task 12:
 7. Applied the forward migration so dashboard historical category and weight reporting uses immutable `sale_items.category_name` and `sale_items.weight_grams` snapshots.
 8. Login was visually reviewed at 390×844, 768×1024 and 1440×900; responsive spacing/actions were strengthened in protected layouts and Administration source. Protected live visual/account acceptance remains externally blocked until safe authenticated access is provided.
 
-Do not call this cleanup fully live until Vercel deploys the cleanup commit and a disposable-shop/account acceptance confirms Create Account and Password Reset without touching real credentials. Recovery archive and controlled setup helper scripts are not app migrations. Do not expand scope to returns/refunds, transfers, fiscal receipts, CRM, payroll or generalized tenancy without a new request.
+Task 13 implements permanent Owner-confirmed account/shop deletion, Auth-user cascade deletion, immutable sale/audit actor/shop labels, Unassigned current products/accounts, exact inventory field ordering, real XLSX mapping with `Ціна(грн)` ignored, and simplified Dashboard/Inventory/Sales/Administration UI. Do not call Task 13 fully live until Vercel deploys its commit and authenticated production acceptance confirms the destructive dialogs and representative responsive layouts. Recovery archive and controlled setup helper scripts are not app migrations.
 
 ## Navigation for future development
 

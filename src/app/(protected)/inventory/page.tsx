@@ -1,14 +1,11 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import type { InventoryStatus } from "@/lib/database.types";
 import { InventoryStatus as StatusBadge } from "@/components/inventory-status";
-import { BarcodeScanner } from "@/components/barcode-scanner";
 import { INVENTORY_STATUSES, STATUS_LABELS } from "@/lib/inventory/constants";
 import { displayValue, formatPrice } from "@/lib/inventory/format";
 import { inventoryOrdinal, inventoryResultSummary } from "@/lib/inventory/pagination";
 import {
   canManageInventory,
-  findInventoryItemByBarcode,
   getCurrentEmployee,
   getInventoryItems,
   getInventoryOptions,
@@ -26,17 +23,12 @@ function parameter(params: Record<string, string | string[] | undefined>, name: 
 export default async function InventoryPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const barcode = parameter(params, "barcode");
-  const exactMode = parameter(params, "mode") === "exact";
-  if (exactMode && barcode.trim()) {
-    const exact = await findInventoryItemByBarcode(barcode);
-    if (exact) redirect(`/inventory/${exact.id}?from=scan`);
-  }
 
   const rawStatus = parameter(params, "status");
   const requestedPage = Number(parameter(params, "page"));
   const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
   const filters: InventoryFilters = {
-    barcode: exactMode ? "" : barcode,
+    barcode,
     article: parameter(params, "article"),
     category: parameter(params, "category"),
     metal: (["Gold", "Silver"] as const).find((value) => value === parameter(params, "metal")),
@@ -47,7 +39,6 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
   const [employee, options, inventory] = await Promise.all([getCurrentEmployee(), getInventoryOptions(), getInventoryItems(filters, page)]);
   const { items, count, pageSize } = inventory;
   const canManage = canManageInventory(employee.role);
-  const exactMiss = exactMode && Boolean(barcode.trim());
   const totalPages = Math.max(1, Math.ceil(count / pageSize));
   function pageHref(nextPage: number) {
     const next = new URLSearchParams();
@@ -57,16 +48,9 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
   }
 
   return <section>
-    <div className="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-widest text-stone-500">Stock workspace</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight">Inventory</h1>
-        <p className="mt-2 text-base font-medium text-stone-700">{inventoryResultSummary(page, pageSize, count, items.length)}</p>
-      </div>
+    <div className="flex flex-wrap justify-end gap-4">
       {canManage ? <div className="flex flex-wrap gap-3"><Link href="/inventory/import" className="rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-sm font-medium text-stone-800 hover:bg-stone-100">Import inventory</Link><Link href="/inventory/new" className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-stone-700">Add product</Link></div> : null}
     </div>
-
-    <div className="mt-8"><BarcodeScanner initialValue={exactMiss ? barcode.trim() : ""} notFound={exactMiss} /></div>
 
     <form className="mt-6 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -112,36 +96,37 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
         <h2 className="font-medium">No inventory items found</h2>
         <p className="mt-2 text-sm text-stone-600">Try clearing filters{canManage ? " or add the first product" : ""}.</p>
       </div> : <div className="overflow-x-auto">
-        <table className="min-w-[1750px] w-full text-left text-sm">
+        <table className="min-w-[1600px] w-full text-left text-sm">
           <thead className="border-b border-stone-200 bg-stone-50 text-xs uppercase tracking-wide text-stone-500"><tr>
-            {["Number", "Product Category", "Producer", "Size", "Article", "Weight", "Price per Gram", "Price", "Discount", "Status", "Shop", "Barcode", "Notes"].map((heading) => <th key={heading} className="px-4 py-3 font-medium">{heading}</th>)}
+            {["Nr", "Product Category", "Producer", "Metal", "Size", "Weight", "Price per Gram", "Article", "Price (UAH)", "Notes", "Status", "Shop", "Barcode"].map((heading) => <th key={heading} className="px-4 py-3 font-medium">{heading}</th>)}
           </tr></thead>
           <tbody className="divide-y divide-stone-100">
             {items.map((item, index) => <tr key={item.id} className="hover:bg-amber-50/40">
               <td className="px-4 py-3 font-medium"><Link href={`/inventory/${item.id}`} className="text-amber-900 underline-offset-4 hover:underline">{inventoryOrdinal(page, pageSize, index)}</Link></td>
               <td className="px-4 py-3">{item.product_categories?.name ?? "—"}</td>
               <td className="px-4 py-3">{displayValue(item.producer)}</td>
+              <td className="px-4 py-3">{displayValue(item.metal)}</td>
               <td className="px-4 py-3">{displayValue(item.size)}</td>
-              <td className="px-4 py-3">{displayValue(item.article_number)}</td>
               <td className="px-4 py-3">{item.weight_grams === null ? "—" : `${item.weight_grams} g`}</td>
               <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.price_per_gram)}</td>
+              <td className="px-4 py-3">{displayValue(item.article_number)}</td>
               <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.price)}</td>
-              <td className="px-4 py-3">{displayValue(item.discount)}</td>
-              <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
-              <td className="px-4 py-3">{item.shops?.name ?? "—"}</td>
-              <td className="px-4 py-3 font-medium">{displayValue(item.barcode)}</td>
               <td className="max-w-80 px-4 py-3"><span className="line-clamp-2">{displayValue(item.notes)}</span></td>
+              <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
+              <td className="px-4 py-3">{item.shops?.name ?? "Unassigned"}</td>
+              <td className="px-4 py-3 font-medium">{displayValue(item.barcode)}</td>
             </tr>)}
           </tbody>
         </table>
       </div>}
     </div>
-    {totalPages > 1 ? <nav aria-label="Inventory pages" className="mt-5 flex items-center justify-between gap-4">
-      <span className="text-sm text-stone-600">Page {page} of {totalPages}</span>
+    <nav aria-label="Inventory pages" className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <span className="text-sm font-medium text-stone-700">{inventoryResultSummary(page, pageSize, count, items.length)}</span>
       <div className="flex gap-2">
         {page > 1 ? <Link href={pageHref(page - 1)} className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium">Previous</Link> : null}
+        {Array.from({length:totalPages},(_,index)=>index+1).filter(value=>totalPages<=7||Math.abs(value-page)<=2||value===1||value===totalPages).map(value=><Link key={value} href={pageHref(value)} aria-current={value===page?"page":undefined} className={`rounded-lg border px-4 py-2 text-sm font-medium ${value===page?"border-stone-900 bg-stone-900 text-white":"border-stone-300 bg-white"}`}>{value}</Link>)}
         {page < totalPages ? <Link href={pageHref(page + 1)} className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium">Next</Link> : null}
       </div>
-    </nav> : null}
+    </nav>
   </section>;
 }

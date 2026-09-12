@@ -15,6 +15,11 @@ describe("Excel header mapping", () => {
 
   it.each(["Виріб","Вироби","Найменування","Назва виробу","Категорія виробу"])("suggests Product Category for %s",header=>expect(suggestColumnMapping([header])).toEqual({category:0}));
 
+  it("maps both real shop workbook formats and ignores total UAH price",()=>{
+    expect(suggestColumnMapping(["Виріб","Метал","Розмір","Вага","Ціна-грам","Артикул","Ціна(грн)","Примітка"])).toEqual({category:0,metal:1,size:2,weight_grams:3,price_per_gram:4,article_number:5,notes:7});
+    expect(suggestColumnMapping(["Виріб","Виробник","Розмір","Вага","Ціна-грам","Артикул","Ціна(грн)","Примітка"])).toEqual({category:0,producer:1,size:2,weight_grams:3,price_per_gram:4,article_number:5,notes:7});
+  });
+
   it("normalizes punctuation and makes duplicate headers unique", () => {
     expect(normalizeHeader(" Штрих-Код ")).toBe("штрих код");
     expect(uniqueHeaders(["Код", "Код", null])).toEqual(["Код", "Код (2)", "Column 3"]);

@@ -57,7 +57,6 @@ export function validateInventoryForm(formData: FormData): InventoryValidationRe
   }
 
   const errors: InventoryFormErrors = {};
-  if (!values.shop_id) errors.shop_id = "Select a shop.";
   if (values.barcode.length > 200) errors.barcode = "Barcode is too long.";
   if (values.metal && !["Gold", "Silver"].includes(values.metal)) errors.metal = "Select Gold or Silver.";
 
@@ -81,7 +80,7 @@ export function validateInventoryForm(formData: FormData): InventoryValidationRe
   return {
     success: true,
     data: {
-      shop_id: values.shop_id,
+      shop_id: nullableText(values.shop_id),
       barcode: nullableText(values.barcode),
       article_number: nullableText(values.article_number),
       category_name: nullableText(values.category_name)?.replace(/\s+/g, " ") ?? null,

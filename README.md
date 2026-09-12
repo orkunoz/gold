@@ -14,6 +14,7 @@ Read `AGENTS.md` before changing the system. It contains current business decisi
 - Checkout accepts a Discount %, never an arbitrary final-price input. PostgreSQL calculates the sale price.
 - Sales is checkout-only. Historical products are found through Inventory status or linked sale details.
 - Historical category, weight, list price, discount, sale price, and product details come from immutable `sale_items` snapshots.
+- Owner can permanently delete operational accounts and shops through explicit confirmation dialogs. Deleting an account removes its Supabase Auth identity while sale/audit actor snapshots remain. Deleting a shop makes current products and assigned Salespeople `Unassigned`; historical sales retain their captured shop name.
 
 ## Stack
 
@@ -52,6 +53,10 @@ Staff enter username/password. The server normalizes the username and authentica
 The Owner creates a shop Salesperson directly under Administration → Accounts and can reset a selected account password. Routine creation cannot create another Owner. Inactive or unlinked Auth sessions cannot access business data.
 
 ## Inventory and XLSX import
+
+Inventory columns are: Nr, Product Category, Producer, Metal, Size, Weight, Price per Gram, Article, Price (UAH), Notes, Status, Shop, Barcode. Price is always calculated as Weight × Price per Gram. Unassigned products remain editable but cannot be sold until assigned to an active shop.
+
+The standard Ukrainian workbook layouts may contain either `Метал` or `Виробник`. Both are optional. Mapping uses headers, not column position: `Виріб` → Product Category, `Виробник` → Producer, `Метал` → Metal, `Розмір` → Size, `Вага` → Weight, `Ціна-грам` → Price per Gram, `Артикул` → Article, and `Примітка` → Notes. `Ціна(грн)` is intentionally left as Do not import because Price is calculated. Owner chooses one active Target Shop for the import.
 
 Inventory is database-paginated at 50 rows with partial filters and a separate exact case-sensitive barcode scanner. Owners can add/edit/import; Salespeople cannot mutate inventory.
 

@@ -13,14 +13,12 @@ export default async function AdminPage() {
   ];
 
   return <section>
-    <p className="text-xs uppercase tracking-widest text-stone-500">Owner workspace</p>
-    <h1 className="mt-3 text-3xl font-semibold">Administration</h1>
-    <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => <div key={card.label} className="rounded-xl border bg-white p-5"><p className="text-xs uppercase text-stone-500">{card.label}</p><p className="mt-2 text-3xl font-semibold">{card.value}</p></div>)}
     </div>
     <div className="mt-8 grid gap-5 sm:grid-cols-2">
-      <Link href="/admin/shops" className="rounded-xl border bg-white p-6 hover:border-amber-700"><h2 className="text-xl font-semibold">Shops</h2><p className="mt-2 text-sm text-stone-600">Create, edit, activate, and safely deactivate shops.</p></Link>
-      <Link href="/admin/employees" className="rounded-xl border bg-white p-6 hover:border-amber-700"><h2 className="text-xl font-semibold">Accounts</h2><p className="mt-2 text-sm text-stone-600">Create staff logins and manage roles, shops, and access.</p></Link>
+      <Link href="/admin/shops" className="rounded-xl border bg-white p-6 hover:border-amber-700"><h2 className="text-xl font-semibold">Shops</h2></Link>
+      <Link href="/admin/employees" className="rounded-xl border bg-white p-6 hover:border-amber-700"><h2 className="text-xl font-semibold">Accounts</h2></Link>
     </div>
   </section>;
 }
