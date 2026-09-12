@@ -515,6 +515,8 @@ export type Database = {
       is_active_employee: { Args: never; Returns: boolean }
       is_owner: { Args: never; Returns: boolean }
       import_inventory_items: { Args:{p_items:Json}; Returns:number }
+      delete_inventory_item_permanently: { Args:{p_inventory_item_id:string}; Returns:undefined }
+      bulk_move_inventory_items: { Args:{p_inventory_item_ids:string[];p_shop_id?:string|null}; Returns:number }
       resolve_product_category: { Args:{p_name:string}; Returns:string|null }
     }
     Enums: {

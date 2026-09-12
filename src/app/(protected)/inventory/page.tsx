@@ -1,9 +1,8 @@
 import Link from "next/link";
 import type { InventoryStatus } from "@/lib/database.types";
-import { InventoryStatus as StatusBadge } from "@/components/inventory-status";
+import { InventoryBulkTable } from "@/components/inventory-bulk-table";
 import { INVENTORY_STATUSES, STATUS_LABELS } from "@/lib/inventory/constants";
-import { displayValue, formatPrice } from "@/lib/inventory/format";
-import { inventoryOrdinal, inventoryResultSummary } from "@/lib/inventory/pagination";
+import { inventoryResultSummary } from "@/lib/inventory/pagination";
 import {
   canManageInventory,
   getCurrentEmployee,
@@ -95,31 +94,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
       {items.length === 0 ? <div className="p-10 text-center">
         <h2 className="font-medium">No inventory items found</h2>
         <p className="mt-2 text-sm text-stone-600">Try clearing filters{canManage ? " or add the first product" : ""}.</p>
-      </div> : <div className="overflow-x-auto">
-        <table className="min-w-[1600px] w-full text-left text-sm">
-          <thead className="border-b border-stone-200 bg-stone-50 text-xs uppercase tracking-wide text-stone-500"><tr>
-            {["Nr", "Product Category", "Producer", "Metal", "Fineness", "Size", "Weight", "Price per Gram", "Article", "Price (UAH)", "Notes", "Status", "Shop", "Barcode"].map((heading) => <th key={heading} className="px-4 py-3 font-medium">{heading}</th>)}
-          </tr></thead>
-          <tbody className="divide-y divide-stone-100">
-            {items.map((item, index) => <tr key={item.id} className="hover:bg-amber-50/40">
-              <td className="px-4 py-3 font-medium"><Link href={`/inventory/${item.id}`} className="text-amber-900 underline-offset-4 hover:underline">{inventoryOrdinal(page, pageSize, index)}</Link></td>
-              <td className="px-4 py-3">{item.product_categories?.name ?? "—"}</td>
-              <td className="px-4 py-3">{displayValue(item.producer)}</td>
-              <td className="px-4 py-3">{displayValue(item.metal)}</td>
-              <td className="px-4 py-3">{displayValue(item.gold_fineness)}</td>
-              <td className="px-4 py-3">{displayValue(item.size)}</td>
-              <td className="px-4 py-3">{item.weight_grams === null ? "—" : `${item.weight_grams} g`}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.price_per_gram)}</td>
-              <td className="px-4 py-3">{displayValue(item.article_number)}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.price)}</td>
-              <td className="max-w-80 px-4 py-3"><span className="line-clamp-2">{displayValue(item.notes)}</span></td>
-              <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
-              <td className="px-4 py-3">{item.shops?.name ?? "Unassigned"}</td>
-              <td className="px-4 py-3 font-medium">{displayValue(item.barcode)}</td>
-            </tr>)}
-          </tbody>
-        </table>
-      </div>}
+      </div> : <InventoryBulkTable items={items} shops={options.shops} page={page} pageSize={pageSize} canManage={canManage}/>}
     </div>
     <nav aria-label="Inventory pages" className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <span className="text-sm font-medium text-stone-700">{inventoryResultSummary(page, pageSize, count, items.length)}</span>

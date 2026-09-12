@@ -11,6 +11,8 @@ export type InventoryActionState = {
   fieldErrors?: InventoryFormErrors;
 };
 
+export type BulkMoveState = { error: string; success?: string };
+
 function databaseError(error: { code?: string } | null): InventoryActionState {
   if (error?.code === "23505") {
     return { error: "An item with this barcode already exists.", fieldErrors: { barcode: "Barcode must be unique." } };
@@ -80,4 +82,28 @@ export async function updateInventoryItem(
   revalidatePath("/inventory");
   revalidatePath(`/inventory/${id}`);
   redirect(`/inventory/${id}`);
+}
+
+export async function deleteInventoryItemPermanently(id: string): Promise<void> {
+  const employee = await getCurrentEmployee();
+  if (!canManageInventory(employee.role)) redirect("/dashboard");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_inventory_item_permanently", { p_inventory_item_id: id });
+  if (error) redirect(`/inventory/${id}?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/inventory");
+  revalidatePath("/dashboard");
+  redirect("/inventory");
+}
+
+export async function bulkMoveInventoryItems(ids: string[], shopId: string | null): Promise<BulkMoveState> {
+  const employee = await getCurrentEmployee();
+  if (!canManageInventory(employee.role)) return { error: "Owner access required." };
+  const uniqueIds = [...new Set(ids)];
+  if (!uniqueIds.length || uniqueIds.length > 50 || uniqueIds.some((id) => !/^[0-9a-f-]{36}$/i.test(id))) return { error: "Select between 1 and 50 valid products." };
+  if (shopId !== null && !/^[0-9a-f-]{36}$/i.test(shopId)) return { error: "Select a valid destination shop." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("bulk_move_inventory_items", { p_inventory_item_ids: uniqueIds, p_shop_id: shopId });
+  if (error) return { error: error.message };
+  revalidatePath("/inventory");
+  return { error: "", success: `${data ?? 0} product${data === 1 ? "" : "s"} moved.` };
 }

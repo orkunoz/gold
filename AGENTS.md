@@ -66,7 +66,7 @@ No available source means NULL and checkout/completion reject the item. Never re
 
 ### Product history
 
-`inventory_item_history` is append-only to application users, with item FK, field_name, old_value, new_value, changed_by_employee_id, changed_at, source, optional sale_id. Triggers log creation and changes to category, metal, producer, size, article, weight, gram price, inventory price/discount, status, shop, barcode, notes and legacy pricing fields. Sources include MANUAL_EDIT, XLSX_IMPORT, SALE, STATUS_CHANGE, SHOP_TRANSFER and SYSTEM. History rendering resolves display names and sale references. Item FK has ON DELETE CASCADE; sale/employee references restrict deletion. This is why a product deletion can erase history and is not a normal workflow.
+`inventory_item_history` is append-only to application users, with item FK, field_name, old_value, new_value, changed_by_employee_id, changed_at, source, optional sale_id. Triggers log creation and changes to category, metal, producer, size, article, weight, gram price, inventory price/discount, status, shop, barcode, notes and legacy pricing fields. Sources include MANUAL_EDIT, XLSX_IMPORT, SALE, STATUS_CHANGE, SHOP_TRANSFER and SYSTEM. History rendering resolves display names and sale references. Owner-only bulk shop moves accept at most the current 50-row page, reject the whole selection if any product is SOLD, and use the normal SHOP_TRANSFER history path. Permanent deletion is an explicit destructive Owner workflow limited to IN_STOCK/REMOVED: it removes that product's history and sale lines, deletes now-empty sale headers, and recalculates retained sale totals without changing unrelated lines.
 
 ## XLSX import
 
