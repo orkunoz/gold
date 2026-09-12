@@ -141,7 +141,7 @@ Critical constraints: role/status CHECKs, nonnegative amounts, allowed metals, g
 
 ### Applied migrations
 
-The 19 migrations through 20260910220000 matched hosted production at the final Task 12 parity check. Migration `20260912150000_historical_dashboard_snapshots.sql` is the next safe forward migration; it makes historical dashboard category and weight metrics use immutable `sale_items` snapshots. Recheck linked parity and apply it before claiming the cleanup is live. Never edit an already applied migration.
+All 20 migrations through `20260912150000_historical_dashboard_snapshots.sql` matched hosted production after the September 12 cleanup release. The final migration makes historical dashboard category and weight metrics use immutable `sale_items` snapshots. Never edit an already applied migration.
 
 | Version | Purpose |
 | --- | --- |
@@ -190,7 +190,7 @@ Assets are portable: `public/zlata-logo.png` is the supplied logo, used via next
 
 Completed/deployed: Task 11 category/pricing/role simplification and footer rule; Task 12 username accounts, requested four shop assignments, old-account deactivation, one-time archived cleanup, three statuses, simplified dashboard, checkout-only Sales, Zlata logo/theme and inactive-session redirect fix. Vercel deployment for functional commit 555725a reported success. New account credentials and RPC access were verified without storing secrets.
 
-Cleanup validation on September 12: npm ci (0 vulnerabilities), clean lint/typecheck, 94 passing unit tests across 15 files, and successful webpack production build. Hosted SQL, migration parity, and database lint could not be rerun on the new computer because Supabase CLI/project linkage and production environment values were absent; do not imply they passed.
+Cleanup validation on September 12: npm ci (0 vulnerabilities), clean lint/typecheck, 94 passing unit tests across 15 files, and successful webpack production build. The new computer was linked to the existing hosted Gold project (`xxkqpduwueefpgmnjhgn`); pre-release parity showed only `20260912150000` pending, its dry-run listed no seeds or roles, and DB lint found no schema errors. The reviewed forward-only migration was applied, after which all 20 migrations matched and DB lint again found no errors. Docker-dependent rollback SQL suites were explicitly deferred by the Owner and were not run; do not imply they passed.
 
 Live acceptance completed September 12: Owner login/dashboard; Kamin login, assigned-shop dashboard/checkout, missing Administration navigation and direct /admin redirect; Volodymyr login and inventory; categories include Браслет оф; status options have only three states; checkout formula 38,320 UAH with 10% discount became 34,488 UAH; successful add cleared/refocused scanner without success banner. No final-price input or Sales Register. Test cart removed and signed out, with no completed test sale or persistent product mutation.
 
@@ -202,10 +202,10 @@ Cleanup implementation completed locally after Task 12:
 4. Updated README, production runbook, environment comments, account labels, and current tests to current business rules.
 5. Article choices now load bounded pages of 50 and explicitly show progress/Load more instead of silently truncating.
 6. XLSX parser preserves original worksheet row references after blank-row removal. Blank mapped gram-price footer rows are counted separately in preview/results. Malformed nonblank optional gram price warns and stores NULL with an explicit no-formula-price explanation.
-7. Added a forward migration so dashboard historical category and weight reporting uses immutable `sale_items.category_name` and `sale_items.weight_grams` snapshots.
+7. Applied the forward migration so dashboard historical category and weight reporting uses immutable `sale_items.category_name` and `sale_items.weight_grams` snapshots.
 8. Login was visually reviewed at 390×844, 768×1024 and 1440×900; responsive spacing/actions were strengthened in protected layouts and Administration source. Protected live visual/account acceptance remains externally blocked until safe authenticated access is provided.
 
-Do not call this cleanup deployed or fully live until the forward migration is applied, Vercel deploys the cleanup commit, and a disposable-shop/account acceptance confirms Create Account and Password Reset without touching real credentials. Recovery archive and controlled setup helper scripts are not app migrations. Do not expand scope to returns/refunds, transfers, fiscal receipts, CRM, payroll or generalized tenancy without a new request.
+Do not call this cleanup fully live until Vercel deploys the cleanup commit and a disposable-shop/account acceptance confirms Create Account and Password Reset without touching real credentials. Recovery archive and controlled setup helper scripts are not app migrations. Do not expand scope to returns/refunds, transfers, fiscal receipts, CRM, payroll or generalized tenancy without a new request.
 
 ## Navigation for future development
 
