@@ -25,6 +25,8 @@ describe("Task 17 scoped UI", () => {
     expect(source).toContain("Revenue:");
     expect(source).toContain("onMouseEnter");
     expect(source).toContain("onClick");
+    expect(source).toContain("formatDashboardDate");
+    expect(source).not.toContain("new Date(");
   });
 
   it("hides REMOVED in dashboard summary and Inventory filter while retaining the status model", () => {
