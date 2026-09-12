@@ -18,31 +18,47 @@ describe("Task 17 scoped UI", () => {
     expect(source).not.toMatch(/overflow-[xy]-auto|min-w-\[640px\]/);
   });
 
-  it("shows tooltip date, physical items sold, and revenue", () => {
+  it("shows a floating tooltip with date, physical items sold, and revenue", () => {
     const source = read("./sales-trend.tsx");
+    expect(source).toContain('role="tooltip"');
     expect(source).toContain("Items Sold:");
     expect(source).toContain("point.items_sold");
     expect(source).toContain("Revenue:");
     expect(source).toContain("onMouseEnter");
+    expect(source).toContain("onMouseLeave={() => setActiveIndex(null)}");
+    expect(source).toContain("onBlur={() => setActiveIndex(null)}");
     expect(source).toContain("onClick");
     expect(source).toContain("formatDashboardDate");
     expect(source).not.toContain("new Date(");
+    expect(source).not.toContain('role="status"');
+    expect(source).not.toContain("mb-4 min-h-16");
   });
 
-  it("hides REMOVED in dashboard summary and Inventory filter while retaining the status model", () => {
+  it("removes the dashboard status summary while retaining the status model", () => {
     const dashboard = read("../app/(protected)/dashboard/page.tsx");
     const filters = read("./inventory-filters.tsx");
-    expect(dashboard).toContain('["IN_STOCK","SOLD"]');
+    expect(dashboard).not.toMatch(/Status summary|status_counts/);
     expect(filters).toContain('["IN_STOCK", "SOLD"]');
     expect(filters).not.toContain("Metal<select");
     expect(read("../lib/inventory/constants.ts")).toContain('"REMOVED"');
   });
 
-  it("offers URL-backed custom start and optional end dates for both roles", () => {
-    const source = read("../app/(protected)/dashboard/page.tsx");
+  it("only shows URL-backed date fields for Custom Range", () => {
+    const source = read("./dashboard-filters.tsx");
+    expect(source).toContain('period === "CUSTOM"');
     expect(source).toContain('name="start"');
     expect(source).toContain('name="end"');
-    expect(source).toContain("customDateRange");
-    expect(source).toContain('employee.role === "owner" ? requestedShop : employee.shop_id');
+    expect(source).toContain("(optional)");
+    expect(source).toContain('name="shop"');
+    const page = read("../app/(protected)/dashboard/page.tsx");
+    expect(page).toContain("customDateRange");
+    expect(page).toContain('employee.role === "owner" ? requestedShop : employee.shop_id');
+  });
+
+  it("uses the cleaned-up inventory and recent-sales labels", () => {
+    const source = read("../app/(protected)/dashboard/page.tsx");
+    expect(source).toContain('label="Inventory value"');
+    expect(source).toContain('"Items","Total",""');
+    expect(source).not.toMatch(/label="Total value"|Revenue \/ Total|Status summary/);
   });
 });

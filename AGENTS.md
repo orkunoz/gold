@@ -104,10 +104,11 @@ Implementation: `/sales`, `sales-checkout.tsx`, `lib/sales/{checkout,actions}.ts
 
 `get_dashboard_report(period, shop, start_date, end_date)` is a hardened aggregate RPC; the two-argument preset wrapper remains for compatibility. Periods: TODAY, LAST_7_DAYS, THIS_MONTH (default), LAST_30_DAYS, CUSTOM. Custom reporting accepts a single date or an inclusive start/end range. Date boundaries use Europe/Kyiv, including DST; the database converts the inclusive end date to exclusive next local midnight. Current stock metrics are independent of reporting period.
 
-- Owner: All shops/one active shop selector; Revenue, Items sold, Gold weight sold; in-stock count/weight, Total value, missing-price count and IN_STOCK/SOLD status summary; daily revenue and physical-items-sold chart, category performance, shop performance for All shops, period-scoped recent sales.
+- Owner: All shops/one active shop selector; Revenue, Items sold, Gold weight sold; in-stock count/weight and Inventory value with missing-price count; daily revenue and physical-items-sold chart, category performance, shop performance for All shops, period-scoped recent sales.
 - Salesperson: only assigned active shop; selectable preset/custom reporting period; Revenue, Items sold, Gold weight sold and period-scoped recent sales for that shop. No other-shop selector, inventory valuation, category/employee comparisons or cross-shop report. RPC rejects another shop ID even if UI is bypassed.
-- Sales count and Average Sale KPI cards removed. Customer Value UI renamed Total value; internal JSON key remains customer_value for compatibility.
+- Sales count and Average Sale KPI cards removed. Customer Value UI is labeled Inventory value; internal JSON key remains customer_value for compatibility.
 - Shop revenue, category, and sold-weight reporting use immutable sale/sale-item snapshots rather than mutable inventory rows.
+- Dashboard date inputs render only for Custom Range. The sales-over-time chart uses responsive capped-width bars and a point-local hover/focus/tap tooltip; it has no permanent summary panel.
 - Employee breakdown is intentionally absent. The Owner dashboard renders category and shop comparisons only; the empty Employee sales panel and `employees` response property were removed.
 
 ## Administration / Auth
