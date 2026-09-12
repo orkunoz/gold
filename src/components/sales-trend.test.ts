@@ -23,4 +23,15 @@ describe("sales trend date positioning", () => {
     expect(chartPointPosition(range, 1)).toBe(20);
     expect(chartPointPosition(range, 2)).toBe(100);
   });
+
+  it("positions PostgreSQL timestamp-shaped report dates instead of stacking them at the left", () => {
+    const range = points([
+      "2026-09-06T00:00:00+00:00",
+      "2026-09-09T00:00:00+00:00",
+      "2026-09-12T00:00:00+00:00",
+    ]);
+    expect(chartPointPosition(range, 0)).toBe(0);
+    expect(chartPointPosition(range, 1)).toBe(50);
+    expect(chartPointPosition(range, 2)).toBe(100);
+  });
 });

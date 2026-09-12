@@ -1,22 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { formatDashboardDate } from "@/lib/dashboard/date-only";
+import { formatDashboardDate, parseDashboardDate } from "@/lib/dashboard/date-only";
 import { formatPrice } from "@/lib/inventory/format";
 
 type Point = { date: string; revenue: number; items_sold: number };
 
-const DAY_MS = 86_400_000;
-const epochDay = (date: string) => {
-  const [year, month, day] = date.split("-").map(Number);
-  return Date.UTC(year, month - 1, day) / DAY_MS;
-};
-
 export function chartPointPosition(points: Point[], index: number) {
   if (points.length <= 1) return 50;
-  const first = epochDay(points[0].date);
-  const last = epochDay(points.at(-1)!.date);
-  return last === first ? 50 : (epochDay(points[index].date) - first) / (last - first) * 100;
+  const first = parseDashboardDate(points[0].date)?.getTime();
+  const current = parseDashboardDate(points[index].date)?.getTime();
+  const last = parseDashboardDate(points.at(-1)!.date)?.getTime();
+  if (first === undefined || current === undefined || last === undefined) return index / (points.length - 1) * 100;
+  return last === first ? 50 : (current - first) / (last - first) * 100;
 }
 
 export function SalesTrend({ points }: { points: Point[] }) {
