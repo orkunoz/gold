@@ -11,7 +11,7 @@ import { InventoryStatus } from "@/components/inventory-status";
 
 type Shop = { id: string; name: string };
 
-export function SalesCheckout({ employee, shops }: { employee: { username?:string|null; full_name: string | null; role: EmployeeRole; shop_id: string | null }; shops: Shop[] }) {
+export function SalesCheckout({ employee, shops }: { employee: { username?:string|null; full_name: string | null; role: EmployeeRole; shop_id: string | null; shops?: { name: string } | null }; shops: Shop[] }) {
   const availableShops = checkoutShops(employee.role, employee.shop_id, shops);
   const [shopId, setShopId] = useState(employee.role === "owner" ? availableShops[0]?.id ?? "" : employee.shop_id ?? "");
   const [cart, setCart] = useState<CartItem[]>([]);

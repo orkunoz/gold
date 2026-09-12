@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { getAdminData } from "@/lib/admin/queries";
+import { getAdminEmployees, getAdminShopRecords } from "@/lib/admin/queries";
 
 export const metadata = { title: "Administration" };
 
 export default async function AdminPage() {
-  const { shops, employees } = await getAdminData();
+  const [shops, employees] = await Promise.all([getAdminShopRecords(), getAdminEmployees()]);
   const cards = [
     { label: "Active shops", value: shops.filter((shop) => shop.is_active).length },
     { label: "Active accounts", value: employees.filter((employee) => employee.is_active).length },

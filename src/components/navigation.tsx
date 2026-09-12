@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import type { EmployeeRole } from "@/lib/database.types";
 
@@ -21,7 +21,12 @@ export function Navigation({ role }: { role: EmployeeRole }) {
     {visibleLinks.map(({ href, label }) => {
       const active = pathname === href || pathname.startsWith(`${href}/`);
       return <Link key={href} href={href} aria-current={active ? "page" : undefined}
-        className={`rounded-xl px-4 py-2.5 text-sm font-medium transition ${active ? "bg-amber-950 text-amber-50 shadow-sm" : "text-stone-600 hover:bg-amber-50 hover:text-amber-950"}`}>{label}</Link>;
+        className={`rounded-xl px-4 py-2.5 text-sm font-medium transition ${active ? "bg-amber-950 text-amber-50 shadow-sm" : "text-stone-600 hover:bg-amber-50 hover:text-amber-950"}`}>{label}<NavigationPending /></Link>;
     })}
   </nav>;
+}
+
+function NavigationPending() {
+  const { pending } = useLinkStatus();
+  return pending ? <span className="ml-2 inline-block h-1.5 w-1.5 rounded-full bg-current opacity-60" aria-label="Loading page" /> : null;
 }

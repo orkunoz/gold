@@ -1,1 +1,1 @@
-export default function AdminLoading(){return <p className="text-sm text-stone-500">Loading administration…</p>}
+export default function AdminLoading(){return <section aria-busy="true" aria-label="Loading administration" className="animate-pulse"><div className="h-9 w-56 rounded bg-stone-200"/><div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{Array.from({length:4},(_,index)=><div key={index} className="h-24 rounded-xl bg-stone-200"/>)}</div><div className="mt-8 h-56 rounded-xl bg-stone-200"/></section>}
