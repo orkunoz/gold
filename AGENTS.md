@@ -5,7 +5,9 @@ Last reviewed: 2026-09-12. This file describes the current implementation, not a
 ## Project and deployment
 
 - Gold jewelry-store management SaaS/web application for a Ukraine family jewelry business. Current deployment serves one business with several physical shops; it is not a generalized multi-tenant SaaS yet.
-- UI brand: Zlata Jewelry. English operational UI; Ukrainian product data; UAH currency; grams for weight.
+- UI brand: Zlata Jewelry. Ukrainian-default, English-selectable operational UI; Ukrainian/Unicode product data; UAH currency; grams for weight.
+- Localization uses the lightweight in-repository dictionaries `locales/ua.json` and `locales/en.json` (never `uk.json`). `src/lib/i18n` provides shared lookup, interpolation, and English missing-key fallback; server components read the `zlata-language` cookie through `getTranslations`, while client components use `I18nProvider`/`useI18n`. Ukrainian (`ua`, HTML language `uk`) is the first-visit default; the UA | EN controls on Login and authenticated navigation persist the preference in a one-year, site-wide SameSite=Lax cookie. Keep UI wording in the dictionaries and use translation keys in components rather than language conditionals.
+- Dates and UAH displays use the selected locale while reporting boundaries remain Europe/Kyiv. Business data (shop/category/producer names, usernames, articles, barcodes, notes and history values) is never translated. PostgreSQL text, browser inputs, search and the XLSX parser preserve Ukrainian Unicode; only usernames and technical identifiers retain their existing restricted validation.
 - Repository: https://github.com/orkunoz/gold ; default/deployment branch `main`.
 - Production: https://gold-kappa-ruddy.vercel.app ; Vercel project `gold` in team `zelta-digital`.
 - Next.js App Router 16.3.4, React 19.2.8, TypeScript 6.0.3, Tailwind 4.3.3, Node.js 24+, Supabase PostgreSQL/Auth and server-side RPC backend. Exact versions are pinned in package.json/package-lock.json.
@@ -50,7 +52,7 @@ One `inventory_items` row represents one physical item (not an article-level qua
 
 The list columns are exactly Nr, Product Category, Producer, Metal, Fineness, Size, Weight, Price per Gram, Article, Price (UAH), Notes, Status, Shop, Barcode. Database pagination is 50 items/page, newest first; row numbers continue across pages and the filtered result count is in the table footer. Filters include partial barcode/article, category, IN_STOCK/SOLD status, text and Owner shop. Metal remains a field/column but is not a list filter; REMOVED remains operational but is not a selectable list filter. Inventory has no separate scanner panel; Sales checkout retains scanning. Salespeople cannot add/edit/import.
 
-Manual add/edit allows an existing category or new category text directly; blank category is NULL. Category resolution normalizes surrounding/repeated whitespace, matches case-insensitively, preserves spelling of the existing category, and safely handles concurrent creation. `Браслет` and `Браслет оф` are distinct.
+Manual add/edit allows an existing category or new category text directly; blank category is NULL. Add Product does not expose a Status field and creates products as IN_STOCK by default; Edit Product retains the status control for mutable products. Category resolution normalizes surrounding/repeated whitespace, matches case-insensitively, preserves spelling of the existing category, and safely handles concurrent creation. `Браслет` and `Браслет оф` are distinct.
 
 `get_inventory_category_options()` aggregates categories referenced by accessible inventory in PostgreSQL (no full inventory download). It includes all statuses and is not narrowed by current list filters or the Owner's selected shop filter. Empty accessible inventory gives zero category options; unused master records do not appear. `get_sales_category_options()` uses accessible sale-line category snapshots and remains internal compatibility functionality.
 
@@ -96,6 +98,7 @@ Implementation: `/sales`, `sales-checkout.tsx`, `lib/sales/{checkout,actions}.ts
 - Payload to `complete_sale(p_shop_id, p_items, p_notes)` contains only inventory_item_id and discount_percent per item. Extra fields, including sale_price, are rejected. Missing discount defaults to 0 in SQL. Notes max 5,000 characters; 1–100 unique item UUIDs per sale.
 - Database authenticates active employee, validates active shop and salesperson assignment, locks item rows in UUID order with FOR UPDATE, checks all exist/belong to shop/are IN_STOCK, resolves authoritative current list price under lock, validates discounts, and calculates amounts itself.
 - Atomically creates sales header, inserts sale_items snapshots, totals header, records SALE audit context and marks all items SOLD. Any failure rolls back. Unique sale_items.inventory_item_id plus row locks prevent double sale. Browser never supplies employee attribution or authoritative price.
+- SOLD products are immutable for every role, including Owner. Product Detail and history remain viewable, but the UI exposes no edit/delete controls, the direct edit route redirects to Product Detail, server actions reject the mutation, and a database trigger rejects every UPDATE or DELETE after the item reaches SOLD. The checkout transition from IN_STOCK to SOLD remains allowed.
 - Snapshots: list_price, discount_percent, sale_price, category_name, producer, size, article_number, weight_grams, price_per_gram, metal, barcode, notes. Sales stores employee/shop, sale number/date, total_list_price/total_sale_price and notes. Sale sequence may have gaps after rollback; do not reset it.
 - Application grants deny direct sale mutation; ordinary inventory writes cannot create/reverse/change SOLD rows. Keep historical employee/shop references and snapshots intact.
 - Confirmation includes sale identifier, date, count, total and link to read-only `/sales/[id]`. Dashboard recent-sales links still work. Historical register RPCs/query files remain, but shared Sales page does not render them.
@@ -172,6 +175,7 @@ All migrations through `20260912233000_task17_dashboard_ranges.sql` matched host
 | 20260912220000 | Task 14 fineness import/audit and recent-sale category summaries |
 | 20260912230000 | Task 15 permanent product deletion and bulk inventory moves |
 | 20260912233000 | Task 17 custom dashboard ranges, daily physical-item totals and simplified status summary |
+| 20260912234000 | Task 19 database-enforced SOLD product immutability |
 
 ### Production data safety / completed cleanup
 

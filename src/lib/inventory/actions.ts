@@ -13,11 +13,12 @@ export type InventoryActionState = {
 
 export type BulkMoveState = { error: string; success?: string };
 
-function databaseError(error: { code?: string } | null): InventoryActionState {
+function databaseError(error: { code?: string; message?: string } | null): InventoryActionState {
   if (error?.code === "23505") {
     return { error: "An item with this barcode already exists.", fieldErrors: { barcode: "Barcode must be unique." } };
   }
   if (error?.code === "42501") return { error: "You do not have permission to make this change." };
+  if (error?.code === "22023" && error.message?.includes("SOLD products")) return { error: "SOLD products are read-only and cannot be edited." };
   return { error: "Unable to save this item. Please try again." };
 }
 
@@ -35,6 +36,7 @@ export async function createInventoryItem(
   const employee = await getCurrentEmployee();
   if (!canManageInventory(employee.role)) return { error: "You do not have permission to add inventory." };
 
+  formData.set("status", "IN_STOCK");
   const validation = validateInventoryForm(formData);
   if (!validation.success) return { error: "Check the highlighted fields.", fieldErrors: validation.errors };
   const supabase = await createClient();
@@ -62,9 +64,18 @@ export async function updateInventoryItem(
   const employee = await getCurrentEmployee();
   if (!canManageInventory(employee.role)) return { error: "You do not have permission to edit inventory." };
 
+  const supabase = await createClient();
+  const { data: currentItem, error: currentItemError } = await supabase
+    .from("inventory_items")
+    .select("status")
+    .eq("id", id)
+    .maybeSingle();
+  if (currentItemError) return databaseError(currentItemError);
+  if (!currentItem) return { error: "Item not found or you do not have permission to edit it." };
+  if (currentItem.status === "SOLD") return { error: "SOLD products are read-only and cannot be edited." };
+
   const validation = validateInventoryForm(formData);
   if (!validation.success) return { error: "Check the highlighted fields.", fieldErrors: validation.errors };
-  const supabase = await createClient();
   let categoryId: string | null;
   try { categoryId = await resolveCategory(supabase, validation.data.category_name); }
   catch { return { error: "Unable to create or select this category." }; }

@@ -6,8 +6,8 @@ const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf
 describe("Task 17 scoped UI", () => {
   it("takes Administration directly to Accounts and Shops without summary stats or data reads", () => {
     const source = read("../app/(protected)/admin/page.tsx");
-    expect(source).toContain("Accounts");
-    expect(source).toContain("Shops");
+    expect(source).toContain('t("admin.accounts")');
+    expect(source).toContain('t("admin.shops")');
     expect(source).not.toMatch(/Active shops|Active accounts|Salespeople|getAdmin/);
   });
 
@@ -21,9 +21,9 @@ describe("Task 17 scoped UI", () => {
   it("shows a floating tooltip with date, physical items sold, and revenue", () => {
     const source = read("./sales-trend.tsx");
     expect(source).toContain('role="tooltip"');
-    expect(source).toContain("Items Sold:");
+    expect(source).toContain('t("dashboard.itemsSold")');
     expect(source).toContain("point.items_sold");
-    expect(source).toContain("Revenue:");
+    expect(source).toContain('t("dashboard.revenue")');
     expect(source).toContain("onMouseEnter");
     expect(source).toContain("onMouseLeave={() => setActiveIndex(null)}");
     expect(source).toContain("onBlur={() => setActiveIndex(null)}");
@@ -48,7 +48,7 @@ describe("Task 17 scoped UI", () => {
     expect(source).toContain('period === "CUSTOM"');
     expect(source).toContain('name="start"');
     expect(source).toContain('name="end"');
-    expect(source).toContain("(optional)");
+    expect(source).toContain('t("common.optional")');
     expect(source).toContain('name="shop"');
     const page = read("../app/(protected)/dashboard/page.tsx");
     expect(page).toContain("customDateRange");
@@ -57,8 +57,8 @@ describe("Task 17 scoped UI", () => {
 
   it("uses the cleaned-up inventory and recent-sales labels", () => {
     const source = read("../app/(protected)/dashboard/page.tsx");
-    expect(source).toContain('label="Inventory value"');
-    expect(source).toContain('"Items","Total",""');
+    expect(source).toContain('label={t("dashboard.inventoryValue")}');
+    expect(source).toContain('t("sales.items"),t("common.total"),""');
     expect(source).not.toMatch(/label="Total value"|Revenue \/ Total|Status summary/);
   });
 });

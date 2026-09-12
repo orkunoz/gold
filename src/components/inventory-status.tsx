@@ -1,5 +1,6 @@
+"use client";
 import type { InventoryStatus as Status } from "@/lib/database.types";
-import { STATUS_LABELS } from "@/lib/inventory/constants";
+import { useI18n } from "./i18n-provider";
 
 const colors: Record<Status, string> = {
   IN_STOCK: "bg-emerald-50 text-emerald-800 ring-emerald-600/20",
@@ -8,7 +9,8 @@ const colors: Record<Status, string> = {
 };
 
 export function InventoryStatus({ status }: { status: Status }) {
+  const { t } = useI18n();
   return <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${colors[status]}`}>
-    {STATUS_LABELS[status]}
+    {t(`status.${status}`)}
   </span>;
 }

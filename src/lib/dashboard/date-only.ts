@@ -12,8 +12,8 @@ export function parseDashboardDate(value: string | null | undefined) {
   return date;
 }
 
-export function formatDashboardDate(value: string | null | undefined, options: Intl.DateTimeFormatOptions) {
+export function formatDashboardDate(value: string | null | undefined, options: Intl.DateTimeFormatOptions, locale = "en-GB") {
   const date = parseDashboardDate(value);
   if (!date) return "Date unavailable";
-  return new Intl.DateTimeFormat("en-GB", { ...options, timeZone: "Europe/Kyiv" }).format(date);
+  return new Intl.DateTimeFormat(locale, { ...options, timeZone: "Europe/Kyiv" }).format(date);
 }

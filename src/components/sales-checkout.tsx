@@ -8,10 +8,12 @@ import { completeSaleAction, type SaleConfirmation } from "@/lib/sales/actions";
 import { addProductToCart, buildSaleRpcItems, cartTotal, checkoutShops, discountedPrice, normalizeSalesBarcode, parseDiscountPercent, removeCartItem, updateCartDiscount, type CartItem, type CheckoutProduct } from "@/lib/sales/checkout";
 import { formatPrice } from "@/lib/inventory/format";
 import { InventoryStatus } from "@/components/inventory-status";
+import { useI18n } from "./i18n-provider";
 
 type Shop = { id: string; name: string };
 
 export function SalesCheckout({ employee, shops }: { employee: { username?:string|null; full_name: string | null; role: EmployeeRole; shop_id: string | null; shops?: { name: string } | null }; shops: Shop[] }) {
+  const { t, locale } = useI18n();
   const availableShops = checkoutShops(employee.role, employee.shop_id, shops);
   const [shopId, setShopId] = useState(employee.role === "owner" ? availableShops[0]?.id ?? "" : employee.shop_id ?? "");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -42,18 +44,18 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
     const barcode = normalizeSalesBarcode(scannerRef.current?.value ?? "");
     if (!barcode) { refocusScanner(); return; }
     if (isLookingUp || isPending) return;
-    if (!shopId) { setMessage("Select a shop before scanning."); refocusScanner(true); return; }
-    setMessage("Looking up barcode…");
+    if (!shopId) { setMessage(t("sales.selectShop")); refocusScanner(true); return; }
+    setMessage(t("sales.lookup"));
     setIsLookingUp(true);
     try {
       const response = await fetch(`/api/sales/lookup?code=${encodeURIComponent(barcode)}&shop_id=${encodeURIComponent(shopId)}`);
       const payload = await response.json() as { item?: CheckoutProduct; items?:CheckoutProduct[]; error?: string; articlePage?:number; totalArticleMatches?:number; hasMore?:boolean };
       if (!response.ok || (!payload.item&&!payload.items?.length)) {
-        setMessage(response.status === 404 ? "Barcode or article not found." : payload.error ?? "Item lookup failed.");
+        setMessage(response.status === 404 ? t("sales.notFound") : payload.error ?? t("sales.lookupFailed"));
         refocusScanner(true);
         return;
       }
-      if(payload.items){setMatches(payload.items);setArticleQuery(barcode);setArticlePage(payload.articlePage??1);setArticleTotal(payload.totalArticleMatches??payload.items.length);setHasMoreMatches(Boolean(payload.hasMore));setMessage(`${payload.totalArticleMatches??payload.items.length} physical items use this article. Choose the correct item.`);refocusScanner();return;}
+      if(payload.items){setMatches(payload.items);setArticleQuery(barcode);setArticlePage(payload.articlePage??1);setArticleTotal(payload.totalArticleMatches??payload.items.length);setHasMoreMatches(Boolean(payload.hasMore));setMessage(t("sales.physicalMatches",{count:payload.totalArticleMatches??payload.items.length}));refocusScanner();return;}
       const foundItem=payload.item!;
       const result = addProductToCart(cart, foundItem);
       setCart(result.cart);
@@ -61,7 +63,7 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
       if (scannerRef.current) scannerRef.current.value = "";
       refocusScanner(result.error !== null);
     } catch {
-      setMessage("Barcode lookup failed. Check the connection and try again.");
+      setMessage(t("sales.connectionFailed"));
       refocusScanner(true);
     } finally {
       setIsLookingUp(false);
@@ -75,9 +77,9 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
       const nextPage=articlePage+1;
       const response=await fetch(`/api/sales/lookup?code=${encodeURIComponent(articleQuery)}&shop_id=${encodeURIComponent(shopId)}&article_page=${nextPage}`);
       const payload=await response.json() as {items?:CheckoutProduct[];error?:string;articlePage?:number;totalArticleMatches?:number;hasMore?:boolean};
-      if(!response.ok||!payload.items){setMessage(payload.error??"Unable to load more matching items.");return;}
+      if(!response.ok||!payload.items){setMessage(payload.error??t("sales.loadMoreFailed"));return;}
       setMatches(current=>[...current,...payload.items!]);setArticlePage(payload.articlePage??nextPage);setArticleTotal(payload.totalArticleMatches??articleTotal);setHasMoreMatches(Boolean(payload.hasMore));
-    }catch{setMessage("Unable to load more matching items.");}finally{setIsLookingUp(false);}
+    }catch{setMessage(t("sales.loadMoreFailed"));}finally{setIsLookingUp(false);}
   }
 
   function changeShop(nextShopId: string) {
@@ -85,14 +87,14 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
     setCart([]);
     setConfirmation(null);
     setMatches([]);setArticleQuery("");setArticlePage(1);setArticleTotal(0);setHasMoreMatches(false);
-    setMessage(cart.length ? "The current sale was cleared because the shop changed." : null);
+    setMessage(cart.length ? t("sales.shopChanged") : null);
     refocusScanner();
   }
 
   function complete() {
     const rpcItems = buildSaleRpcItems(cart);
     if (rpcItems.error || !rpcItems.value) { setMessage(rpcItems.error); return; }
-    if (notes.length > 5000) { setMessage("Sale notes cannot exceed 5000 characters."); return; }
+    if (notes.length > 5000) { setMessage(t("sales.notesTooLong")); return; }
     setMessage(null);
     startTransition(async () => {
       const result = await completeSaleAction({ shopId, items: rpcItems.value!, notes: notes.trim() || null });
@@ -105,44 +107,44 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
   }
 
   if (confirmation) return <section className="rounded-xl border border-emerald-300 bg-emerald-50 p-6 shadow-sm">
-    <p className="text-xs font-semibold uppercase tracking-widest text-emerald-800">Sale completed</p>
+    <p className="text-xs font-semibold uppercase tracking-widest text-emerald-800">{t("sales.completed")}</p>
     <h2 className="mt-3 text-2xl font-semibold">{confirmation.sale_number}</h2>
     <dl className="mt-5 grid gap-4 sm:grid-cols-3">
-      <div><dt className="text-xs uppercase text-stone-500">Date</dt><dd className="mt-1 font-medium">{new Date(confirmation.sold_at).toLocaleString("en-UA")}</dd></div>
-      <div><dt className="text-xs uppercase text-stone-500">Items</dt><dd className="mt-1 font-medium">{confirmation.item_count}</dd></div>
-      <div><dt className="text-xs uppercase text-stone-500">Total</dt><dd className="mt-1 text-xl font-semibold">{formatPrice(confirmation.total_sale_price)}</dd></div>
+      <div><dt className="text-xs uppercase text-stone-500">{t("common.date")}</dt><dd className="mt-1 font-medium">{new Date(confirmation.sold_at).toLocaleString(locale === "ua" ? "uk-UA" : "en-UA",{timeZone:"Europe/Kyiv"})}</dd></div>
+      <div><dt className="text-xs uppercase text-stone-500">{t("sales.items")}</dt><dd className="mt-1 font-medium">{confirmation.item_count}</dd></div>
+      <div><dt className="text-xs uppercase text-stone-500">{t("common.total")}</dt><dd className="mt-1 text-xl font-semibold">{formatPrice(confirmation.total_sale_price,locale)}</dd></div>
     </dl>
     <div className="mt-6 flex flex-wrap gap-3">
-      <button onClick={() => { setConfirmation(null); setMessage(null); }} className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white">Start new sale</button>
-      <Link href={`/sales/${confirmation.sale_id}`} className="rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-sm font-medium">View sale details</Link>
+      <button onClick={() => { setConfirmation(null); setMessage(null); }} className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white">{t("sales.startNew")}</button>
+      <Link href={`/sales/${confirmation.sale_id}`} className="rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-sm font-medium">{t("sales.viewDetails")}</Link>
     </div>
   </section>;
 
   return <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-      {employee.role === "owner" ? <label className="min-w-64 text-sm font-medium">Shop
+      {employee.role === "owner" ? <label className="min-w-64 text-sm font-medium">{t("fields.shop")}
         <select value={shopId} onChange={(event) => changeShop(event.target.value)} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5">
-          {!availableShops.length ? <option value="">No active shop available</option> : null}
+          {!availableShops.length ? <option value="">{t("sales.noShop")}</option> : null}
           {availableShops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}
         </select>
       </label> : null}
     </div>
 
     <form onSubmit={scan} className="mt-6 rounded-xl border-2 border-amber-700 bg-amber-50 p-5">
-      <label htmlFor="sales-barcode" className="block text-lg font-semibold">Barcode or article</label>
-      <p className="mt-1 text-sm text-stone-600">Scan a barcode or type an exact article number and press Enter.</p>
+      <label htmlFor="sales-barcode" className="block text-lg font-semibold">{t("sales.scanLabel")}</label>
+      <p className="mt-1 text-sm text-stone-600">{t("sales.scanHint")}</p>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-        <input ref={scannerRef} id="sales-barcode" type="search" autoComplete="off" spellCheck={false} placeholder="Scan barcode or type article" className="min-w-0 flex-1 rounded-lg border border-amber-800 bg-white px-4 py-3 text-lg font-medium outline-none ring-amber-500 focus:ring-2" />
-        <button disabled={isPending || isLookingUp} className="rounded-lg bg-amber-800 px-6 py-3 font-medium text-white disabled:opacity-50">{isLookingUp ? "Looking up…" : "Add item"}</button>
+        <input ref={scannerRef} id="sales-barcode" type="search" autoComplete="off" spellCheck={false} placeholder={t("sales.scanPlaceholder")} className="min-w-0 flex-1 rounded-lg border border-amber-800 bg-white px-4 py-3 text-lg font-medium outline-none ring-amber-500 focus:ring-2" />
+        <button disabled={isPending || isLookingUp} className="rounded-lg bg-amber-800 px-6 py-3 font-medium text-white disabled:opacity-50">{isLookingUp ? t("sales.lookingUp") : t("sales.addItem")}</button>
       </div>
       {message ? <p role="status" className="mt-4 rounded-lg border border-amber-300 bg-white px-4 py-3 font-medium text-stone-900">{message}</p> : null}
     </form>
     {matches.length?<div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">Choose physical item</h2><span className="text-sm text-stone-600">Showing {matches.length} of {articleTotal}</span></div><div className="mt-3 grid gap-3">{matches.map(item=><div key={item.id} className="flex flex-col gap-3 rounded-lg bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">{item.category??"Uncategorized"} · Article {item.article_number??"—"}</p><p className="text-sm text-stone-500">Barcode {item.barcode??"—"} · {item.weight_grams??"—"} g · {item.status}</p></div><button type="button" onClick={()=>{const result=addProductToCart(cart,item);setCart(result.cart);setMessage(result.error);setMatches([]);setHasMoreMatches(false);refocusScanner();}} className="w-full rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white sm:w-auto">Add</button></div>)}</div>{hasMoreMatches?<button type="button" disabled={isLookingUp} onClick={()=>void loadMoreArticleMatches()} className="mt-4 w-full rounded-lg border border-amber-800 bg-white px-4 py-2 text-sm font-medium text-amber-950 disabled:opacity-50">{isLookingUp?"Loading…":"Load 50 more matches"}</button>:null}</div>:null}
 
     <div className="mt-6 overflow-hidden rounded-xl border border-stone-200">
-      <div className="flex items-center justify-between bg-stone-50 px-4 py-3"><h2 className="font-semibold">Current sale</h2><span className="text-sm text-stone-500">{cart.length} item{cart.length === 1 ? "" : "s"}</span></div>
-      {cart.length === 0 ? <p className="p-8 text-center text-sm text-stone-500">Scan an in-stock item to begin.</p> : <div className="overflow-x-auto"><table className="w-full min-w-[920px] text-left text-sm">
-        <thead className="border-y border-stone-200 bg-stone-50 text-xs uppercase text-stone-500"><tr>{["Product Details", "Weight", "Status", "Discount %", "Sale Price", ""].map((heading) => <th key={heading} className="px-4 py-3">{heading}</th>)}</tr></thead>
+      <div className="flex items-center justify-between bg-stone-50 px-4 py-3"><h2 className="font-semibold">{t("sales.current")}</h2><span className="text-sm text-stone-500">{t("sales.itemCount",{count:cart.length})}</span></div>
+      {cart.length === 0 ? <p className="p-8 text-center text-sm text-stone-500">{t("sales.empty")}</p> : <div className="overflow-x-auto"><table className="w-full min-w-[920px] text-left text-sm">
+        <thead className="border-y border-stone-200 bg-stone-50 text-xs uppercase text-stone-500"><tr>{["productDetails", "weight", "status", "discount", "salePrice"].map((key) => <th key={key} className="px-4 py-3">{t(`fields.${key}`)}</th>)}<th /></tr></thead>
         <tbody className="divide-y divide-stone-100">{cart.map((item) => {
           const discountError=parseDiscountPercent(item.discountPercent).error;
           return <tr key={item.id}>
@@ -150,19 +152,19 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
             <td className="px-4 py-3">{item.weight_grams === null ? "—" : `${item.weight_grams} g`}</td>
             <td className="px-4 py-3"><InventoryStatus status={item.status} /></td>
             <td className="px-4 py-3"><input aria-label={`Discount for ${item.barcode??item.article_number??"item"}`} type="number" min="0" max="100" step="0.01" inputMode="decimal" value={item.discountPercent} onChange={(event)=>setCart(updateCartDiscount(cart,item.id,event.target.value))} className={`w-24 rounded-lg border px-3 py-2 ${discountError?"border-red-500":"border-stone-300"}`} />{discountError?<p className="mt-1 text-xs text-red-700">{discountError}</p>:null}</td>
-            <td className="px-4 py-3 whitespace-nowrap font-semibold">{formatPrice(discountedPrice(item.listPrice, item.discountPercent))}</td>
-            <td className="px-4 py-3 text-right"><button onClick={() => { setCart(removeCartItem(cart, item.id)); refocusScanner(); }} className="text-sm font-medium text-red-700 hover:underline">Remove</button></td>
+            <td className="px-4 py-3 whitespace-nowrap font-semibold">{formatPrice(discountedPrice(item.listPrice, item.discountPercent),locale)}</td>
+            <td className="px-4 py-3 text-right"><button onClick={() => { setCart(removeCartItem(cart, item.id)); refocusScanner(); }} className="text-sm font-medium text-red-700 hover:underline">{t("sales.remove")}</button></td>
           </tr>;
         })}</tbody>
       </table></div>}
     </div>
 
     <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
-      <label className="text-sm font-medium">Sale notes <span className="font-normal text-stone-500">(optional)</span>
+      <label className="text-sm font-medium">{t("sales.saleNotes")} <span className="font-normal text-stone-500">({t("common.optional")})</span>
         <textarea value={notes} maxLength={5000} onChange={(event) => setNotes(event.target.value)} rows={3} className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2.5" />
         <span className="mt-1 block text-xs text-stone-500">{notes.length}/5000 characters</span>
       </label>
-      <div className="min-w-64 rounded-xl bg-stone-950 p-5 text-white"><p className="text-xs uppercase tracking-wide text-stone-400">Current total</p><p className="mt-2 text-2xl font-semibold">{formatPrice(cartTotal(cart))}</p><button onClick={complete} disabled={cart.length === 0 || isPending || !shopId} className="mt-4 w-full rounded-lg bg-amber-500 px-5 py-3 font-semibold text-stone-950 disabled:cursor-not-allowed disabled:opacity-50">{isPending ? "Completing sale…" : "Complete Sale"}</button></div>
+      <div className="min-w-64 rounded-xl bg-stone-950 p-5 text-white"><p className="text-xs uppercase tracking-wide text-stone-400">{t("sales.currentTotal")}</p><p className="mt-2 text-2xl font-semibold">{formatPrice(cartTotal(cart),locale)}</p><button onClick={complete} disabled={cart.length === 0 || isPending || !shopId} className="mt-4 w-full rounded-lg bg-amber-500 px-5 py-3 font-semibold text-stone-950 disabled:cursor-not-allowed disabled:opacity-50">{isPending ? t("sales.completing") : t("sales.complete")}</button></div>
     </div>
   </section>;
 }
