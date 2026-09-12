@@ -58,8 +58,6 @@ export function validateInventoryForm(formData: FormData): InventoryValidationRe
 
   const errors: InventoryFormErrors = {};
   if (values.barcode.length > 200) errors.barcode = "Barcode is too long.";
-  if (values.metal && !["Gold", "Silver"].includes(values.metal)) errors.metal = "Select Gold or Silver.";
-
   const status = values.status as InventoryStatus;
   if (!INVENTORY_STATUSES.includes(status)) errors.status = "Select a valid status.";
 
@@ -86,7 +84,7 @@ export function validateInventoryForm(formData: FormData): InventoryValidationRe
       category_name: nullableText(values.category_name)?.replace(/\s+/g, " ") ?? null,
       gold_fineness: nullableText(values.gold_fineness),
       gold_color: nullableText(values.gold_color),
-      metal: nullableText(values.metal) as "Gold" | "Silver" | null,
+      metal: nullableText(values.metal),
       producer: nullableText(values.producer),
       weight_grams: weight,
       size: nullableText(values.size),

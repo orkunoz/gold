@@ -39,8 +39,8 @@ One `inventory_items` row represents one physical item (not an article-level qua
 | barcode | Nullable text; non-null values trimmed/nonempty and globally unique, case-sensitive; many NULL barcodes allowed |
 | article_number | Nullable text; repeats are valid and never imply the same physical item |
 | category_id | Nullable FK to product_categories; display name obtained by join |
-| metal | Nullable text constrained to Gold or Silver |
-| producer, size | Nullable text; size supports nonnumeric source values |
+| metal | Nullable open text; arbitrary user/import values are allowed |
+| producer, size | Nullable open text; arbitrary producer values are allowed and size supports nonnumeric source values |
 | gold_fineness | Nullable jewelry fineness, exposed as Fineness; XLSX header `Проба` |
 | gold_color | Nullable legacy/manual product attribute retained |
 | weight_grams | Nullable nonnegative numeric weight |
@@ -53,6 +53,8 @@ One `inventory_items` row represents one physical item (not an article-level qua
 The list columns are exactly Nr, Product Category, Producer, Metal, Fineness, Size, Weight, Price per Gram, Article, Price (UAH), Notes, Status, Shop, Barcode. Database pagination is 50 items/page, newest first; row numbers continue across pages and the filtered result count is in the table footer. Filters include partial barcode/article, category, IN_STOCK/SOLD status, text and Owner shop. Metal remains a field/column but is not a list filter; REMOVED remains operational but is not a selectable list filter. Inventory has no separate scanner panel; Sales checkout retains scanning. Salespeople cannot add/edit/import.
 
 Manual add/edit allows an existing category or new category text directly; blank category is NULL. Add Product does not expose a Status field and creates products as IN_STOCK by default; Edit Product retains the status control for mutable products. Category resolution normalizes surrounding/repeated whitespace, matches case-insensitively, preserves spelling of the existing category, and safely handles concurrent creation. `Браслет` and `Браслет оф` are distinct.
+
+Metal and Producer are open text fields in manual add/edit and XLSX import. Trim surrounding whitespace, store blank as NULL, preserve Unicode text exactly, and never reject or warn merely because a value is new. Both fields participate in Inventory text search and display without translation. Existing Gold/Silver values remain ordinary unchanged inventory values; new values require no separate setup.
 
 `get_inventory_category_options()` aggregates categories referenced by accessible inventory in PostgreSQL (no full inventory download). It includes all statuses and is not narrowed by current list filters or the Owner's selected shop filter. Empty accessible inventory gives zero category options; unused master records do not appear. `get_sales_category_options()` uses accessible sale-line category snapshots and remains internal compatibility functionality.
 
@@ -81,6 +83,7 @@ Implementation: `src/lib/inventory/import`, `src/components/inventory-import.tsx
 - Target shop is selected from active accessible shops. A nonblank mapped Shop cell overrides target using case-insensitive normalized shop name/code matching. Unknown shop is a row error; do not silently create shops from XLSX.
 - Blank/unmapped status defaults to IN_STOCK. English and Ukrainian aliases support IN_STOCK/SOLD/REMOVED. SOLD import is rejected: only complete_sale creates it. Unknown status warns and defaults to IN_STOCK. Removed reservation strings are no longer recognized aliases.
 - Every nonempty mapped category is valid, including `Браслет оф`. Normalize whitespace and case matching; create new category via `resolve_product_category` during database import. Never emit Unknown Category merely because the category is new. Blank is NULL.
+- Every nonempty mapped Metal and Producer value is valid open text. Trim surrounding whitespace, preserve the remaining Unicode text exactly, and store blank as NULL. Never normalize these fields to a whitelist or emit Unknown Metal/Producer warnings.
 - Blank barcode is NULL; no generated barcodes. Repeated nonblank barcodes in candidate rows and existing database barcodes are errors; unique DB constraint resolves races. Article is independent, nullable and repeatable. Excel numeric cells already lose leading zeros; store barcode/article cells as text in source workbooks when zeros matter.
 - Localized numbers accept decimal comma, whitespace/NBSP grouping and trailing грн/UAH/₴. Negative weight/gram price is an error. Malformed optional number warns and becomes NULL. Missing weight or gram price makes formula price NULL.
 - CRITICAL footer rule: when Price per Gram is mapped, skip every row whose mapped cell is blank/whitespace/NULL, before duplicate counting and preview. This prevents totals rows becoming products. Numeric zero is not blank. If gram price is not mapped, sparse rows remain valid; do not make it globally required.
@@ -142,11 +145,11 @@ Important entry points/helpers:
 
 RLS is enabled on business tables. Requests normally use the user's Supabase session. Hardened SECURITY DEFINER RPCs set search_path and explicitly enforce identity/role/shop, including functions running with row_security off. Do not assume RLS alone protects a definer function. Anonymous access is denied; authenticated direct shop/employee writes are revoked in favor of Owner RPCs; pricing rule management is Owner-only; history is read-only to app users. Server service-role client is limited to protected Auth account operations, never generic inventory/sales requests.
 
-Critical constraints: role/status CHECKs, nonnegative amounts, allowed metals, global non-null barcode uniqueness, unique normalized category names, normalized unique usernames, unique Auth linkage, active-Owner/salesperson partial indexes, required active shop validation, sale-number uniqueness, unique sold physical item, restrictive historical FKs. Removing status was a CHECK replacement, not enum surgery.
+Critical constraints: role/status CHECKs, nonnegative amounts, open-text metal/producer values, global non-null barcode uniqueness, unique normalized category names, normalized unique usernames, unique Auth linkage, active-Owner/salesperson partial indexes, required active shop validation, sale-number uniqueness, unique sold physical item, restrictive historical FKs. Removing status was a CHECK replacement, not enum surgery.
 
 ### Applied migrations
 
-All migrations through `20260912233000_task17_dashboard_ranges.sql` matched hosted production after Task 17. The Task 13 migrations add deletion-safe historical snapshots/unassigned semantics and retain the validation RPC signature without lint warnings. Never edit an already applied migration.
+All migrations through `20260912235000_dynamic_inventory_metal.sql` matched hosted production after this hotfix. The Task 13 migrations add deletion-safe historical snapshots/unassigned semantics and retain the validation RPC signature without lint warnings. Never edit an already applied migration.
 
 | Version | Purpose |
 | --- | --- |
@@ -176,6 +179,7 @@ All migrations through `20260912233000_task17_dashboard_ranges.sql` matched host
 | 20260912230000 | Task 15 permanent product deletion and bulk inventory moves |
 | 20260912233000 | Task 17 custom dashboard ranges, daily physical-item totals and simplified status summary |
 | 20260912234000 | Task 19 database-enforced SOLD product immutability |
+| 20260912235000 | Open-text inventory Metal and Producer values |
 
 ### Production data safety / completed cleanup
 

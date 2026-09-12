@@ -55,12 +55,7 @@ export function matchCategory(value: SpreadsheetCell | undefined, categories: Ca
 }
 
 export function normalizeImportedMetal(value: SpreadsheetCell | undefined) {
-  const raw = text(value);
-  if (!raw) return { value: null as "Gold" | "Silver" | null };
-  const key = normalized(raw);
-  if (["gold", "золото"].includes(key)) return { value: "Gold" as const };
-  if (["silver", "срібло"].includes(key)) return { value: "Silver" as const };
-  return { value: null, warning: `Unknown metal “${raw}”` };
+  return { value: text(value) };
 }
 
 export function normalizeImportedStatus(value: SpreadsheetCell | undefined) {
@@ -120,7 +115,6 @@ export function validateImportRows(rows: SpreadsheetRow[], context: Context): Im
     if (pricePerGram.error) warnings.push("Invalid price per gram; storing blank, so formula price will be unavailable"); else if (pricePerGram.value !== null && pricePerGram.value < 0) errors.push("Price per gram cannot be negative");
     const category = matchCategory(mapped(row, context.mapping, "category"), context.categories);
     const metal = normalizeImportedMetal(mapped(row, context.mapping, "metal"));
-    if (metal.warning) warnings.push(metal.warning);
     const status = normalizeImportedStatus(mapped(row, context.mapping, "status"));
     if (status.warning) warnings.push(status.warning);
     if (status.value === "SOLD") errors.push("SOLD status can only be created by completing a sale");

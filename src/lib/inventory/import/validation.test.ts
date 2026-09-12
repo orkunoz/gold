@@ -19,10 +19,10 @@ describe("Excel value parsing", () => {
     expect(matchCategory("Браслет оф", categories)).not.toEqual(matchCategory("Браслет", categories));
     expect(matchCategory("   ", categories)).toEqual({ id: null });
   });
-  it.each([["Gold", "Gold"], ["gold", "Gold"], ["Золото", "Gold"], ["SILVER", "Silver"], ["Срібло", "Silver"]])("normalizes metal %s", (input, expected) => expect(normalizeImportedMetal(input)).toEqual({ value: expected }));
-  it("keeps absent metal null and warns on unknown metal", () => {
+  it.each([["Gold", "Gold"], ["Silver", "Silver"], ["  Золота Україна  ", "Золота Україна"], ["Жадент", "Жадент"]])("trims and preserves metal %s", (input, expected) => expect(normalizeImportedMetal(input)).toEqual({ value: expected }));
+  it("keeps absent and blank metal null", () => {
     expect(normalizeImportedMetal(null)).toEqual({ value: null });
-    expect(normalizeImportedMetal("Platinum")).toMatchObject({ value: null, warning: expect.any(String) });
+    expect(normalizeImportedMetal("   ")).toEqual({ value: null });
   });
   it("removes completely blank spreadsheet rows", () => expect(removeEmptySpreadsheetRows([[null, "  "], [null, "Ring"]])).toEqual([[null, "Ring"]]));
   it("calculates price only when weight and price per gram exist",()=>{expect(calculateInventoryPrice(3.25,6000)).toBe(19500);expect(calculateInventoryPrice(null,6000)).toBeNull();expect(calculateInventoryPrice(3.25,null)).toBeNull();});
@@ -50,6 +50,14 @@ describe("flexible inventory import validation", () => {
     expect(preview.summary.footerSkipped).toBe(1);
     expect(preview.rows).toHaveLength(1);
     expect(preview.rows[0]).toMatchObject({ sourceRow: 2, item: { article_number: "A-1", price_per_gram: 100 } });
+  });
+  it("imports new Ukrainian metal and producer values without warnings", () => {
+    const row = validateImportRows([["  Золота Україна  ", "  Жадент  "]], { ...base, mapping: { metal: 0, producer: 1 } }).rows[0];
+    expect(row).toMatchObject({ classification: "Ready", warnings: [], errors: [], item: { metal: "Золота Україна", producer: "Жадент" } });
+  });
+  it("imports blank metal and producer values as null", () => {
+    const row = validateImportRows([["   ", null]], { ...base, mapping: { metal: 0, producer: 1 } }).rows[0];
+    expect(row).toMatchObject({ classification: "Ready", warnings: [], item: { metal: null, producer: null } });
   });
   it("preserves original worksheet row numbers after blank rows were removed",()=>{
     const preview=validateImportRows([["Ring","2","A-1","100"],["Ring","3","A-2","100"]],{...base,sourceRows:[4,7]});

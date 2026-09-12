@@ -18,6 +18,18 @@ describe("inventory form validation", () => {
     expect(validateInventoryForm(form({ category_name: "   " }))).toMatchObject({ success: true, data: { category_name: null } });
   });
 
+  it.each(["Gold", "Silver", "Золота Україна", "Жадент"])('accepts arbitrary metal value "%s"', (metal) => {
+    expect(validateInventoryForm(form({ metal: `  ${metal}  ` }))).toMatchObject({ success: true, data: { metal } });
+  });
+
+  it("accepts and preserves an arbitrary Ukrainian producer", () => {
+    expect(validateInventoryForm(form({ producer: "  Виробник Жадент  " }))).toMatchObject({ success: true, data: { producer: "Виробник Жадент" } });
+  });
+
+  it("stores blank metal and producer values as null", () => {
+    expect(validateInventoryForm(form({ metal: "   ", producer: "   " }))).toMatchObject({ success: true, data: { metal: null, producer: null } });
+  });
+
   it("allows an unassigned shop and a null barcode", () => {
     const result = validateInventoryForm(form({ barcode: "", shop_id: "" }));
     expect(result).toMatchObject({ success: true, data: { shop_id:null,barcode:null } });

@@ -31,7 +31,7 @@ export type ImportRow = {
     article_number: string | null;
     category_id: string | null;
     category_name: string | null;
-    metal: "Gold" | "Silver" | null;
+    metal: string | null;
     gold_fineness: string | null;
     producer: string | null;
     weight_grams: number | null;

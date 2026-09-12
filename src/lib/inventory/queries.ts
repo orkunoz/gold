@@ -68,7 +68,7 @@ export async function getInventoryItems(filters: InventoryFilters, page = 1, pag
   if (filters.category) query = query.eq("category_id", filters.category);
   if (filters.status) query = query.eq("status", filters.status);
   if (filters.shop) query = query.eq("shop_id", filters.shop);
-  if (search) query = query.or(`barcode.ilike.%${search}%,article_number.ilike.%${search}%,producer.ilike.%${search}%,notes.ilike.%${search}%`);
+  if (search) query = query.or(`barcode.ilike.%${search}%,article_number.ilike.%${search}%,producer.ilike.%${search}%,metal.ilike.%${search}%,notes.ilike.%${search}%`);
 
   const { data, error, count } = await query;
   if (error) throw new Error("Unable to load inventory.");
