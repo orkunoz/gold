@@ -1,4 +1,4 @@
--- Rollback-only Task 6 reporting verification. Requires an active owner.
+-- Rollback-only current dashboard verification. Requires an active owner.
 begin;
 do $$
 declare
@@ -16,19 +16,19 @@ begin
   insert into public.shops(id,name,code) values(v_shop_a,'Task 6 Shop A','TASK6-A'),(v_shop_b,'Task 6 Shop B','TASK6-B'),(v_empty_shop,'Task 6 Empty','TASK6-E');
   insert into public.product_categories(id,name) values(v_category,'Task 6 Rings');
   insert into public.inventory_items(id,shop_id,barcode,category_id,weight_grams,owner_price,selling_price,status) values
-    (v_sold_a,v_shop_a,'TASK6-SOLD-A',v_category,2,100,null,'SOLD'),(v_sold_b,v_shop_a,'TASK6-SOLD-B',null,3,200,null,'SOLD'),
-    (v_sold_c,v_shop_b,'TASK6-SOLD-C',v_category,4,300,null,'SOLD'),(v_old_item,v_shop_a,'TASK6-OLD',null,5,999,null,'SOLD'),
+    (v_sold_a,v_shop_a,'TASK6-SOLD-A',null,20,100,null,'SOLD'),(v_sold_b,v_shop_a,'TASK6-SOLD-B',v_category,30,200,null,'SOLD'),
+    (v_sold_c,v_shop_b,'TASK6-SOLD-C',null,40,300,null,'SOLD'),(v_old_item,v_shop_a,'TASK6-OLD',v_category,50,999,null,'SOLD'),
     (v_stock_manual,v_shop_a,'TASK6-STOCK-M',v_category,1,90,100,'IN_STOCK'),(v_stock_rule,v_shop_a,'TASK6-STOCK-R',v_category,2,200,null,'IN_STOCK'),
     (v_stock_missing,v_shop_a,'TASK6-STOCK-N',null,null,null,null,'IN_STOCK');
-  insert into public.inventory_items(shop_id,barcode,status) values(v_shop_a,'TASK6-RESERVED','RESERVED'),(v_shop_a,'TASK6-REMOVED','REMOVED');
+  insert into public.inventory_items(shop_id,barcode,status) values(v_shop_a,'TASK6-REMOVED','REMOVED');
   insert into public.pricing_rules(name,shop_id,category_id,rule_type,rule_value,created_by) values('Task 6 rule',v_shop_a,v_category,'FIXED_AMOUNT',50,v_employee.id);
 
   insert into public.sales(id,shop_id,employee_id,sale_number,sold_at,total_list_price,total_sale_price) values
     (v_sale_a,v_shop_a,v_employee.id,'TASK6-SALE-A',v_today_start+interval '1 hour',300,300),
     (v_sale_b,v_shop_b,v_employee.id,'TASK6-SALE-B',v_today_start+interval '2 hour',400,400),
     (v_old_sale,v_shop_a,v_employee.id,'TASK6-OLD-SALE',v_today_start-interval '1 second',999,999);
-  insert into public.sale_items(sale_id,inventory_item_id,list_price,sale_price) values
-    (v_sale_a,v_sold_a,100,100),(v_sale_a,v_sold_b,200,200),(v_sale_b,v_sold_c,400,400),(v_old_sale,v_old_item,999,999);
+  insert into public.sale_items(sale_id,inventory_item_id,list_price,sale_price,category_name,weight_grams) values
+    (v_sale_a,v_sold_a,100,100,'Task 6 Rings',2),(v_sale_a,v_sold_b,200,200,null,3),(v_sale_b,v_sold_c,400,400,'Task 6 Rings',4),(v_old_sale,v_old_item,999,999,null,5);
 
   v_report:=public.get_dashboard_report('TODAY',null);
   if (v_report#>>'{kpis,revenue}')::numeric<>700 or (v_report#>>'{kpis,sales_count}')::int<>2 or (v_report#>>'{kpis,items_sold}')::int<>3 then raise exception 'all-shop sales KPI aggregation failed'; end if;
@@ -36,14 +36,14 @@ begin
   if not exists(select 1 from jsonb_array_elements(v_report->'shops') row_data where row_data->>'shop'='Task 6 Shop A')
     or not exists(select 1 from jsonb_array_elements(v_report->'shops') row_data where row_data->>'shop'='Task 6 Shop B')
   then raise exception 'owner all-shop comparison failed'; end if;
-  if jsonb_array_length(v_report->'categories')<>2 or jsonb_array_length(v_report->'employees')<>2 then raise exception 'category/employee aggregation failed'; end if;
+  if jsonb_array_length(v_report->'categories')<>2 or v_report ? 'employees' then raise exception 'current category/dashboard shape failed'; end if;
   if v_report->>'timezone'<>'Europe/Kyiv' or v_report->>'start_at' is null then raise exception 'timezone metadata missing'; end if;
 
   v_report:=public.get_dashboard_report('TODAY',v_shop_a);
   if (v_report#>>'{kpis,revenue}')::numeric<>300 or (v_report#>>'{kpis,sales_count}')::int<>1 or (v_report#>>'{kpis,items_sold}')::int<>2 or (v_report#>>'{kpis,gold_weight_sold}')::numeric<>5 then raise exception 'shop filter failed'; end if;
   if (v_report#>>'{inventory,in_stock_items}')::int<>3 or (v_report#>>'{inventory,in_stock_weight}')::numeric<>3 then raise exception 'current stock count/weight failed'; end if;
   if (v_report#>>'{inventory,customer_value}')::numeric<>350 or (v_report#>>'{inventory,missing_price_items}')::int<>1 then raise exception 'effective inventory valuation failed'; end if;
-  if (v_report#>>'{status_counts,RESERVED}')::int<>1 or (v_report#>>'{status_counts,REMOVED}')::int<>1 then raise exception 'status summary failed'; end if;
+  if (v_report#>>'{status_counts,IN_STOCK}')::int<>3 or (v_report#>>'{status_counts,REMOVED}')::int<>1 or v_report#>'{status_counts,RESERVED}' is not null then raise exception 'three-state status summary failed'; end if;
 
   v_report:=public.get_dashboard_report('LAST_7_DAYS',v_shop_a);
   if (v_report#>>'{kpis,revenue}')::numeric<>1299 then raise exception 'date filtering boundary failed'; end if;
@@ -56,7 +56,7 @@ begin
 
   update public.employees set role='salesperson',shop_id=v_shop_a where id=v_employee.id;
   v_report:=public.get_dashboard_report('LAST_30_DAYS',null);
-  if v_report->>'period'<>'TODAY' or v_report->'inventory'<>'null'::jsonb or v_report->'employees'<>'null'::jsonb or (v_report#>>'{kpis,revenue}')::numeric<>300 then raise exception 'salesperson dashboard restriction failed'; end if;
+  if v_report->>'period'<>'LAST_30_DAYS' or v_report->'inventory'<>'null'::jsonb or v_report ? 'employees' or (v_report#>>'{kpis,revenue}')::numeric<>1299 then raise exception 'salesperson dashboard restriction failed'; end if;
   begin perform public.get_dashboard_report('TODAY',v_shop_b); raise exception 'salesperson cross-shop report succeeded'; exception when insufficient_privilege then null; end;
   update public.employees set role='owner',shop_id=v_shop_a where id=v_employee.id;
 

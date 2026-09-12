@@ -1,84 +1,82 @@
-# V1 production runbook
+# Production runbook
 
-## Architecture and status
+## Current deployment
 
-The production target is Vercel running the Next.js application over HTTPS, with Supabase providing Auth and PostgreSQL/RLS. GitHub is the source-code backup. Supabase/Postgres is the source of truth for business data after an Excel import; uploaded workbooks are not a database backup.
+- Application: `https://gold-kappa-ruddy.vercel.app`
+- Vercel project: `gold`, team `zelta-digital`
+- Source/deployment branch: GitHub `orkunoz/gold`, `main`
+- Data/Auth: existing Supabase project
 
-The repository is deployment-ready, but a live Vercel deployment is **not verified or claimed**. It still requires access to the business Vercel project, the final production URL, and production environment values. Real employee invitation delivery also remains a controlled manual acceptance test.
+Vercel runs the Next.js application over HTTPS. Supabase PostgreSQL is the source of truth for inventory, sales, accounts, and audit history. GitHub is source-code history, not a business-data backup. `GET /api/health` verifies only that the Next.js process responds.
 
-`GET /api/health` returns only `{ "status": "ok" }` with no-store caching. It proves the Next.js process responds; it intentionally reveals no configuration, identity, or database details.
-
-## Production environment
-
-Configure these values in Vercel for Production (and Preview only when preview deployments are intentionally allowed):
+## Environment
 
 | Variable | Exposure | Purpose |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Public | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public | Supabase anon/publishable browser key |
-| `NEXT_PUBLIC_APP_URL` | Public | Canonical HTTPS application URL, no trailing slash |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server only | Supabase Auth Admin invitation call |
+| `NEXT_PUBLIC_SUPABASE_URL` | Public | Existing Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public | Browser publishable/anon key |
+| `NEXT_PUBLIC_APP_URL` | Public | Canonical HTTPS application origin |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server only | Protected Auth account creation/reset |
 
-Never prefix the service-role variable with `NEXT_PUBLIC_`, pass it to Client Components, log it, or store it in Git. Rotate it immediately if it is ever exposed. The application imports it only from `src/lib/supabase/admin.ts`, which is guarded by `server-only`; employee invitation is its only use.
+Never expose, log, commit, or add a `NEXT_PUBLIC_` prefix to the service-role key. Rotate it if exposure is suspected.
 
-## Vercel deployment
+## Release procedure
 
-1. Import `orkunoz/gold` into the intended business Vercel account.
-2. Keep the detected Next.js framework and repository root. Use Node.js 24, `npm ci`, and the normal `npm run build` command.
-3. Add all four environment variables above. Do not paste secrets into source files or build logs.
-4. Deploy and record the resulting HTTPS production URL.
-5. Set `NEXT_PUBLIC_APP_URL` to that exact origin and redeploy so invitation redirects use it.
-6. In Supabase Authentication → URL Configuration, set **Site URL** to the production origin. Add the exact production login URL (`https://…/login`) to allowed redirect URLs. Add intentional Vercel preview URLs only if previews should use production Auth.
-7. Keep public signup and anonymous sign-in disabled; keep the email provider enabled.
-8. Enable leaked-password protection in Supabase Auth if the project plan supports it; the production security advisor currently reports it disabled.
-9. Confirm `/api/health`, then execute the acceptance checklist below with controlled accounts/data.
+1. Confirm the intended repository, clean worktree, `main`, and exact commit.
+2. Run `npm ci`, lint, typecheck, unit tests, and production build.
+3. Authenticate/link Supabase CLI to the existing project.
+4. Run migration parity, `supabase db push --dry-run --linked`, and database lint.
+5. Review and apply only new forward migrations. Never edit or replay an applied migration.
+6. Push `main` and separately verify GitHub CI and the Vercel deployment for that commit.
+7. Verify `/api/health`, login, role restrictions, and changed workflows.
 
-Vercel's default domain and HTTPS are sufficient for V1. A custom domain can be attached in Vercel later; update both `NEXT_PUBLIC_APP_URL` and Supabase Auth URLs and redeploy after changing it.
+Database migrations are not applied by GitHub Actions or Vercel.
 
-## Database release and recovery
+## Database safety and recovery
 
-Before each database release, verify the linked project, inspect `supabase db push --dry-run`, run migration parity and database lint, then apply only new forward migrations. Never edit an already-applied migration or run `db reset`, destructive seed scripts, or ad-hoc cleanup against production.
+- Never run `supabase db reset` against production.
+- Never production-seed or replay historical cleanup scripts.
+- Preserve sales, sale items, inventory history, employee/shop references, and the restricted recovery archive.
+- Use rollback-only SQL tests and unmistakably disposable records.
+- Verify Supabase backup/PITR configuration in the provider dashboard and maintain a documented restore owner and isolated restore drill.
 
-Verify that database backups/PITR appropriate to the selected Supabase plan are enabled in the Supabase dashboard. This repository cannot prove that backups exist. Before the system becomes business-critical, document who owns restoration and perform a restoration drill into an isolated project. A GitHub checkout restores code and migrations, not live inventory or sales.
+## Current acceptance checklist
 
-Task 3 acceptance rows `TEST-3A-001`, `TEST-3B-001`, and `TEST-3B-WARN` were previously documented as `REMOVED`. Confirm their identity before any cleanup; never delete rows that may be real data. Completed sales are immutable history and should not be deleted after a production smoke test. If a test sale is necessary, use one unmistakably labeled item and leave it `REMOVED` when no sale is completed, or record the test sale number when one is completed.
+### Authentication and Accounts
 
-## Production acceptance checklist
+- [ ] Owner and Salesperson can sign in/out with username/password.
+- [ ] Signed-out, inactive, and unlinked identities cannot access protected data.
+- [ ] Owner can create one disposable username-based Salesperson account for a disposable shop.
+- [ ] The disposable account can sign in only to its assigned shop.
+- [ ] Owner can reset that disposable account password; the old password stops working and the new password works.
+- [ ] Routine account creation cannot create another Owner or a second active Salesperson for a shop.
+- [ ] Production Owner credentials are never changed for testing.
 
-Perform this after deployment with controlled Owner, manager, and salesperson accounts. Do not fabricate results.
+### Inventory and import
 
-### Authentication and administration
+- [ ] Owner can add/edit/import; Salesperson remains read-only and shop-scoped.
+- [ ] Status options are exactly `IN_STOCK`, `SOLD`, and `REMOVED`.
+- [ ] Exact barcode scanning and article choice work with keyboard input.
+- [ ] More than 50 identical article matches are paged explicitly.
+- [ ] Original XLSX source-row references remain stable after blank rows.
+- [ ] Blank mapped gram-price footer rows are visibly counted as skipped.
+- [ ] Malformed nonblank optional gram price warns, stores null, and does not create a formula price.
 
-- [ ] Owner, manager, and salesperson can sign in and sign out.
-- [ ] Protected routes redirect signed-out users.
-- [ ] A user without an active linked employee cannot access business data.
-- [ ] Owner creates a controlled test shop and safely deactivates it.
-- [ ] Owner invites a controlled second email; the link returns to the production app and the Auth identity links to exactly one employee.
-- [ ] Role/shop changes take effect; inactive employee loses operational access.
-- [ ] Salesperson cannot open Administration or Pricing; manager cannot access another shop.
+### Checkout and reporting
 
-### Inventory, import, pricing, and scanning
+- [ ] Discount defaults to 0 and accepts 0–100; no arbitrary final-price input exists.
+- [ ] The database rejects cross-shop, unavailable, duplicate, missing-price, or extra-field sale requests atomically.
+- [ ] Sale detail preserves list price, discount, sale price, category, and weight snapshots.
+- [ ] Editing allowable current inventory fields cannot change historical category, sold weight, or sales metrics.
+- [ ] Owner receives all/one-shop reporting; Salesperson receives only assigned-shop reporting.
 
-- [ ] Import a realistic `.xlsx` sample; malformed file, missing/impossible date, duplicate barcode, and invalid shop cases fail safely.
-- [ ] Blank imported manual price remains null; provided manual price remains an override.
-- [ ] Manually create and edit one labeled test item; duplicate barcode is blocked.
-- [ ] Inventory scan autofocus/Enter/exact match/not-found/whitespace and rapid repeated scans work with keyboard emulation.
-- [ ] Create and deactivate a pricing rule; automatic price applies and manual override wins everywhere.
+### Responsive review
 
-### Sale and reporting
+- [ ] Login, Dashboard, Inventory, Checkout, and Administration are usable at desktop, tablet, and mobile widths.
+- [ ] Dense tables retain intentional horizontal scrolling; actions and inputs remain reachable and focus-visible.
 
-- [ ] Scan one `IN_STOCK` item once into checkout; duplicate, `SOLD`, `RESERVED`, and `REMOVED` scans are rejected.
-- [ ] Effective list price is correct; edit final price and complete exactly one sale.
-- [ ] Item becomes `SOLD`; a second sale attempt is rejected; history/detail preserve list and final snapshots.
-- [ ] Dashboard reflects revenue and reduced current stock.
-- [ ] Changing a pricing rule does not change completed sale detail or historical revenue.
+## CI and checks
 
-## Automated release checks
+GitHub Actions runs Node 24 install, lint, typecheck, unit tests, and the webpack production build. Hosted migration parity, database lint, rollback SQL tests, live account acceptance, and Vercel deployment verification are explicit release checks and must be reported separately.
 
-GitHub Actions runs install, lint, typecheck, unit tests, and production build without production secrets. Hosted database lint, parity, and rollback-safe SQL suites remain explicit release checks because CI must not hold production database credentials. Dependency audit findings should be reviewed rather than resolved with blind major upgrades.
-
-The Task 8 audit found no high or critical npm vulnerabilities. Newer package versions are available, including major versions of development tooling, but no late V1 upgrade is justified without a separate compatibility pass. Supabase's security advisor warns that authenticated users can invoke the intentional `SECURITY DEFINER` RPC surface; these functions are the designed application interface and retain fixed search paths plus explicit active-employee, role, and shop authorization. Do not dismiss future advisor findings without reviewing each function.
-
-## Deferred from V1
-
-Returns/refunds, transfers, stocktaking, receipt/fiscal printing, customer records/CRM, loyalty, commissions/payroll, tax/accounting, and advanced analytics remain separate future milestones.
+Returns/refunds, transfers, fiscal receipts, CRM, stocktaking, payroll, and generalized tenancy remain out of scope.

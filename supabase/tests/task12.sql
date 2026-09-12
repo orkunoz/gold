@@ -8,6 +8,8 @@ do $$ begin
   if not has_function_privilege('authenticated','public.admin_link_employee_account(uuid,text,text,text,uuid)','EXECUTE') then raise exception 'authenticated owner entry point missing';end if;
   if pg_get_constraintdef((select oid from pg_constraint where conrelid='public.inventory_items'::regclass and conname='inventory_items_status_check')) ilike '%RESERVED%' then raise exception 'RESERVED remains in inventory status constraint';end if;
   if pg_get_functiondef('public.get_dashboard_report(text,uuid)'::regprocedure) ilike '%v_period:=''TODAY''%' then raise exception 'salesperson reporting is still forced to today';end if;
+  if pg_get_functiondef('public.get_dashboard_report(text,uuid)'::regprocedure) ilike '%join public.inventory_items i on i.id=si.inventory_item_id%' then raise exception 'historical dashboard still joins mutable inventory';end if;
+  if pg_get_functiondef('public.get_dashboard_report(text,uuid)'::regprocedure) not ilike '%sum(si.weight_grams)%' then raise exception 'sale snapshot weight reporting missing';end if;
 end $$;
 
 rollback;

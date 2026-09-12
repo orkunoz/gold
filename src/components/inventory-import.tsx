@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import type { Tables } from "@/lib/database.types";
 import { IMPORT_FIELDS, type ColumnMapping, type ImportPreview, type ParsedSheet } from "@/lib/inventory/import/types";
 
-type Result = { imported: number; skipped: number; duplicates: number; failed: number; failures: { row: number; message: string }[] };
+type Result = { imported: number; skipped: number; footerSkipped: number; duplicates: number; failed: number; failures: { row: number; message: string }[] };
 type Props = { employeeShopId: string | null; shops: Pick<Tables<"shops">, "id" | "name" | "code">[] };
 
 const fieldLabels: Record<typeof IMPORT_FIELDS[number], string> = {
@@ -47,7 +47,7 @@ export function InventoryImport({ employeeShopId, shops }: Props) {
     if (selected) await parse(selected);
   }
 
-  const payload = useMemo(() => parsed ? { rows: parsed.rows, mapping, targetShopId, headerRow: parsed.headerRow } : null, [parsed, mapping, targetShopId]);
+  const payload = useMemo(() => parsed ? { rows: parsed.rows, sourceRows: parsed.sourceRows, mapping, targetShopId, headerRow: parsed.headerRow } : null, [parsed, mapping, targetShopId]);
 
   async function validate() {
     if (!payload) return;
@@ -84,7 +84,7 @@ export function InventoryImport({ employeeShopId, shops }: Props) {
         </select><p className="mt-2 text-sm text-stone-500">Detected headers on spreadsheet row {parsed.headerRow + 1}; {parsed.rows.length} data rows found.</p>
       </section>
 
-      <section><h2 className="text-lg font-semibold">3. Map columns</h2><p className="mt-1 text-sm text-stone-600">Choose what each spreadsheet column means. Every field is optional; unmapped values stay blank, while status and target shop use their operational defaults. When Price Per Gram is mapped, rows with an empty value in that column are ignored.</p>
+      <section><h2 className="text-lg font-semibold">3. Map columns</h2><p className="mt-1 text-sm text-stone-600">Choose what each spreadsheet column means. Every field is optional; unmapped values stay blank, while status and target shop use their operational defaults. When Price Per Gram is mapped, rows with an empty value are counted as skipped summary/footer rows. Malformed nonblank values are imported as blank with a warning, so no formula price is created.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {parsed.headers.map((header, sourceIndex) => { const selected = IMPORT_FIELDS.find((field) => mapping[field] === sourceIndex) ?? ""; return <label key={`${header}-${sourceIndex}`} className="text-sm font-medium">{header}
             <select value={selected} onChange={(event) => { const target = event.target.value as typeof IMPORT_FIELDS[number] | ""; setMapping((current) => { const next = { ...current }; IMPORT_FIELDS.forEach((field) => { if (next[field] === sourceIndex || field === target) delete next[field]; }); if (target) next[target] = sourceIndex; return next; }); }} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5">
@@ -100,15 +100,16 @@ export function InventoryImport({ employeeShopId, shops }: Props) {
       <button disabled={busy} onClick={() => void validate()} className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">{busy ? "Working…" : "Validate and preview"}</button></> : null}
 
       {preview ? <section className="border-t border-stone-200 pt-8"><h2 className="text-lg font-semibold">4. Import preview</h2>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">{Object.entries(preview.summary).map(([label, value]) => <div key={label} className="rounded-lg bg-stone-100 p-3"><div className="text-2xl font-semibold">{value}</div><div className="text-xs capitalize text-stone-600">{label}</div></div>)}</div>
+        <p className="mt-2 text-sm text-stone-600">Source row numbers match the original worksheet even when blank rows are ignored.</p>
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">{Object.entries(preview.summary).map(([label, value]) => <div key={label} className="rounded-lg bg-stone-100 p-3"><div className="text-2xl font-semibold">{value}</div><div className="text-xs text-stone-600">{label.replace(/([A-Z])/g," $1").toLowerCase()}</div></div>)}</div>
         <div className="mt-5 max-h-96 overflow-auto rounded-lg border border-stone-200"><table className="w-full min-w-[1500px] text-left text-sm"><thead className="sticky top-0 bg-stone-50"><tr>{["Row", "Result", "Category", "Metal", "Producer", "Size", "Weight", "Price/g", "Article", "Price", "Discount", "Note", "Status", "Shop", "Barcode", "Issues"].map((heading) => <th key={heading} className="px-3 py-2">{heading}</th>)}</tr></thead><tbody className="divide-y divide-stone-100">{preview.rows.slice(0, 200).map((row) => <tr key={row.sourceRow}><td className="px-3 py-2">{row.sourceRow}</td><td className="px-3 py-2 font-medium">{row.classification}</td><td className="px-3 py-2">{row.item?.category_name ?? "—"}</td><td className="px-3 py-2">{row.item?.metal ?? "—"}</td><td className="px-3 py-2">{row.item?.producer ?? "—"}</td><td className="px-3 py-2">{row.item?.size ?? "—"}</td><td className="px-3 py-2">{row.item?.weight_grams ?? "—"}</td><td className="px-3 py-2">{row.item?.price_per_gram ?? "—"}</td><td className="px-3 py-2">{row.item?.article_number ?? "—"}</td><td className="px-3 py-2">{row.item?.price ?? "—"}</td><td className="px-3 py-2">{row.item?.discount ?? "—"}</td><td className="px-3 py-2">{row.item?.notes ?? "—"}</td><td className="px-3 py-2">{row.item?.status ?? "—"}</td><td className="px-3 py-2">{row.item?.shop_name ?? "—"}</td><td className="px-3 py-2">{row.item?.barcode ?? "—"}</td><td className="px-3 py-2 text-xs text-stone-600">{[...row.errors, ...row.warnings].join("; ") || "—"}</td></tr>)}</tbody></table></div>
         {preview.rows.length > 200 ? <p className="mt-2 text-sm text-stone-500">Showing the first 200 preview rows.</p> : null}
         <button disabled={busy || importable === 0} onClick={() => void execute()} className="mt-5 rounded-lg bg-emerald-800 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">{busy ? "Importing…" : `Import ${importable} valid product${importable === 1 ? "" : "s"}`}</button>
       </section> : null}
     </div> : <section className="mt-8 rounded-xl border border-emerald-200 bg-emerald-50 p-6"><h2 className="text-xl font-semibold">Import complete</h2>
-      <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4"><div><dt className="text-xs text-stone-600">Imported</dt><dd className="text-2xl font-semibold">{result.imported}</dd></div><div><dt className="text-xs text-stone-600">Skipped</dt><dd className="text-2xl font-semibold">{result.skipped}</dd></div><div><dt className="text-xs text-stone-600">Duplicates</dt><dd className="text-2xl font-semibold">{result.duplicates}</dd></div><div><dt className="text-xs text-stone-600">Failed</dt><dd className="text-2xl font-semibold">{result.failed}</dd></div></dl>
+      <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-5"><div><dt className="text-xs text-stone-600">Imported</dt><dd className="text-2xl font-semibold">{result.imported}</dd></div><div><dt className="text-xs text-stone-600">Validation errors skipped</dt><dd className="text-2xl font-semibold">{result.skipped}</dd></div><div><dt className="text-xs text-stone-600">Footer rows skipped</dt><dd className="text-2xl font-semibold">{result.footerSkipped}</dd></div><div><dt className="text-xs text-stone-600">Duplicates</dt><dd className="text-2xl font-semibold">{result.duplicates}</dd></div><div><dt className="text-xs text-stone-600">Database failures</dt><dd className="text-2xl font-semibold">{result.failed}</dd></div></dl>
       {result.failures.length ? <ul className="mt-4 text-sm text-red-800">{result.failures.map((failure) => <li key={`${failure.row}-${failure.message}`}>Row {failure.row}: {failure.message}</li>)}</ul> : null}
-      <div className="mt-6 flex gap-3"><Link href="/inventory" className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white">Return to inventory</Link><button onClick={() => { setFile(null); setParsed(null); setPreview(null); setResult(null); }} className="rounded-lg px-5 py-2.5 text-sm font-medium">Import another file</button></div>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row"><Link href="/inventory" className="rounded-lg bg-stone-900 px-5 py-2.5 text-center text-sm font-medium text-white">Return to inventory</Link><button onClick={() => { setFile(null); setParsed(null); setPreview(null); setResult(null); }} className="rounded-lg px-5 py-2.5 text-sm font-medium">Import another file</button></div>
     </section>}
   </div>;
 }

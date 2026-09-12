@@ -47,8 +47,13 @@ describe("flexible inventory import validation", () => {
       ["Total", "2", "TOTAL", "   "],
     ], base);
     expect(preview.summary).toMatchObject({ total: 1, ready: 1, warnings: 0, errors: 0 });
+    expect(preview.summary.footerSkipped).toBe(1);
     expect(preview.rows).toHaveLength(1);
     expect(preview.rows[0]).toMatchObject({ sourceRow: 2, item: { article_number: "A-1", price_per_gram: 100 } });
+  });
+  it("preserves original worksheet row numbers after blank rows were removed",()=>{
+    const preview=validateImportRows([["Ring","2","A-1","100"],["Ring","3","A-2","100"]],{...base,sourceRows:[4,7]});
+    expect(preview.rows.map(row=>row.sourceRow)).toEqual([4,7]);
   });
   it("checks duplicate and existing non-null barcodes but permits blanks", () => {
     const context = { ...base, mapping: { barcode: 0 }, existingBarcodes: new Set(["EXISTS"]) };
@@ -60,7 +65,7 @@ describe("flexible inventory import validation", () => {
   });
   it("warns and stores null for malformed optional numbers, but rejects negatives", () => {
     const context = { ...base, mapping: { weight_grams: 0, price_per_gram: 1 } };
-    expect(validateImportRows([["bad", "oops"]], context).rows[0]).toMatchObject({ classification: "Warning", item: { weight_grams: null, price_per_gram: null, price: null } });
+    expect(validateImportRows([["bad", "oops"]], context).rows[0]).toMatchObject({ classification: "Warning", warnings:expect.arrayContaining([expect.stringContaining("formula price")]), item: { weight_grams: null, price_per_gram: null, price: null } });
     expect(validateImportRows([["-1", "-2"]], context).rows[0].errors).toHaveLength(2);
   });
   it("uses a mapped shop when valid", () => {

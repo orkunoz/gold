@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       }
     }
     revalidatePath("/inventory");
-    return NextResponse.json({ imported, skipped: preview.summary.errors, duplicates: preview.summary.duplicates, failed: failures.length, failures });
+    return NextResponse.json({ imported, skipped: preview.summary.errors, footerSkipped: preview.summary.footerSkipped, duplicates: preview.summary.duplicates, failed: failures.length, failures });
   } catch {
     return NextResponse.json({ error: "The import could not be completed." }, { status: 500 });
   }

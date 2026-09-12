@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addProductToCart, buildSaleRpcItems, cartAfterCompletion, cartTotal, checkoutShopLocked, checkoutShops, defaultListPrice, discountedPrice, normalizeSalesBarcode, parseDiscountPercent, removeCartItem, updateCartDiscount, type CheckoutProduct } from "./checkout";
+import { addProductToCart, articleMatchPage, articleMatchRange, buildSaleRpcItems, cartAfterCompletion, cartTotal, checkoutShopLocked, checkoutShops, defaultListPrice, discountedPrice, normalizeSalesBarcode, parseDiscountPercent, removeCartItem, updateCartDiscount, type CheckoutProduct } from "./checkout";
 
 const product = (overrides: Partial<CheckoutProduct> = {}): CheckoutProduct => ({ id: "item-1", shop_id: "shop-1", barcode: "ABC-1", article_number: "ART", category: "Ring", gold_fineness: "585", gold_color: "Yellow", weight_grams: 2.5, size: "17", owner_price: 100, selling_price: 120, effective_price: 120, source: "MANUAL", pricing_rule_id: null, rule_type: null, rule_value: null, status: "IN_STOCK", ...overrides });
 
@@ -10,6 +10,8 @@ describe("sales checkout", () => {
   });
 
   it("supports an article-only item without a barcode",()=>expect(addProductToCart([],product({barcode:null,article_number:"ARTICLE-7"}))).toMatchObject({error:null,cart:[{article_number:"ARTICLE-7",barcode:null}]}));
+
+  it("keeps repeated-article lookup bounded and paginated",()=>{expect(articleMatchPage(null)).toBe(1);expect(articleMatchPage("bad")).toBe(1);expect(articleMatchPage("2")).toBe(2);expect(articleMatchRange(2)).toEqual({from:50,to:99});});
 
   it.each([
     ["SOLD", "already sold"], ["REMOVED", "removed"],

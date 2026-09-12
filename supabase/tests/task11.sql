@@ -97,18 +97,14 @@ begin
   exception when data_exception then null;
   end;
 
-  -- Sales categories come from immutable accessible sold-line history.
+  -- Internal historical category options come from immutable accessible sale-line snapshots.
   if not exists(select 1 from public.get_sales_category_options() where name = 'Браслет оф') then
-    raise exception 'Sold category missing from Sales Register options';
+    raise exception 'Sold category missing from historical options';
   end if;
   update public.inventory_items set category_id = null where id in (item_a, item_b);
   if not exists(select 1 from public.get_sales_category_options() where name = 'Браслет оф') then
     raise exception 'Historical Sales category did not retain its snapshot';
   end if;
-  if jsonb_array_length((public.get_sales_register(shop_a, 'Браслет оф', 1, 25)->'sales')) <> 1 then
-    raise exception 'Sales Register category filtering failed';
-  end if;
-
   -- Salesperson is scoped to exactly the assigned shop in option queries and sale RPC.
   perform set_config('request.jwt.claim.sub', salesperson_auth::text, true);
   if exists(select 1 from public.get_inventory_category_options() where name = 'Кольє')

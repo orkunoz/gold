@@ -7,7 +7,7 @@ export default async function AdminPage() {
   const { shops, employees } = await getAdminData();
   const cards = [
     { label: "Active shops", value: shops.filter((shop) => shop.is_active).length },
-    { label: "Active employees", value: employees.filter((employee) => employee.is_active).length },
+    { label: "Active accounts", value: employees.filter((employee) => employee.is_active).length },
     { label: "Owners", value: employees.filter((employee) => employee.is_active && employee.role === "owner").length },
     { label: "Salespeople", value: employees.filter((employee) => employee.is_active && employee.role === "salesperson").length },
   ];
@@ -20,7 +20,7 @@ export default async function AdminPage() {
     </div>
     <div className="mt-8 grid gap-5 sm:grid-cols-2">
       <Link href="/admin/shops" className="rounded-xl border bg-white p-6 hover:border-amber-700"><h2 className="text-xl font-semibold">Shops</h2><p className="mt-2 text-sm text-stone-600">Create, edit, activate, and safely deactivate shops.</p></Link>
-      <Link href="/admin/employees" className="rounded-xl border bg-white p-6 hover:border-amber-700"><h2 className="text-xl font-semibold">Employees</h2><p className="mt-2 text-sm text-stone-600">Invite staff and manage roles, shops, and access.</p></Link>
+      <Link href="/admin/employees" className="rounded-xl border bg-white p-6 hover:border-amber-700"><h2 className="text-xl font-semibold">Accounts</h2><p className="mt-2 text-sm text-stone-600">Create staff logins and manage roles, shops, and access.</p></Link>
     </div>
   </section>;
 }

@@ -3,7 +3,7 @@ import { IMPORT_FIELDS, type ColumnMapping, type ImportPreview, type ImportRow, 
 
 type Category = { id: string; name: string };
 type Shop = { id: string; name: string; code: string | null };
-type Context = { mapping: ColumnMapping; targetShopId: string; categories: Category[]; shops: Shop[]; existingBarcodes: Set<string>; headerRow?: number };
+type Context = { mapping: ColumnMapping; targetShopId: string; categories: Category[]; shops: Shop[]; existingBarcodes: Set<string>; headerRow?: number; sourceRows?: number[] };
 
 function text(value: SpreadsheetCell | undefined) {
   if (value === null || value === undefined || value === "") return null;
@@ -86,8 +86,9 @@ export function removeEmptySpreadsheetRows(rows: SpreadsheetRow[]) {
 }
 
 export function validateImportRows(rows: SpreadsheetRow[], context: Context): ImportPreview {
-  const candidates = rows
-    .map((row, index) => ({ row, index }))
+  const withSource = rows.map((row, index) => ({ row, index, sourceRow: context.sourceRows?.[index] ?? index + (context.headerRow ?? 0) + 2 }));
+  const footerSkipped = withSource.filter(({ row }) => context.mapping.price_per_gram !== undefined && text(mapped(row, context.mapping, "price_per_gram")) === null).length;
+  const candidates = withSource
     .filter(({ row }) => context.mapping.price_per_gram === undefined || text(mapped(row, context.mapping, "price_per_gram")) !== null);
   const barcodeCounts = new Map<string, number>();
   candidates.forEach(({ row }) => {
@@ -116,7 +117,7 @@ export function validateImportRows(rows: SpreadsheetRow[], context: Context): Im
     const weight = parseImportedNumber(mapped(row, context.mapping, "weight_grams"));
     const pricePerGram = parseImportedNumber(mapped(row, context.mapping, "price_per_gram"));
     if (weight.error) warnings.push("Invalid weight; storing blank"); else if (weight.value !== null && weight.value < 0) errors.push("Weight cannot be negative");
-    if (pricePerGram.error) warnings.push("Invalid price per gram; storing blank"); else if (pricePerGram.value !== null && pricePerGram.value < 0) errors.push("Price per gram cannot be negative");
+    if (pricePerGram.error) warnings.push("Invalid price per gram; storing blank, so formula price will be unavailable"); else if (pricePerGram.value !== null && pricePerGram.value < 0) errors.push("Price per gram cannot be negative");
     const category = matchCategory(mapped(row, context.mapping, "category"), context.categories);
     const metal = normalizeImportedMetal(mapped(row, context.mapping, "metal"));
     if (metal.warning) warnings.push(metal.warning);
@@ -132,14 +133,16 @@ export function validateImportRows(rows: SpreadsheetRow[], context: Context): Im
       price: weight.error || pricePerGram.error ? null : calculateInventoryPrice(weight.value,pricePerGram.value),
       discount: text(mapped(row, context.mapping, "discount")), status: status.value, notes: text(mapped(row, context.mapping, "notes")),
     } : null;
-    return { sourceRow: index + (context.headerRow ?? 0) + 2, classification: errors.length ? "Error" : warnings.length ? "Warning" : "Ready", errors, warnings, item };
+    return { sourceRow: context.sourceRows?.[index] ?? index + (context.headerRow ?? 0) + 2, classification: errors.length ? "Error" : warnings.length ? "Warning" : "Ready", errors, warnings, item };
   });
   return { rows: validated, summary: {
+    sourceRows: rows.length,
     total: validated.length,
     ready: validated.filter((row) => row.classification === "Ready").length,
     warnings: validated.filter((row) => row.classification === "Warning").length,
     errors: validated.filter((row) => row.classification === "Error").length,
     duplicates: validated.filter((row) => row.errors.some((error) => error.toLocaleLowerCase().includes("duplicate") || error.includes("already exists"))).length,
+    footerSkipped,
   } };
 }
 

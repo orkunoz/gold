@@ -15,5 +15,4 @@ export type DashboardReport = {
   sales_over_time: null | { date: string; revenue: number; sales_count: number }[];
   categories: null | { category: string; items_sold: number; revenue: number; weight_sold: number }[];
   shops: null | { shop_id: string; shop: string; revenue: number; sales_count: number; items_sold: number; weight_sold: number; in_stock_items: number; in_stock_weight: number; inventory_value: number }[];
-  employees: null | { employee: string; shop: string; sales_count: number; items_sold: number; revenue: number; average_sale: number }[];
 };

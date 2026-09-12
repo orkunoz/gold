@@ -1,6 +1,6 @@
 # Gold / Zlata Jewelry — persistent development handoff
 
-Last reviewed: 2026-09-12. This file describes the current implementation, not a roadmap from earlier milestones. Read it before changing code. Latest functional milestone is commit `555725a` (Task 12); use `git log -1` for the latest documentation/repository commit. No conversation memory or files outside this repository are required to understand the system.
+Last reviewed: 2026-09-12. This file describes the current implementation, not a roadmap from earlier milestones. Read it before changing code. Task 12 shipped in `555725a`; the subsequent cleanup milestone is documented below. Use `git log -1` for the current repository commit. No conversation memory or files outside this repository are required to understand the system.
 
 ## Project and deployment
 
@@ -107,7 +107,7 @@ Implementation: `/sales`, `sales-checkout.tsx`, `lib/sales/{checkout,actions}.ts
 - Salesperson: only assigned active shop; selectable reporting period; Revenue, Items sold, Gold weight sold and recent sales for that shop. No other-shop selector, inventory valuation, category/employee comparisons or cross-shop report. RPC rejects another shop ID even if UI is bypassed.
 - Sales count and Average Sale KPI cards removed. Customer Value UI renamed Total value; internal JSON key remains customer_value for compatibility.
 - Shop revenue aggregates sale lines to avoid multiplying a multi-item header total. Some dashboard weight/category joins still use protected inventory rows rather than snapshots; preserve SOLD protections when considering future changes.
-- Known inconsistency: Owner page still renders an empty Employee sales section while current RPC returns employees=null. This is a remaining Task 12 polish issue, not proof of missing sale attribution.
+- Employee breakdown is intentionally absent. The Owner dashboard renders category and shop comparisons only; the empty Employee sales panel and `employees` response property were removed.
 
 ## Administration / Auth
 
@@ -116,11 +116,11 @@ Implementation: `/sales`, `sales-checkout.tsx`, `lib/sales/{checkout,actions}.ts
 - Current operational usernames: admin (Owner, no shop), kamin → Kamin, horokhiv → Horokhiv, novovolynsk → Novovolynsk, volodymyr → Volodymyr. These are identifiers, not credentials; obtain passwords securely from the Owner. Legacy employees are inactive, not deleted. Active shop options last observed are these four locations; old shop identities can remain inactive.
 - Auth session uses verified getClaims and Supabase SSR cookie refresh. Proxy checks active employee and locally signs out inactive/unlinked sessions to avoid login/dashboard loops. Protected pages and each mutation independently authorize. Authenticated responses are private/no-store.
 - `/admin` is Owner-only. Shops support create/edit/activate/deactivate. Deactivation blocks active assigned employees and IN_STOCK inventory.
-- `/admin/employees` lists accounts; creation still uses route `/admin/employees/invite` but is a direct Create Account form, not email invitation. Fields: username/password/confirmation/shop; role fixed salesperson; initial display name=username. Edit supports display name, role, active flag, shop. Auth identity/username are not editable in UI.
+- `/admin/employees` is labeled Accounts; creation still uses the legacy route `/admin/employees/invite` but is a direct Create Account form, not email invitation. Fields: username/password/confirmation/shop; role fixed salesperson; initial display name=username. Edit supports display name, role, active flag, shop. Auth identity/username are not editable in UI.
 - Server action requires active Owner, validates username and password confirmation/6–72 character bounds, uses server-only Auth Admin createUser with confirmed internal email, then calls `admin_link_employee_account`. Existing exact matches support retry; conflicting identity/role/shop is rejected. If new Auth creation succeeds and linking fails, it attempts to remove only that newly created Auth user. Existing passwords are not changed by retry; use reset action.
 - Password reset is an Owner-only server action using Auth Admin updateUserById, with confirmation UI and new-password validation. Existing password is never retrieved/displayed. Edit page currently offers reset for Owner as well as salesperson records.
 - Normal create flow cannot create extra Owners. Partial indexes enforce one active Owner and one active salesperson per shop; serialized last-active-Owner protection remains. Any future Owner replacement requires a controlled, tested transition, not deleting the old Owner first.
-- Old employee_invitations table and preparation/finalization RPCs remain for compatibility; old invitation server action is removed. Some labels/comments still say employee/invitation.
+- Old employee_invitations table and preparation/finalization RPCs remain for database compatibility; the old invitation server action and user-facing invitation terminology are removed.
 
 ## Database and security architecture
 
@@ -141,7 +141,7 @@ Critical constraints: role/status CHECKs, nonnegative amounts, allowed metals, g
 
 ### Applied migrations
 
-All 19 repository migrations through 20260910220000 matched hosted production at the final Task 12 parity check. On a new computer recheck parity before changes; never edit an already applied migration.
+The 19 migrations through 20260910220000 matched hosted production at the final Task 12 parity check. Migration `20260912150000_historical_dashboard_snapshots.sql` is the next safe forward migration; it makes historical dashboard category and weight metrics use immutable `sale_items` snapshots. Recheck linked parity and apply it before claiming the cleanup is live. Never edit an already applied migration.
 
 | Version | Purpose |
 | --- | --- |
@@ -164,6 +164,7 @@ All 19 repository migrations through 20260910220000 matched hosted production at
 | 20260910190000 | Dynamic categories, authoritative discounts, account uniqueness |
 | 20260910210000 | Usernames, three-state inventory, dashboard periods, account link |
 | 20260910220000 | Account-link integrity and shop revenue fix |
+| 20260912150000 | Historical dashboard category/weight snapshot reporting |
 
 ### Production data safety / completed cleanup
 
@@ -189,19 +190,22 @@ Assets are portable: `public/zlata-logo.png` is the supplied logo, used via next
 
 Completed/deployed: Task 11 category/pricing/role simplification and footer rule; Task 12 username accounts, requested four shop assignments, old-account deactivation, one-time archived cleanup, three statuses, simplified dashboard, checkout-only Sales, Zlata logo/theme and inactive-session redirect fix. Vercel deployment for functional commit 555725a reported success. New account credentials and RPC access were verified without storing secrets.
 
-Last code quality run: npm ci, clean lint/typecheck, 92 passing unit tests across 15 files, successful webpack production build. Hosted lint/parity and rollback-only complete_sale, Task 11 and Task 12/dashboard role/archive-access checks passed. These are dated evidence, not a claim that every legacy SQL fixture still matches current behavior.
+Cleanup validation on September 12: npm ci (0 vulnerabilities), clean lint/typecheck, 94 passing unit tests across 15 files, and successful webpack production build. Hosted SQL, migration parity, and database lint could not be rerun on the new computer because Supabase CLI/project linkage and production environment values were absent; do not imply they passed.
 
 Live acceptance completed September 12: Owner login/dashboard; Kamin login, assigned-shop dashboard/checkout, missing Administration navigation and direct /admin redirect; Volodymyr login and inventory; categories include Браслет оф; status options have only three states; checkout formula 38,320 UAH with 10% discount became 34,488 UAH; successful add cleared/refocused scanner without success banner. No final-price input or Sales Register. Test cart removed and signed out, with no completed test sale or persistent product mutation.
 
-Task 12 core functionality is delivered; no pending code edits were left at this documentation handoff. Remaining requirements/gaps should be addressed explicitly in the next task, without replaying account setup or cleanup:
+Cleanup implementation completed locally after Task 12:
 
-1. Remove or reconcile the misleading empty Owner Employee sales panel (RPC intentionally returns employees=null). No functional change is made by this handoff task.
-2. Finish dedicated live acceptance of Owner Create Account and Password Reset through the UI using a separately approved disposable account/shop; setup used Auth Admin plus RPC, not this entire UI workflow. Do not reset real shop passwords merely for testing.
-3. Add substantive regression coverage for account creation/recovery/reset and full Task 12 dashboard/status requirements; current task12.sql is limited schema assertions. Update older SQL tests that still create RESERVED or assume previous pricing/reporting rules before treating the whole supabase/tests directory as a current suite. Keep immutable applied migrations unchanged.
-4. Complete explicit tablet/phone visual acceptance. Desktop branding and workflows were inspected; do not claim exhaustive responsive/device testing.
-5. Reconcile stale historical README/PRODUCTION/.env.example comments and legacy tests/labels (email invitations, manager/reservation, manual-first pricing, old register/today-only reporting). This AGENTS.md and current code supersede those milestone descriptions. Normal account list still says Employees and creation route still says invite internally.
+1. Removed the intentionally empty Owner Employee sales panel and response typing.
+2. Added unit/rollback SQL coverage for username account creation, safe retry, password reset action behavior, role/shop restrictions, three statuses, checkout payloads, reporting periods, and immutable historical snapshots.
+3. Removed obsolete Sales Register client helpers/tests while retaining database compatibility RPCs.
+4. Updated README, production runbook, environment comments, account labels, and current tests to current business rules.
+5. Article choices now load bounded pages of 50 and explicitly show progress/Load more instead of silently truncating.
+6. XLSX parser preserves original worksheet row references after blank-row removal. Blank mapped gram-price footer rows are counted separately in preview/results. Malformed nonblank optional gram price warns and stores NULL with an explicit no-formula-price explanation.
+7. Added a forward migration so dashboard historical category and weight reporting uses immutable `sale_items.category_name` and `sale_items.weight_grams` snapshots.
+8. Login was visually reviewed at 390×844, 768×1024 and 1440×900; responsive spacing/actions were strengthened in protected layouts and Administration source. Protected live visual/account acceptance remains externally blocked until safe authenticated access is provided.
 
-Other known limitations worth preserving in future decisions: import row numbers can shift after blank rows are removed; footer-skipped rows are excluded from preview totals rather than reported as separate skips; optional malformed gram-price text warns/NULL rather than triggering blank-footer exclusion; article chooser is capped at 50; recovery archive and controlled setup helper scripts are not app migrations. Do not expand scope to returns/refunds, transfers, fiscal receipts, CRM, payroll or generalized tenancy without a new request.
+Do not call this cleanup deployed or fully live until the forward migration is applied, Vercel deploys the cleanup commit, and a disposable-shop/account acceptance confirms Create Account and Password Reset without touching real credentials. Recovery archive and controlled setup helper scripts are not app migrations. Do not expand scope to returns/refunds, transfers, fiscal receipts, CRM, payroll or generalized tenancy without a new request.
 
 ## Navigation for future development
 
@@ -215,3 +219,13 @@ Other known limitations worth preserving in future decisions: import row numbers
 - supabase/migrations: ordered authoritative schema evolution; supabase/tests: review fixture currency before use.
 
 Keep this file current after meaningful milestones. Record actual completed work, test evidence and remaining limitations; never secrets or initial passwords. Preserve unrelated user changes and report proposed versus applied/deployed work accurately.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

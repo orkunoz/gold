@@ -21,6 +21,10 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [confirmation, setConfirmation] = useState<SaleConfirmation | null>(null);
   const [matches,setMatches]=useState<CheckoutProduct[]>([]);
+  const [articleQuery,setArticleQuery]=useState("");
+  const [articlePage,setArticlePage]=useState(1);
+  const [articleTotal,setArticleTotal]=useState(0);
+  const [hasMoreMatches,setHasMoreMatches]=useState(false);
   const [isPending, startTransition] = useTransition();
   const scannerRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -44,13 +48,13 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
     setIsLookingUp(true);
     try {
       const response = await fetch(`/api/sales/lookup?code=${encodeURIComponent(barcode)}&shop_id=${encodeURIComponent(shopId)}`);
-      const payload = await response.json() as { item?: CheckoutProduct; items?:CheckoutProduct[]; error?: string };
+      const payload = await response.json() as { item?: CheckoutProduct; items?:CheckoutProduct[]; error?: string; articlePage?:number; totalArticleMatches?:number; hasMore?:boolean };
       if (!response.ok || (!payload.item&&!payload.items?.length)) {
         setMessage(response.status === 404 ? "Barcode or article not found." : payload.error ?? "Item lookup failed.");
         refocusScanner(true);
         return;
       }
-      if(payload.items){setMatches(payload.items);setMessage(`${payload.items.length} physical items use this article. Choose the correct item.`);refocusScanner();return;}
+      if(payload.items){setMatches(payload.items);setArticleQuery(barcode);setArticlePage(payload.articlePage??1);setArticleTotal(payload.totalArticleMatches??payload.items.length);setHasMoreMatches(Boolean(payload.hasMore));setMessage(`${payload.totalArticleMatches??payload.items.length} physical items use this article. Choose the correct item.`);refocusScanner();return;}
       const foundItem=payload.item!;
       const result = addProductToCart(cart, foundItem);
       setCart(result.cart);
@@ -65,11 +69,23 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
     }
   }
 
+  async function loadMoreArticleMatches(){
+    if(!articleQuery||!hasMoreMatches||isLookingUp)return;
+    setIsLookingUp(true);
+    try{
+      const nextPage=articlePage+1;
+      const response=await fetch(`/api/sales/lookup?code=${encodeURIComponent(articleQuery)}&shop_id=${encodeURIComponent(shopId)}&article_page=${nextPage}`);
+      const payload=await response.json() as {items?:CheckoutProduct[];error?:string;articlePage?:number;totalArticleMatches?:number;hasMore?:boolean};
+      if(!response.ok||!payload.items){setMessage(payload.error??"Unable to load more matching items.");return;}
+      setMatches(current=>[...current,...payload.items!]);setArticlePage(payload.articlePage??nextPage);setArticleTotal(payload.totalArticleMatches??articleTotal);setHasMoreMatches(Boolean(payload.hasMore));
+    }catch{setMessage("Unable to load more matching items.");}finally{setIsLookingUp(false);}
+  }
+
   function changeShop(nextShopId: string) {
     setShopId(nextShopId);
     setCart([]);
     setConfirmation(null);
-    setMatches([]);
+    setMatches([]);setArticleQuery("");setArticlePage(1);setArticleTotal(0);setHasMoreMatches(false);
     setMessage(cart.length ? "The current sale was cleared because the shop changed." : null);
     refocusScanner();
   }
@@ -123,7 +139,7 @@ export function SalesCheckout({ employee, shops }: { employee: { full_name: stri
       </div>
       {message ? <p role="status" className="mt-4 rounded-lg border border-amber-300 bg-white px-4 py-3 font-medium text-stone-900">{message}</p> : null}
     </form>
-    {matches.length?<div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4"><h2 className="font-semibold">Choose physical item</h2><div className="mt-3 grid gap-3">{matches.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white p-3"><div><p className="font-medium">{item.category??"Uncategorized"} · Article {item.article_number??"—"}</p><p className="text-sm text-stone-500">Barcode {item.barcode??"—"} · {item.weight_grams??"—"} g · {item.status}</p></div><button type="button" onClick={()=>{const result=addProductToCart(cart,item);setCart(result.cart);setMessage(result.error);setMatches([]);refocusScanner();}} className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white">Add</button></div>)}</div></div>:null}
+    {matches.length?<div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">Choose physical item</h2><span className="text-sm text-stone-600">Showing {matches.length} of {articleTotal}</span></div><div className="mt-3 grid gap-3">{matches.map(item=><div key={item.id} className="flex flex-col gap-3 rounded-lg bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">{item.category??"Uncategorized"} · Article {item.article_number??"—"}</p><p className="text-sm text-stone-500">Barcode {item.barcode??"—"} · {item.weight_grams??"—"} g · {item.status}</p></div><button type="button" onClick={()=>{const result=addProductToCart(cart,item);setCart(result.cart);setMessage(result.error);setMatches([]);setHasMoreMatches(false);refocusScanner();}} className="w-full rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white sm:w-auto">Add</button></div>)}</div>{hasMoreMatches?<button type="button" disabled={isLookingUp} onClick={()=>void loadMoreArticleMatches()} className="mt-4 w-full rounded-lg border border-amber-800 bg-white px-4 py-2 text-sm font-medium text-amber-950 disabled:opacity-50">{isLookingUp?"Loading…":"Load 50 more matches"}</button>:null}</div>:null}
 
     <div className="mt-6 overflow-hidden rounded-xl border border-stone-200">
       <div className="flex items-center justify-between bg-stone-50 px-4 py-3"><h2 className="font-semibold">Current sale</h2><span className="text-sm text-stone-500">{cart.length} item{cart.length === 1 ? "" : "s"}</span></div>

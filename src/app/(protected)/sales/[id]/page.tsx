@@ -16,7 +16,7 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
     </dl>
     <div className="mt-6 rounded-xl border border-stone-200 bg-white p-5"><h2 className="font-semibold">Notes</h2><p className="mt-2 whitespace-pre-wrap text-sm text-stone-600">{sale.notes || "No notes."}</p></div>
     <div className="mt-8 overflow-x-auto rounded-xl border border-stone-200 bg-white"><table className="w-full min-w-[760px] text-left text-sm">
-      <thead className="border-b border-stone-200 bg-stone-50 text-xs uppercase text-stone-500"><tr>{["Product", "Article", "List price", "Discount %", "Final price"].map((heading) => <th key={heading} className="px-4 py-3">{heading}</th>)}</tr></thead>
+      <thead className="border-b border-stone-200 bg-stone-50 text-xs uppercase text-stone-500"><tr>{["Product", "Article", "List price", "Discount %", "Sale price"].map((heading) => <th key={heading} className="px-4 py-3">{heading}</th>)}</tr></thead>
       <tbody className="divide-y divide-stone-100">{items.map((item) => <tr key={item.id}><td className="px-4 py-3 font-semibold"><Link href={`/inventory/${item.inventory_item_id}`} className="hover:underline">{item.category_name??item.barcode??"Product"}</Link></td><td className="px-4 py-3">{displayValue(item.article_number)}</td><td className="px-4 py-3">{formatPrice(item.list_price)}</td><td className="px-4 py-3">{item.discount_percent}%</td><td className="px-4 py-3 font-semibold">{formatPrice(item.sale_price)}</td></tr>)}</tbody>
     </table></div>
   </section>;

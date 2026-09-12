@@ -17,6 +17,7 @@ export type ParsedSheet = {
   headers: string[];
   suggestedMapping: ColumnMapping;
   rows: SpreadsheetRow[];
+  sourceRows: number[];
 };
 
 export type ImportRow = {
@@ -45,5 +46,5 @@ export type ImportRow = {
 
 export type ImportPreview = {
   rows: ImportRow[];
-  summary: { total: number; ready: number; warnings: number; errors: number; duplicates: number };
+  summary: { sourceRows: number; total: number; ready: number; warnings: number; errors: number; duplicates: number; footerSkipped: number };
 };

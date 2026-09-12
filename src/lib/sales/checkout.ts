@@ -26,6 +26,10 @@ export function normalizeSalesBarcode(value: string) {
   return value.trim();
 }
 
+export const ARTICLE_MATCH_PAGE_SIZE=50;
+export function articleMatchPage(value:string|null){const requested=Number(value??"1");return Number.isInteger(requested)&&requested>0&&requested<=1000?requested:1;}
+export function articleMatchRange(page:number){const from=(page-1)*ARTICLE_MATCH_PAGE_SIZE;return{from,to:from+ARTICLE_MATCH_PAGE_SIZE-1};}
+
 export function unavailableMessage(status: InventoryStatus) {
   if (status === "SOLD") return "This item is already sold.";
   if (status === "REMOVED") return "This item has been removed from inventory.";

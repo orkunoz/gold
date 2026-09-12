@@ -1,22 +1,28 @@
-# Gold
+# Gold / Zlata Jewelry
 
-Current production behavior (Task 12): Zlata Jewelry branding; username/password sign-in; Owner and one Salesperson per shop; direct Owner account creation and password reset; checkout-only Sales; three inventory states (IN_STOCK, SOLD, REMOVED); simplified role-scoped dashboard. Inventory formula price is the primary checkout list price, with discount calculated by PostgreSQL. Price-per-gram-empty XLSX rows are skipped when that column is mapped. Earlier milestone notes below are historical.
+Production inventory, checkout, reporting, and account administration for one Ukrainian family jewelry business with several physical shops. The interface is English, product data may be Ukrainian, prices are UAH, and weight is grams.
 
-The September 10 clean start preserved previous operational records in the restricted `production_recovery.task12_before_import` database archive before clearing Inventory and Sales. The application starts empty for the real XLSX import. No passwords or service-role credentials are stored in this repository.
+Read `AGENTS.md` before changing the system. It contains current business decisions and production-safety requirements.
 
-Internal jewelry inventory and sales workspace for a family business in Ukraine. The UI is currently English.
+## Current business rules
 
-## Scope
+- Roles are `owner` and `salesperson` only. There is one active Owner and at most one active Salesperson per shop.
+- Owner manages inventory, XLSX import, shops, and login accounts. Salespeople have read-only inventory and checkout access for their assigned active shop.
+- Inventory represents individual physical items. Status is `IN_STOCK`, `SOLD`, or `REMOVED`; there is no reservation workflow.
+- Categories come from product data and are resolved case-insensitively after whitespace normalization.
+- Formula price (`weight_grams × price_per_gram`) is authoritative when available. Legacy selling price, pricing rules, and owner price remain compatibility fallbacks only.
+- Checkout accepts a Discount %, never an arbitrary final-price input. PostgreSQL calculates the sale price.
+- Sales is checkout-only. Historical products are found through Inventory status or linked sale details.
+- Historical category, weight, list price, discount, sale price, and product details come from immutable `sale_items` snapshots.
 
-V1 includes authentication, inventory and Excel import, barcode workflows, atomic sales, operational pricing, reporting, and Owner administration. Returns/refunds, transfers, stocktaking, receipt/fiscal printing, customer records/CRM, loyalty, commissions/payroll, and advanced analytics remain deferred.
+## Stack
 
-## Prerequisites
+- Next.js 16 App Router, React 19, TypeScript 6, Tailwind CSS 4
+- Node.js 24+
+- Supabase Auth, PostgreSQL, RLS, and hardened RPCs
+- Vercel production deployment from GitHub `main`
 
-- Node.js 24 LTS or newer and npm.
-- A Supabase project dedicated to this internal application.
-- Git and access to this repository.
-
-## Installation
+## Local setup
 
 ```sh
 git clone https://github.com/orkunoz/gold.git
@@ -24,257 +30,71 @@ cd gold
 npm ci
 ```
 
-Copy `.env.example` to `.env.local` and configure the application values:
+Create ignored `.env.local` from `.env.example`. Obtain values securely from the existing Vercel/Supabase projects; never commit or print secrets.
 
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_PUBLIC_KEY
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-# Server-only; required for Owner employee invitations.
 SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVER_SECRET
 ```
 
-Get the URL and public key from your Supabase project's Connect dialog or API settings. The requested `ANON_KEY` variable name is retained; it can contain the project's legacy anon key or its newer publishable key. The three `NEXT_PUBLIC_` values are browser configuration; `SUPABASE_SERVICE_ROLE_KEY` is server-only and must never be exposed, logged, or committed. It is used only by the protected employee invitation action. `.env.local` is ignored by Git. Environment values are checked when creating a client, not during module import, so a build does not need live credentials. Restart the server after changing them; public variables are embedded at build time.
-
-## Development
+The service-role key is server-only and used only for protected Owner account creation and password reset.
 
 ```sh
 npm run dev
 ```
 
-Open http://localhost:3000. Signed-out visitors are redirected to `/login`; signed-in visitors go to `/dashboard`.
+## Authentication and accounts
 
-## Supabase configuration
+Staff enter username/password. The server normalizes the username and authenticates the deterministic internal Supabase identity `username@internal.local`. `employees.auth_user_id` is the authoritative unique application link. Passwords exist only in Supabase Auth.
 
-1. Enable the Email provider under Authentication > Sign In / Providers.
-2. Disable **Allow new users to sign up** for this staff-only application. There is no public registration UI, but provider-level signup must also be disabled.
-3. Under Authentication > Users, create the authorized staff accounts with email/password and confirmed email status. Give each person their own account. Invitation acceptance and password reset flows are outside Task 1.
-4. Set Authentication > URL Configuration > Site URL to `http://localhost:3000` during local development. Update it to the actual HTTPS application URL when hosting is configured. This password-only sign-in flow does not need an OAuth callback route.
-5. Keep anonymous sign-ins disabled. Task 2 database access also requires an active, linked `employees` row and is restricted by its role and assigned shop.
+The Owner creates a shop Salesperson directly under Administration → Accounts and can reset a selected account password. Routine creation cannot create another Owner. Inactive or unlinked Auth sessions cannot access business data.
 
-Supabase manages its own Auth storage. Application users are linked to Auth identities through `public.employees`. No direct PostgreSQL connection string is needed by the web application.
+## Inventory and XLSX import
 
-## Database setup
+Inventory is database-paginated at 50 rows with partial filters and a separate exact case-sensitive barcode scanner. Owners can add/edit/import; Salespeople cannot mutate inventory.
 
-Task 2 migrations live in `supabase/migrations`; optional generic seed data lives in `supabase/seed.sql`. The schema uses one inventory row per physical jewelry piece. Barcodes are trimmed, non-empty, case-sensitive, and globally unique. Article numbers may repeat. Prices are stored values and are never calculated by this migration.
+The importer accepts standard `.xlsx` files up to 5 MiB and 5,000 data rows. It supports worksheet selection, editable Ukrainian/English column mapping, preview, and database batches of 100. Browser rows are revalidated before execution.
 
-Install the Supabase CLI using its official installation instructions, authenticate it, and link this checkout to the existing Gold project. Do not commit database passwords, access tokens, service-role keys, or `.env.local`.
+If Price per Gram is mapped, blank cells in that column are clearly counted as skipped summary/footer rows. Nonblank malformed optional values produce a warning, are stored as null, and make formula price unavailable. Preview references retain the original worksheet row numbers even after blank rows are ignored.
+
+New categories are accepted. Unknown shops are errors; `SOLD` can only be produced by checkout. Blank barcodes remain null, while non-null barcodes are globally unique.
+
+## Checkout
+
+Exact barcode lookup is attempted first, followed by exact article lookup. Repeated articles show physical-item choices in bounded pages of 50 with an explicit Load more action.
+
+The cart is browser state. The client sends only inventory item IDs and discount percentages. `complete_sale` authenticates the employee, validates shop access, locks rows, resolves current authoritative prices, calculates discounted prices, snapshots the sale, and marks inventory `SOLD` atomically.
+
+## Dashboard
+
+Periods are Today, Last 7 days, This month, and Last 30 days using `Europe/Kyiv` boundaries. Owner can report across all/one active shop and sees current inventory valuation, status, trend, category, and shop reports. Salespeople see only revenue, items sold, gold weight sold, and recent sales for their assigned shop.
+
+Historical metrics use `sale_items` snapshots, so later inventory changes cannot change past category or sold-weight reporting.
+
+## Database changes
+
+Migrations in `supabase/migrations` are ordered and immutable after application. Link the Supabase CLI to the existing project and use forward migrations only:
 
 ```sh
 supabase login
 supabase link --project-ref YOUR_PROJECT_REF
-supabase db push
+supabase migration list --linked
+supabase db push --dry-run --linked
+supabase db lint --linked --level error
 ```
 
-After schema changes, regenerate the checked-in database types and review the diff:
+Never run a hosted reset, production seed, historical cleanup, or already-applied migration replay. SQL files under `supabase/tests` are rollback-only current-rule integration checks and require a suitably privileged linked database connection.
+
+## Validation
 
 ```sh
-supabase gen types typescript --linked --schema public > src/lib/database.types.ts
-```
-
-The generated `role` and `status` fields are narrowed to the documented TypeScript unions because PostgreSQL check constraints are not represented as enums by the generator.
-
-For a fresh local Supabase stack, apply migrations and the seed with:
-
-```sh
-supabase start
-supabase db reset
-```
-
-The optional seed creates a `Main Shop` with code `MAIN` and generic jewelry categories. It does not create Auth users or employees.
-
-### Bootstrap the first owner
-
-First create or identify the owner's confirmed account under **Authentication > Users**. Then run the following once in the Supabase SQL Editor, replacing only the placeholder UUID with that Auth user's UUID:
-
-```sql
-insert into public.shops (name, code)
-values ('Main Shop', 'MAIN')
-on conflict (code) do update set name = excluded.name
-returning id;
-
-insert into public.employees (auth_user_id, full_name, role, shop_id)
-select
-  'AUTH_USER_UUID'::uuid,
-  'Owner',
-  'owner',
-  shop.id
-from public.shops as shop
-where shop.code = 'MAIN';
-```
-
-This privileged bootstrap is intentionally performed through the SQL Editor: before the first `employees` owner row exists, no application user is authorized to administer employee records. Additional employees can later be added by an owner-facing administrative workflow.
-
-### Authorization model
-
-- Owners can read and administer shops, employees, categories, and all inventory.
-- Salespeople can read inventory for their assigned shop and their own employee record, but cannot write inventory or administrative records.
-- Active salespeople can read their assigned shop and active employees can read categories.
-- Unauthenticated and inactive users have no application-table access.
-- Only owners can delete inventory records. Normal business workflows must change status to `SOLD` or `REMOVED`, not delete rows.
-- `SOLD` is protected history: ordinary authenticated inserts and updates cannot create, modify, or reverse a sold inventory row. Only the atomic `complete_sale` RPC may set it.
-
-RLS helpers use hardened, schema-qualified functions to look up the current active employee without recursive policies. Authorization remains enforced in PostgreSQL; protected pages alone are not a data-access boundary.
-
-After applying the migration, verify with separate Owner and Salesperson test accounts. Confirm that each role can perform only the operations above, that a salesperson cannot access another shop, and that anonymous API requests return no rows.
-
-## Checks
-
-```sh
+npm ci
 npm run lint
 npm run typecheck
 npm test
 npm run build
-npm start
 ```
 
-The unit tests mock Supabase and cover authentication actions, route redirects, and cookie propagation. They do not replace a live Supabase integration check.
-
-## Production deployment
-
-The intended V1 architecture is this Next.js application on Vercel over HTTPS, backed by the existing Supabase Auth/Postgres project. See [PRODUCTION.md](./PRODUCTION.md) for environment classification, exact Vercel and Supabase Auth setup, backup/recovery expectations, controlled smoke-test guidance, and the full production acceptance checklist. Repository readiness does not mean a live deployment has been completed.
-
-## Inventory workflow
-
-Open `/inventory` to view accessible inventory in pages of 50, newest first. Filter by partial barcode, article number, category, status, free text, and—for owners—shop. The separate scanner field receives focus and performs exact barcode lookup on Enter.
-
-Owners see manual add/edit controls. Salespeople have read-only inventory access for their assigned shop. Duplicate barcodes and invalid or negative numeric values produce safe form errors. Normal removal is represented by the `REMOVED` status; the UI does not expose deletion.
-
-Prices are displayed in UAH and remain manually entered stored values. Task 3A does not derive prices from weight or any other rule.
-
-## Barcode scanner workflow
-
-The Inventory page includes a prominent, automatically focused **Scan barcode** field for USB scanners that type a barcode and send Enter. Enter performs a case-sensitive exact barcode lookup through the authenticated Supabase session and existing RLS policies; the partial barcode filter remains separate. Surrounding whitespace is trimmed, and empty scans are ignored.
-
-A match opens the complete product detail view without changing its inventory status. `SOLD` and `REMOVED` items display prominent warnings. A scanned result includes **Scan another item**, which returns directly to the focused scanner field. Missing scans display **Barcode not found** in place and reselect the field so staff can immediately scan again. Camera scanning and scan-history database tables are not included.
-
-## Excel inventory import
-
-Owners can open **Import inventory** from `/inventory`. The guided flow is Upload → Sheet → Map → Preview → Results:
-
-1. Upload a standard `.xlsx` file no larger than 5 MB.
-2. Select a worksheet when the workbook contains multiple sheets.
-3. Review and edit the detected header mapping. Each spreadsheet source column can map to one Gold field or **Do not import**; no workbook column is mandatory.
-4. Select the target active shop.
-5. Validate and review every row before importing valid rows in batches of 100.
-
-The importer recognizes common English and Ukrainian headers, including `Артикул`, `Штрихкод`, `Штрих-код`, `Код`, `Виріб`, `Метал`, `Виробник`, `Вага`, `Розмір`, `Ціна`, `Ціна грн`, `Знижка`, `Примітка`, and `Статус`. Mappings always remain editable.
-
-The flexible targets are Product Category, Metal, Producer, Size, Weight, Price Per Gram, Article Number, Discount, Note, Status, Shop, and Barcode. Unmapped optional values are stored as `NULL`; status defaults to `IN_STOCK`, and an unmapped shop uses the selected target shop. Blank rows are ignored. When Price Per Gram (`Ціна-грам`) is mapped, any row with an empty value in that source column is ignored, preventing workbook total/footer rows from becoming inventory products. Existing products are never overwritten, and accepted items record the importing employee in `created_by`.
-
-`inventory_items.price` is database-calculated as rounded `weight_grams × price_per_gram`; it is null when either input is missing. This calculated Inventory price is the default customer/list price in checkout unless a manual selling-price override exists. If the formula inputs are incomplete, pricing rules and then owner/base price remain the fallbacks. `discount` preserves informational XLSX source data and never changes checkout pricing. Barcode is optional; multiple null barcodes are allowed, while every non-null barcode remains globally unique and scanner-compatible.
-
-Every product detail includes append-only History. Database triggers record meaningful field changes with actor, time, and source; sale completion records the `IN_STOCK → SOLD` event and links it to the sale. Authenticated clients can read accessible history but cannot insert, update, delete, or forge it. XLSX batch insertion uses a hardened RPC so imported creation events are marked `XLSX_IMPORT`.
-
-Checkout accepts either an exact barcode or an exact article number. Barcode matches remain one physical item; when a repeated article matches multiple physical items, the cashier must choose the intended item rather than the system guessing. Discount % is a numeric per-item input, accepts 0–100 (including decimals), recalculates the editable final price, and is validated again by the atomic `complete_sale` RPC. `sale_items` permanently snapshots list price, discount percentage, final price, and product metadata. The Sales Register defaults to one-row-per-sold-product Products view and retains the one-row-per-transaction Sales view; product filters and pagination are database-side and shop-authorized.
-
-Workbook formulas are not calculated and macros are not executed. Uploaded data is parsed on the server and validated again immediately before insertion; the browser preview is not trusted. Only `.xlsx` is supported. Inventory results are paginated at 50 rows per page, show the exact database count for the current filters, and use a display-only Number that starts at 1 for each filtered result and continues across its pages.
-
-## Sales database and transaction
-
-Task 4A adds permanent `sales` headers and `sale_items` price snapshots. Each physical inventory item can appear in `sale_items` only once. Foreign keys use restrictive deletion behavior, values have non-negative constraints, and authenticated clients receive read-only table grants governed by shop-scoped RLS. Owners may read all sales; salespeople may read sales for their assigned shop. Ordinary clients cannot insert, update, or delete sales history.
-
-Sales are created only through the authenticated `complete_sale(p_shop_id, p_items, p_notes)` RPC. Each JSON item contains exactly an `inventory_item_id` and final `sale_price`; the database resolves the active employee from `auth.uid()`, verifies role and active-shop access, rejects duplicate/missing/wrong-shop/non-`IN_STOCK` items, and locks inventory rows in deterministic UUID order. It generates the sale number, snapshots the authoritative effective list price, calculates totals, inserts all history rows, and marks every item `SOLD` in one transaction. Any error rolls back the sale, line items, and all status changes.
-
-Example typed RPC payload for future server-side UI work:
-
-```ts
-await supabase.rpc("complete_sale", {
-  p_shop_id: shopId,
-  p_items: [
-    { inventory_item_id: inventoryItemId, sale_price: 3500 },
-  ],
-  p_notes: null,
-})
-```
-
-Do not send employee IDs, sale numbers, list prices, totals, or target statuses; the database derives them. Task 4A intentionally includes no Sales page implementation, checkout, returns/refunds, discounts, formulas, payments, receipts, transfers, or analytics.
-
-`supabase/tests/complete_sale.sql` is a rollback-only integration verification intended for a migration-capable connection with an existing active owner. It covers owner, manager, and salesperson success; one- and multi-item totals; historical list-price snapshots; status changes; requested validation failures; duplicate-sale protection; atomic rollback; and direct-write privilege restrictions. It restores the sale-number sequence and rolls back all test rows.
-
-## Cashier checkout
-
-Open `/sales` for the scanner-first checkout. The page shows the current employee and shop, a focused exact-barcode field, the client-only current cart, editable final prices, a client-side total, optional notes up to 5000 characters, and the completion control. Owners may choose among accessible active shops; salespeople are locked to their assigned shop. Changing an owner’s shop clears the unfinished cart to avoid mixing stock.
-
-USB scanners can type a barcode and send Enter. Only exact, RLS-accessible `IN_STOCK` products enter the cart. `SOLD`, `RESERVED`, and `REMOVED` items show specific warnings; duplicate scans do not duplicate a physical item. Each line shows product details, its database-resolved effective list price and source, an editable non-negative final price with two-decimal validation, and a remove action. Removing or editing a line changes only browser state and never writes a price back to inventory.
-
-**Complete Sale** is disabled for an empty cart and guarded against double submission. The server sends only the shop, item IDs/final prices, and optional notes to `complete_sale`; it never inserts sales rows or marks inventory `SOLD` directly. The RPC remains authoritative for authorization, availability, price snapshots, totals, locking, and atomic writes. Failure keeps the cart and states that no partial sale was created. Success clears the cart and shows the generated sale number, time, item count, authoritative total, and links to begin again or view the read-only detail.
-
-The read-only Sales Register appears below checkout in pages of 25, newest first, without a filter panel. Owners see all history; salespeople remain database-restricted to their assigned shop. The Inventory page's Status = Sold filter is the primary way to find sold products. `/sales/[id]` continues to show the immutable header, notes, totals, employee/shop, and item-level barcode/article/category/weight plus list and final price snapshots. There are no edit or delete actions.
-
-## Task 9 demo data
-
-`scripts/seed-demo-data.sql` is the explicit idempotent production demo seed. It ensures active `Shop2` (`SHOP2`) and `Shop3` (`SHOP3`), keeps the pre-existing primary shop unchanged, inserts only exact `DEMO-001`–`DEMO-020` inventory with matching `DEMO-A001`–`DEMO-A020` articles and `DEMO DATA — SAFE TO REMOVE` notes, and creates exact `DEMO-SALE-001`–`DEMO-SALE-010` historical sales. It aborts on identifier collisions with non-demo records and verifies 20 unique items, 10 `SOLD`, 10 `IN_STOCK`, ten one-item sales, and matching totals/snapshots before committing. Running it again is safe and does not duplicate records.
-
-`scripts/verify-demo-data.sql` performs read-only hosted assertions. `scripts/remove-demo-data.sql` is manual-only cleanup: it checks the same exact markers, then removes demo sale items, sales, and inventory in foreign-key order. It intentionally keeps Shop2 and Shop3. Never broaden these predicates, run the cleanup automatically, or use a database reset against production.
-
-## Pricing rules foundation
-
-Owners have a **Pricing** navigation item and Owner-only `/pricing` management pages. Rules support `FIXED_AMOUNT` (owner price plus a configured UAH amount) and `PERCENTAGE` (owner price plus a configured percentage), with Global, Shop, Category, or Shop + Category scope. Resolution selects exactly one active/current rule in this order: Shop + Category, Shop, Category, Global; higher priority wins within a scope, followed deterministically by newest creation time and ID.
-
-`calculate_selling_price(owner_price, shop_id, category_id)` performs PostgreSQL numeric arithmetic and rounds to two decimals. Null owner price returns null; no matching rule returns owner price unchanged. When a shop is supplied, the function requires the current employee to have access to that shop and requires the shop to exist and be active. Salespeople therefore cannot probe another shop's pricing through the `SECURITY DEFINER` function. Rules can have optional start/end times and are retired with `is_active=false`, never deletion. Only Owners can read or mutate the rule table; active employees use the hardened calculation function without direct rule visibility. The original `created_by` attribution cannot be changed after insertion.
-
-The create/edit form validates scope, values, priority, dates, and notes server-side and includes an informational price preview. There is no repricing trigger or mass inventory update.
-
-Operational pricing uses one precedence everywhere: a non-null `inventory_items.selling_price` is a **manual override**; otherwise the database-calculated Inventory price (`weight_grams × price_per_gram`) is used; if that is unavailable, the current pricing rule is calculated dynamically; finally, `owner_price` is the fallback. A blank manual override therefore enables automatic pricing. Inventory lists use one batched authenticated pricing RPC per page; item details and exact barcode/article checkout use the same authoritative resolver. Inventory pages show the effective customer price and source, and item details also show the underlying calculated rule price. Excel imports preserve provided selling prices as manual overrides and keep blanks null.
-
-Checkout defaults both List price and the editable Final sale price to the effective price. When weight and price per gram are present, that effective price is the database-calculated Inventory formula price. Only when every pricing source is unavailable does checkout leave the price blank and require the cashier to enter one. At completion, `complete_sale` recalculates the effective list price inside its existing atomic transaction after row locking, so `sale_items.list_price` reflects the authoritative value rather than trusting the browser. Completed snapshots are never recalculated when source values or rules later change.
-
-## Business dashboard
-
-`/dashboard` uses one authenticated `get_dashboard_report` RPC rather than loading raw sales and inventory into the browser. Owners can report across all active shops or select one shop. Salespeople receive a deliberately limited view for their assigned active shop: today's revenue, sales, items, sold weight, average sale, and recent sales; inventory valuation and comparison data are omitted by the RPC itself.
-
-Reporting periods are Today, Last 7 days, This month (the default), and Last 30 days. PostgreSQL calculates inclusive local-day starts and the exclusive next-day boundary using the `Europe/Kyiv` IANA timezone, including daylight-saving changes. Sales KPIs use immutable `sales` and `sale_items` history: revenue, sale/item counts, physical sold weight, average sale, daily revenue, category totals, employee totals, and Owner all-shop comparison. Recent sales link to their read-only details.
-
-Current inventory KPIs are separate from the selected sales period. They include status counts, in-stock count/weight, and customer value using the live effective-price precedence (manual override → current rule → owner price). Null effective prices are excluded from the monetary sum and reported as a missing-price count. Dashboard calculation neither rewrites inventory nor recalculates historical sale snapshots.
-
-## Owner administration
-
-Owners have an **Administration** navigation area with shop and employee pages. Shop codes are required, normalized to uppercase, and unique. Shops can be created, renamed, activated, and deactivated but not deleted. Deactivation is blocked while active employees are assigned or `IN_STOCK`/`RESERVED` inventory remains; historical shops, sales, and sold/removed stock keep their original references and names.
-
-Employees remain linked authoritatively by immutable `auth_user_id`. Owners can edit display names, the fixed roles `owner`/`salesperson`, active-shop assignments, and active status; records are never deleted. Active salespeople require one active shop. Database-level serialized protection prevents deactivating or downgrading the last active Owner, including concurrent requests. Inactive employees immediately fail existing operational authorization checks, while historical sales retain their attribution.
-
-Employee onboarding uses a recoverable two-step invitation. An Owner-only database RPC first records a normalized pending invitation, then a server-only Supabase Admin client finds or invites the exact email identity, and a second Owner-only RPC verifies that `auth.users` email before linking the employee. Finalization revalidates the stored role and shop immediately before insertion, so a shop deactivated after preparation cannot produce an invalid active employee; the invitation remains pending and safe to retry. Configure `SUPABASE_SERVICE_ROLE_KEY` only in the server environment; never expose it with a `NEXT_PUBLIC_` name or commit it. Without that variable, shop/employee administration still works but the invitation action shows a configuration message. Real invitation delivery requires a controlled second email acceptance test and is intentionally not exercised by automated tests.
-
-Normal authenticated clients no longer have direct insert/update/delete privileges on `shops` or `employees`; critical changes use fixed-search-path `SECURITY DEFINER` RPCs that require an active Owner. Operational selectors show active shops, while historical sales/detail queries continue resolving inactive shop and employee names.
-
-With your Supabase configuration in place, verify:
-
-- Visiting `/`, `/dashboard`, `/inventory`, or `/sales` while signed out redirects to `/login`.
-- Invalid credentials show a generic error without revealing whether an account exists.
-- Valid credentials redirect to `/dashboard`; reloading retains the session.
-- Visiting `/login` while signed in redirects to `/dashboard`.
-- Navigation opens each placeholder page, with the active page indicated.
-- Sign out returns to `/login`; directly revisiting a protected URL requires authentication.
-- An expired session refreshes when possible, or redirects to login when no longer valid.
-
-## Architecture and files
-
-- `src/app`: App Router, root layout, login, and `(protected)` route group. Pages are Server Components; protected pages are dynamically rendered.
-- `src/lib/supabase/client.ts`: browser client factory using `@supabase/ssr`, ready for future Client Components.
-- `src/lib/supabase/server.ts`: request-scoped server client using Next.js cookies.
-- `src/lib/database.types.ts`: generated TypeScript representation of the public database schema, including sales tables and `complete_sale`.
-- `supabase/migrations`: versioned PostgreSQL schema, constraints, indexes, triggers, and RLS policies.
-- `supabase/seed.sql`: optional idempotent development seed for the first shop and generic categories.
-- `src/proxy.ts` and `src/lib/supabase/proxy.ts`: refresh sessions, preserve updated cookies on redirects, and prevent caching of auth responses.
-- `src/lib/auth/session.ts`: cached-per-request verified claims and reusable `requireUser` guard. Both layout and pages guard access; future server actions and data access must independently authorize requests.
-- `src/lib/auth/actions.ts`: validated sign-in and current-session sign-out Server Actions. Passwords are never logged or returned to the client.
-- `src/lib/inventory`: typed inventory queries, Server Actions, validation, formatting, and shared constants. All database calls use the current user's cookie-backed Supabase client.
-- `src/lib/inventory/import`: server-side workbook parsing, header suggestions, row validation, duplicate checks, and bounded batching.
-- `src/lib/sales`: client-state checkout rules, the sole sale-completion Server Action, and RLS-backed history/detail queries.
-- `src/app/api/inventory/import`: authenticated parse, preview, and execution endpoints. They use the current employee's RLS-restricted Supabase session and never use a service-role key.
-- `src/app/api/sales/lookup`: authenticated, exact, shop-scoped inventory lookup for checkout scanning; it performs no writes.
-- `src/components`: login form, navigation, sign-out control, and shared placeholder view.
-- `src/app/globals.css`: Tailwind CSS and small global accessibility defaults.
-- Root configuration files: TypeScript strict mode, ESLint, Next.js, PostCSS, environment example, and dependency lockfile.
-
-TypeScript 6 and ESLint 9 are pinned to the versions supported by the current Next.js ESLint plugins. ESLint 9 produces an upstream end-of-support notice; move to ESLint 10 when those plugins support it. Dependencies are pinned and locked for reproducible installation.
-
-Authentication uses verified `getClaims()` rather than trusting `getSession()`. Claims validate the signed token; immediate server-side revocation checks are not performed on every page request. Supabase's JWT expiry and refresh settings govern session lifetime. Sign-out affects the current browser session.
-
-## Reference guidance
-
-- [Next.js installation](https://nextjs.org/docs/app/getting-started/installation)
-- [Supabase server-side clients](https://supabase.com/docs/guides/auth/server-side/creating-a-client)
-
-GitHub stores the source. Task 8 makes the repository deployment-ready; live Vercel deployment remains pending the business account, production URL, and production environment configuration documented in `PRODUCTION.md`.
+See `PRODUCTION.md` for release and acceptance procedures.
