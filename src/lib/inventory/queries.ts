@@ -16,7 +16,6 @@ export type InventoryFilters = {
   barcode?: string;
   article?: string;
   category?: string;
-  metal?: "Gold" | "Silver";
   status?: InventoryStatus;
   shop?: string;
   search?: string;
@@ -67,7 +66,6 @@ export async function getInventoryItems(filters: InventoryFilters, page = 1, pag
   if (barcode) query = query.ilike("barcode", `%${barcode}%`);
   if (article) query = query.ilike("article_number", `%${article}%`);
   if (filters.category) query = query.eq("category_id", filters.category);
-  if (filters.metal) query = query.eq("metal", filters.metal);
   if (filters.status) query = query.eq("status", filters.status);
   if (filters.shop) query = query.eq("shop_id", filters.shop);
   if (search) query = query.or(`barcode.ilike.%${search}%,article_number.ilike.%${search}%,producer.ilike.%${search}%,notes.ilike.%${search}%`);

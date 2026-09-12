@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import type { EmployeeRole, InventoryStatus } from "@/lib/database.types";
-import { INVENTORY_STATUSES, STATUS_LABELS } from "@/lib/inventory/constants";
+import { STATUS_LABELS } from "@/lib/inventory/constants";
 import { INVENTORY_FILTER_DEBOUNCE_MS, inventoryHref } from "@/lib/inventory/filter-url";
 import type { InventoryFilters } from "@/lib/inventory/queries";
 
@@ -47,8 +47,7 @@ export function InventoryFilters({ filters, role, categories, shops, children }:
       <label className="text-sm font-medium">Barcode<input name="barcode" value={draft.barcode} onChange={(event) => setDraft((current) => ({ ...current, barcode: event.target.value }))} placeholder="Filter by partial barcode" className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2.5" /></label>
       <label className="text-sm font-medium">Article number<input name="article" value={draft.article} onChange={(event) => setDraft((current) => ({ ...current, article: event.target.value }))} placeholder="Article number" className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2.5" /></label>
       <label className="text-sm font-medium">Category<select name="category" value={filters.category ?? ""} onChange={(event) => applySelect("category", event.target.value)} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5"><option value="">All categories</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-      <label className="text-sm font-medium">Status<select name="status" value={filters.status ?? ""} onChange={(event) => applySelect("status", event.target.value)} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5"><option value="">All statuses</option>{INVENTORY_STATUSES.map((status: InventoryStatus) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}</select></label>
-      <label className="text-sm font-medium">Metal<select name="metal" value={filters.metal ?? ""} onChange={(event) => applySelect("metal", event.target.value)} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5"><option value="">All metals</option><option value="Gold">Gold</option><option value="Silver">Silver</option></select></label>
+      <label className="text-sm font-medium">Status<select name="status" value={filters.status ?? ""} onChange={(event) => applySelect("status", event.target.value)} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5"><option value="">All statuses</option>{(["IN_STOCK", "SOLD"] as InventoryStatus[]).map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}</select></label>
       {role === "owner" ? <label className="text-sm font-medium">Shop<select name="shop" value={filters.shop ?? ""} onChange={(event) => applySelect("shop", event.target.value)} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5"><option value="">All shops</option>{shops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}</select></label> : null}
       <label className="text-sm font-medium lg:col-span-2">Text search<input name="search" value={draft.search} onChange={(event) => setDraft((current) => ({ ...current, search: event.target.value }))} placeholder="Barcode, article, producer, or notes" className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2.5" /></label>
     </div>

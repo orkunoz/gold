@@ -499,7 +499,7 @@ export type Database = {
       get_inventory_category_options: { Args: never; Returns: { id: string; name: string; product_count: number }[] }
       get_sales_category_options: { Args: never; Returns: { name: string; product_count: number }[] }
       get_dashboard_report: {
-        Args: { p_period?: string; p_shop_id?: string | null }
+        Args: { p_period?: string; p_shop_id?: string | null; p_start_date?: string | null; p_end_date?: string | null }
         Returns: Json
       }
       get_sales_register: {

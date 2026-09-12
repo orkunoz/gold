@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { InventoryStatus } from "@/lib/database.types";
 import { InventoryBulkTable } from "@/components/inventory-bulk-table";
 import { InventoryFilters } from "@/components/inventory-filters";
-import { INVENTORY_STATUSES } from "@/lib/inventory/constants";
 import { inventoryResultSummary } from "@/lib/inventory/pagination";
 import { inventoryPageHref } from "@/lib/inventory/filter-url";
 import {
@@ -32,10 +31,9 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
     barcode,
     article: parameter(params, "article"),
     category: parameter(params, "category"),
-    metal: (["Gold", "Silver"] as const).find((value) => value === parameter(params, "metal")),
     shop: parameter(params, "shop"),
     search: parameter(params, "search"),
-    status: INVENTORY_STATUSES.includes(rawStatus as InventoryStatus) ? rawStatus as InventoryStatus : undefined,
+    status: (["IN_STOCK", "SOLD"] as InventoryStatus[]).includes(rawStatus as InventoryStatus) ? rawStatus as InventoryStatus : undefined,
   };
   const [employee, options, inventory] = await Promise.all([getCurrentEmployee(), getInventoryOptions(), getInventoryItems(filters, page)]);
   const { items, count, pageSize } = inventory;

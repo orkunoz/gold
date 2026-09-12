@@ -48,7 +48,7 @@ One `inventory_items` row represents one physical item (not an article-level qua
 | discount | Nullable source/import text; informational, not checkout discount_percent |
 | received_at, notes | Nullable received timestamp and notes |
 
-The list columns are exactly Nr, Product Category, Producer, Metal, Fineness, Size, Weight, Price per Gram, Article, Price (UAH), Notes, Status, Shop, Barcode. Database pagination is 50 items/page, newest first; row numbers continue across pages and the filtered result count is in the table footer. Filters include partial barcode/article, category, metal, status, text and Owner shop. Inventory has no separate scanner panel; Sales checkout retains scanning. Salespeople cannot add/edit/import.
+The list columns are exactly Nr, Product Category, Producer, Metal, Fineness, Size, Weight, Price per Gram, Article, Price (UAH), Notes, Status, Shop, Barcode. Database pagination is 50 items/page, newest first; row numbers continue across pages and the filtered result count is in the table footer. Filters include partial barcode/article, category, IN_STOCK/SOLD status, text and Owner shop. Metal remains a field/column but is not a list filter; REMOVED remains operational but is not a selectable list filter. Inventory has no separate scanner panel; Sales checkout retains scanning. Salespeople cannot add/edit/import.
 
 Manual add/edit allows an existing category or new category text directly; blank category is NULL. Category resolution normalizes surrounding/repeated whitespace, matches case-insensitively, preserves spelling of the existing category, and safely handles concurrent creation. `Браслет` and `Браслет оф` are distinct.
 
@@ -102,10 +102,10 @@ Implementation: `/sales`, `sales-checkout.tsx`, `lib/sales/{checkout,actions}.ts
 
 ## Dashboard
 
-`get_dashboard_report(period, shop)` is a hardened aggregate RPC. Periods: TODAY, LAST_7_DAYS, THIS_MONTH (default), LAST_30_DAYS. Date boundaries use Europe/Kyiv, including DST; end is exclusive next local midnight. Current stock metrics are independent of reporting period.
+`get_dashboard_report(period, shop, start_date, end_date)` is a hardened aggregate RPC; the two-argument preset wrapper remains for compatibility. Periods: TODAY, LAST_7_DAYS, THIS_MONTH (default), LAST_30_DAYS, CUSTOM. Custom reporting accepts a single date or an inclusive start/end range. Date boundaries use Europe/Kyiv, including DST; the database converts the inclusive end date to exclusive next local midnight. Current stock metrics are independent of reporting period.
 
-- Owner: All shops/one active shop selector; Revenue, Items sold, Gold weight sold; in-stock count/weight, Total value, missing-price count and status summary; daily revenue chart, category performance, shop performance for All shops, recent sales.
-- Salesperson: only assigned active shop; selectable reporting period; Revenue, Items sold, Gold weight sold and recent sales for that shop. No other-shop selector, inventory valuation, category/employee comparisons or cross-shop report. RPC rejects another shop ID even if UI is bypassed.
+- Owner: All shops/one active shop selector; Revenue, Items sold, Gold weight sold; in-stock count/weight, Total value, missing-price count and IN_STOCK/SOLD status summary; daily revenue and physical-items-sold chart, category performance, shop performance for All shops, period-scoped recent sales.
+- Salesperson: only assigned active shop; selectable preset/custom reporting period; Revenue, Items sold, Gold weight sold and period-scoped recent sales for that shop. No other-shop selector, inventory valuation, category/employee comparisons or cross-shop report. RPC rejects another shop ID even if UI is bypassed.
 - Sales count and Average Sale KPI cards removed. Customer Value UI renamed Total value; internal JSON key remains customer_value for compatibility.
 - Shop revenue, category, and sold-weight reporting use immutable sale/sale-item snapshots rather than mutable inventory rows.
 - Employee breakdown is intentionally absent. The Owner dashboard renders category and shop comparisons only; the empty Employee sales panel and `employees` response property were removed.
@@ -142,7 +142,7 @@ Critical constraints: role/status CHECKs, nonnegative amounts, allowed metals, g
 
 ### Applied migrations
 
-All 22 migrations through `20260912203000_task13_lint_cleanup.sql` matched hosted production after Task 13. The Task 13 migrations add deletion-safe historical snapshots/unassigned semantics and retain the validation RPC signature without lint warnings. Never edit an already applied migration.
+All migrations through `20260912233000_task17_dashboard_ranges.sql` matched hosted production after Task 17. The Task 13 migrations add deletion-safe historical snapshots/unassigned semantics and retain the validation RPC signature without lint warnings. Never edit an already applied migration.
 
 | Version | Purpose |
 | --- | --- |
@@ -169,6 +169,8 @@ All 22 migrations through `20260912203000_task13_lint_cleanup.sql` matched hoste
 | 20260912200000 | Account/shop deletion, unassigned current records, immutable actor/shop snapshots |
 | 20260912203000 | Task 13 validation-function lint cleanup |
 | 20260912220000 | Task 14 fineness import/audit and recent-sale category summaries |
+| 20260912230000 | Task 15 permanent product deletion and bulk inventory moves |
+| 20260912233000 | Task 17 custom dashboard ranges, daily physical-item totals and simplified status summary |
 
 ### Production data safety / completed cleanup
 

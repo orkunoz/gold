@@ -13,13 +13,18 @@ describe("inventory filter navigation", () => {
   });
 
   it("keeps active filters in pagination links", () => {
-    expect(inventoryPageHref("status=REMOVED&search=ring", 2))
-      .toBe("/inventory?status=REMOVED&search=ring&page=2");
+    expect(inventoryPageHref("status=SOLD&search=ring", 2))
+      .toBe("/inventory?status=SOLD&search=ring&page=2");
   });
 
   it("never exposes a shop filter control to salespeople", () => {
     expect(inventoryFilterFields("salesperson")).not.toContain("shop");
     expect(inventoryFilterFields("owner")).toContain("shop");
+  });
+
+  it("drops retired metal and removed-status query behavior", () => {
+    expect(inventoryHref("metal=Gold&status=REMOVED&page=3", { search: "ring" })).toBe("/inventory?search=ring");
+    expect(inventoryFilterFields("owner")).not.toContain("metal");
   });
 
   it("uses a debounce within the requested range", () => {

@@ -1,13 +1,31 @@
+"use client";
+
+import { useState } from "react";
 import { formatPrice } from "@/lib/inventory/format";
 
-export function SalesTrend({ points }: { points: { date: string; revenue: number; sales_count: number }[] }) {
+type Point = { date: string; revenue: number; items_sold: number };
+
+function label(date: string, options: Intl.DateTimeFormatOptions) {
+  return new Intl.DateTimeFormat("en-GB", { ...options, timeZone: "Europe/Kyiv" }).format(new Date(`${date}T12:00:00+03:00`));
+}
+
+export function SalesTrend({ points }: { points: Point[] }) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const max = Math.max(1, ...points.map((point) => point.revenue));
   if (!points.length) return <p className="py-10 text-center text-sm text-stone-500">No reporting days available.</p>;
-  return <div className="overflow-x-auto"><div className="flex h-64 min-w-[640px] items-end gap-2 border-b border-stone-300 px-2 pt-8" role="img" aria-label="Daily revenue chart">
-    {points.map((point) => <div key={point.date} className="flex min-w-5 flex-1 flex-col items-center justify-end gap-2" title={`${point.date}: ${formatPrice(point.revenue)}, ${point.sales_count} sales`}>
-      <span className="sr-only">{point.date}: {formatPrice(point.revenue)}, {point.sales_count} sales</span>
-      <div className="w-full rounded-t bg-amber-700" style={{ height: `${Math.max(point.revenue ? 4 : 1, point.revenue / max * 180)}px` }} />
-      <span className="rotate-45 whitespace-nowrap text-[10px] text-stone-500">{new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "Europe/Kyiv" }).format(new Date(point.date))}</span>
-    </div>)}
-  </div></div>;
+  const active = points[activeIndex ?? points.length - 1];
+
+  return <div className="w-full min-w-0 overflow-hidden" data-chart-container="no-scrollbars">
+    <div className="mb-4 min-h-16 rounded-lg bg-amber-50 px-4 py-3 text-sm text-stone-700" role="status" aria-live="polite">
+      <p className="font-semibold text-stone-900">{label(active.date, { day: "numeric", month: "short", year: "numeric" })}</p>
+      <p>Items Sold: {active.items_sold}</p>
+      <p>Revenue: {formatPrice(active.revenue)}</p>
+    </div>
+    <div className="flex h-48 w-full min-w-0 items-end gap-1 border-b border-stone-300" role="img" aria-label="Daily revenue chart with items sold and revenue tooltips">
+      {points.map((point, index) => <button key={point.date} type="button" className="group flex h-full min-w-0 flex-1 items-end focus:outline-none" onMouseEnter={() => setActiveIndex(index)} onFocus={() => setActiveIndex(index)} onClick={() => setActiveIndex(index)} aria-label={`${label(point.date, { day: "numeric", month: "short", year: "numeric" })}. Items Sold: ${point.items_sold}. Revenue: ${formatPrice(point.revenue)}.`}>
+        <span className="block w-full rounded-t bg-amber-700 transition-colors group-hover:bg-amber-600 group-focus-visible:ring-2 group-focus-visible:ring-amber-900" style={{ height: `${Math.max(point.revenue ? 4 : 1, point.revenue / max * 176)}px` }} />
+      </button>)}
+    </div>
+    <div className="mt-2 flex justify-between text-[10px] text-stone-500"><span>{label(points[0].date, { month: "short", day: "numeric" })}</span><span>{label(points.at(-1)!.date, { month: "short", day: "numeric" })}</span></div>
+  </div>;
 }
