@@ -98,7 +98,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
       </div> : <div className="overflow-x-auto">
         <table className="min-w-[1600px] w-full text-left text-sm">
           <thead className="border-b border-stone-200 bg-stone-50 text-xs uppercase tracking-wide text-stone-500"><tr>
-            {["Nr", "Product Category", "Producer", "Metal", "Size", "Weight", "Price per Gram", "Article", "Price (UAH)", "Notes", "Status", "Shop", "Barcode"].map((heading) => <th key={heading} className="px-4 py-3 font-medium">{heading}</th>)}
+            {["Nr", "Product Category", "Producer", "Metal", "Fineness", "Size", "Weight", "Price per Gram", "Article", "Price (UAH)", "Notes", "Status", "Shop", "Barcode"].map((heading) => <th key={heading} className="px-4 py-3 font-medium">{heading}</th>)}
           </tr></thead>
           <tbody className="divide-y divide-stone-100">
             {items.map((item, index) => <tr key={item.id} className="hover:bg-amber-50/40">
@@ -106,6 +106,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
               <td className="px-4 py-3">{item.product_categories?.name ?? "—"}</td>
               <td className="px-4 py-3">{displayValue(item.producer)}</td>
               <td className="px-4 py-3">{displayValue(item.metal)}</td>
+              <td className="px-4 py-3">{displayValue(item.gold_fineness)}</td>
               <td className="px-4 py-3">{displayValue(item.size)}</td>
               <td className="px-4 py-3">{item.weight_grams === null ? "—" : `${item.weight_grams} g`}</td>
               <td className="px-4 py-3 whitespace-nowrap">{formatPrice(item.price_per_gram)}</td>

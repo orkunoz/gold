@@ -39,7 +39,8 @@ One `inventory_items` row represents one physical item (not an article-level qua
 | category_id | Nullable FK to product_categories; display name obtained by join |
 | metal | Nullable text constrained to Gold or Silver |
 | producer, size | Nullable text; size supports nonnumeric source values |
-| gold_fineness, gold_color | Nullable legacy/manual product attributes retained |
+| gold_fineness | Nullable jewelry fineness, exposed as Fineness; XLSX header `Проба` |
+| gold_color | Nullable legacy/manual product attribute retained |
 | weight_grams | Nullable nonnegative numeric weight |
 | price_per_gram | Nullable nonnegative numeric(14,2) |
 | price | Nullable numeric(14,2), database trigger calculates round(weight_grams × price_per_gram, 2); NULL if either input is NULL |
@@ -47,7 +48,7 @@ One `inventory_items` row represents one physical item (not an article-level qua
 | discount | Nullable source/import text; informational, not checkout discount_percent |
 | received_at, notes | Nullable received timestamp and notes |
 
-The list columns are exactly Nr, Product Category, Producer, Metal, Size, Weight, Price per Gram, Article, Price (UAH), Notes, Status, Shop, Barcode. Database pagination is 50 items/page, newest first; row numbers continue across pages and the filtered result count is in the table footer. Filters include partial barcode/article, category, metal, status, text and Owner shop. Inventory has no separate scanner panel; Sales checkout retains scanning. Salespeople cannot add/edit/import.
+The list columns are exactly Nr, Product Category, Producer, Metal, Fineness, Size, Weight, Price per Gram, Article, Price (UAH), Notes, Status, Shop, Barcode. Database pagination is 50 items/page, newest first; row numbers continue across pages and the filtered result count is in the table footer. Filters include partial barcode/article, category, metal, status, text and Owner shop. Inventory has no separate scanner panel; Sales checkout retains scanning. Salespeople cannot add/edit/import.
 
 Manual add/edit allows an existing category or new category text directly; blank category is NULL. Category resolution normalizes surrounding/repeated whitespace, matches case-insensitively, preserves spelling of the existing category, and safely handles concurrent creation. `Браслет` and `Браслет оф` are distinct.
 
@@ -73,7 +74,7 @@ Implementation: `src/lib/inventory/import`, `src/components/inventory-import.tsx
 
 - Standard `.xlsx` only (not `.xls`), ZIP signature check, nonempty, maximum 5 MiB, maximum 5,000 data rows, maximum 100 columns in submitted rows. Cell text trimmed and capped at 2,000 characters; date cells converted to ISO. Uses read-excel-file.
 - Worksheet selection; header detection examines first 20 rows; duplicate/empty headers get usable display labels. Mapping is editable and source-column-driven. No product column is required; an empty mapping can produce a sparse item using operational defaults.
-- Current mapped fields: barcode, article_number, category, metal, producer, weight_grams, size, price_per_gram, discount, notes, shop, status. Missing/unmapped optional values become NULL; no invented attributes or legacy price values. Type 1 may contain Metal without Producer; Type 2 may contain Producer without Metal. `Ціна(грн)` is deliberately suggested as Do not import. `price` is derived from Weight × Price per Gram, never imported as a total price.
+- Current mapped fields: barcode, article_number, category, metal, fineness, producer, weight_grams, size, price_per_gram, discount, notes, shop, status. Missing/unmapped optional values become NULL; no invented attributes or legacy price values. Type 1 may contain Metal without Producer; Type 2 may contain Producer without Metal. `Ціна(грн)` is deliberately suggested as Do not import. `price` is derived from Weight × Price per Gram, never imported as a total price.
 - `Виріб` and variants map to Product Category, not article or producer. `Виробник` maps to producer. Ukrainian/English header aliases normalize case, spaces and punctuation; `Ціна-грам` maps to price_per_gram.
 - Target shop is selected from active accessible shops. A nonblank mapped Shop cell overrides target using case-insensitive normalized shop name/code matching. Unknown shop is a row error; do not silently create shops from XLSX.
 - Blank/unmapped status defaults to IN_STOCK. English and Ukrainian aliases support IN_STOCK/SOLD/REMOVED. SOLD import is rejected: only complete_sale creates it. Unknown status warns and defaults to IN_STOCK. Removed reservation strings are no longer recognized aliases.
@@ -115,7 +116,7 @@ Implementation: `/sales`, `sales-checkout.tsx`, `lib/sales/{checkout,actions}.ts
 - Username input trimmed/lowercased; 3–32 ASCII characters matching `^[a-z0-9][a-z0-9_-]{2,31}$`; deterministic internal email alias derived in signIn. Users enter username, not email. No public username lookup/enumeration endpoint; errors generic.
 - Current operational usernames: admin (Owner, no shop), kamin → Kamin, horokhiv → Horokhiv, novovolynsk → Novovolynsk, volodymyr → Volodymyr. These are identifiers, not credentials; obtain passwords securely from the Owner. Legacy employees are inactive, not deleted. Active shop options last observed are these four locations; old shop identities can remain inactive.
 - Auth session uses verified getClaims and Supabase SSR cookie refresh. Proxy checks active employee and locally signs out inactive/unlinked sessions to avoid login/dashboard loops. Protected pages and each mutation independently authorize. Authenticated responses are private/no-store.
-- `/admin` is Owner-only. Shops support create/edit/activate/deactivate and permanent deletion with a confirmation dialog. Permanent deletion sets current inventory and account assignments to NULL/Unassigned, deletes shop-scoped compatibility pricing rules, and preserves immutable sale shop snapshots.
+- `/admin` is Owner-only. Shops support create/edit and permanent deletion with a confirmation dialog. The compatibility `is_active` field remains in the backend, but activation controls are not exposed. Permanent deletion sets current inventory and account assignments to NULL/Unassigned, deletes shop-scoped compatibility pricing rules, and preserves immutable sale shop snapshots.
 - `/admin/employees` is labeled Accounts; creation still uses the legacy route `/admin/employees/invite` but is a direct Create Account form, not email invitation. Fields: username/password/confirmation/shop; role fixed salesperson; initial display name=username. Edit supports display name, role, active flag, shop. Auth identity/username are not editable in UI.
 - Server action requires active Owner, validates username and password confirmation/6–72 character bounds, uses server-only Auth Admin createUser with confirmed internal email, then calls `admin_link_employee_account`. Existing exact matches support retry; conflicting identity/role/shop is rejected. If new Auth creation succeeds and linking fails, it attempts to remove only that newly created Auth user. Existing passwords are not changed by retry; use reset action.
 - Password reset is an Owner-only server action using Auth Admin updateUserById, with confirmation UI and new-password validation. Permanent account deletion first authorizes against a hardened Owner RPC, then hard-deletes the Supabase Auth identity; the employee row cascades away while sale/audit actor snapshots remain. Existing password is never retrieved/displayed.
@@ -167,6 +168,7 @@ All 22 migrations through `20260912203000_task13_lint_cleanup.sql` matched hoste
 | 20260912150000 | Historical dashboard category/weight snapshot reporting |
 | 20260912200000 | Account/shop deletion, unassigned current records, immutable actor/shop snapshots |
 | 20260912203000 | Task 13 validation-function lint cleanup |
+| 20260912220000 | Task 14 fineness import/audit and recent-sale category summaries |
 
 ### Production data safety / completed cleanup
 
@@ -206,6 +208,8 @@ Cleanup implementation completed locally after Task 12:
 6. XLSX parser preserves original worksheet row references after blank-row removal. Blank mapped gram-price footer rows are counted separately in preview/results. Malformed nonblank optional gram price warns and stores NULL with an explicit no-formula-price explanation.
 7. Applied the forward migration so dashboard historical category and weight reporting uses immutable `sale_items.category_name` and `sale_items.weight_grams` snapshots.
 8. Login was visually reviewed at 390×844, 768×1024 and 1440×900; responsive spacing/actions were strengthened in protected layouts and Administration source. Protected live visual/account acceptance remains externally blocked until safe authenticated access is provided.
+
+Task 14 exposes nullable `gold_fineness` as Fineness after Metal across inventory UI and maps `Проба`/Fineness during XLSX import. Administration lists have no filters, account actions say Edit, and shop activation controls are hidden. Salesperson Dashboard and Sales no longer repeat their assigned shop/identity. Existing multi-item checkout remains authoritative and atomic; recent sales now return one sale row with item count and a category-count summary. Shared employee/shop reads are request-cached, and layout/Sales/salesperson Dashboard no longer fetch inventory category options unnecessarily.
 
 Task 13 implements permanent Owner-confirmed account/shop deletion, Auth-user cascade deletion, immutable sale/audit actor/shop labels, Unassigned current products/accounts, exact inventory field ordering, real XLSX mapping with `Ціна(грн)` ignored, and simplified Dashboard/Inventory/Sales/Administration UI. Do not call Task 13 fully live until Vercel deploys its commit and authenticated production acceptance confirms the destructive dialogs and representative responsive layouts. Recovery archive and controlled setup helper scripts are not app migrations.
 

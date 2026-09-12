@@ -54,11 +54,11 @@ The Owner creates a shop Salesperson directly under Administration → Accounts 
 
 ## Inventory and XLSX import
 
-Inventory columns are: Nr, Product Category, Producer, Metal, Size, Weight, Price per Gram, Article, Price (UAH), Notes, Status, Shop, Barcode. Price is always calculated as Weight × Price per Gram. Unassigned products remain editable but cannot be sold until assigned to an active shop.
+Inventory columns are: Nr, Product Category, Producer, Metal, Fineness, Size, Weight, Price per Gram, Article, Price (UAH), Notes, Status, Shop, Barcode. Price is always calculated as Weight × Price per Gram. Unassigned products remain editable but cannot be sold until assigned to an active shop.
 
-The standard Ukrainian workbook layouts may contain either `Метал` or `Виробник`. Both are optional. Mapping uses headers, not column position: `Виріб` → Product Category, `Виробник` → Producer, `Метал` → Metal, `Розмір` → Size, `Вага` → Weight, `Ціна-грам` → Price per Gram, `Артикул` → Article, and `Примітка` → Notes. `Ціна(грн)` is intentionally left as Do not import because Price is calculated. Owner chooses one active Target Shop for the import.
+The standard Ukrainian workbook layouts may contain either `Метал` or `Виробник`. Both are optional. Mapping uses headers, not column position: `Виріб` → Product Category, `Виробник` → Producer, `Метал` → Metal, `Проба` → Fineness, `Розмір` → Size, `Вага` → Weight, `Ціна-грам` → Price per Gram, `Артикул` → Article, and `Примітка` → Notes. `Ціна(грн)` is intentionally left as Do not import because Price is calculated. Owner chooses one active Target Shop for the import.
 
-Inventory is database-paginated at 50 rows with partial filters and a separate exact case-sensitive barcode scanner. Owners can add/edit/import; Salespeople cannot mutate inventory.
+Inventory is database-paginated at 50 rows and includes a barcode filter. Barcode scanning is available in Sales Checkout. Owners can add/edit/import; Salespeople cannot mutate inventory.
 
 The importer accepts standard `.xlsx` files up to 5 MiB and 5,000 data rows. It supports worksheet selection, editable Ukrainian/English column mapping, preview, and database batches of 100. Browser rows are revalidated before execution.
 

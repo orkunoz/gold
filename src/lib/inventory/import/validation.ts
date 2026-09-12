@@ -127,7 +127,7 @@ export function validateImportRows(rows: SpreadsheetRow[], context: Context): Im
 
     const item: ImportRow["item"] = shopId ? {
       shop_id: shopId, shop_name: context.shops.find((shop) => shop.id === shopId)?.name ?? "Unknown", barcode, article_number: text(mapped(row, context.mapping, "article_number")), category_id: category.id, category_name: category.name ?? null,
-      metal: metal.value, producer: text(mapped(row, context.mapping, "producer")),
+      metal: metal.value, gold_fineness: text(mapped(row, context.mapping, "fineness")), producer: text(mapped(row, context.mapping, "producer")),
       weight_grams: weight.error ? null : weight.value, size: text(mapped(row, context.mapping, "size")),
       price_per_gram: pricePerGram.error ? null : pricePerGram.value,
       price: weight.error || pricePerGram.error ? null : calculateInventoryPrice(weight.value,pricePerGram.value),
@@ -154,7 +154,7 @@ export function validMapping(input: unknown): input is ColumnMapping {
 export function toInsert(item: NonNullable<ImportRow["item"]>, createdBy: string) {
   return {
     shop_id: item.shop_id, barcode: item.barcode, article_number: item.article_number, category_name: item.category_name,
-    metal: item.metal, producer: item.producer, size: item.size, weight_grams: item.weight_grams,
+    metal: item.metal, gold_fineness: item.gold_fineness, producer: item.producer, size: item.size, weight_grams: item.weight_grams,
     price_per_gram: item.price_per_gram, price: item.price, discount: item.discount, notes: item.notes,
     status: item.status, created_by: createdBy,
   };

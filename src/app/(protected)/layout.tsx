@@ -2,14 +2,14 @@ import { requireUser } from "@/lib/auth/session";
 import Image from "next/image";
 import { Navigation } from "@/components/navigation";
 import { SignOutButton } from "@/components/sign-out-button";
-import { getCurrentEmployee, getInventoryOptions } from "@/lib/inventory/queries";
+import { getActiveShops, getCurrentEmployee } from "@/lib/inventory/queries";
 
 export const dynamic = "force-dynamic";
 
 export default async function ApplicationLayout({ children }: { children: React.ReactNode }) {
   const claims = await requireUser();
-  const [employee,options] = await Promise.all([getCurrentEmployee(),getInventoryOptions()]);
-  const shopName=options.shops.find((shop)=>shop.id===employee.shop_id)?.name;
+  const [employee,shops] = await Promise.all([getCurrentEmployee(),getActiveShops()]);
+  const shopName=shops.find((shop)=>shop.id===employee.shop_id)?.name;
   return <>
     <a href="#main-content" className="sr-only focus:not-sr-only focus:block focus:p-4">Skip to content</a>
     <header className="border-b border-stone-200 bg-white">

@@ -11,7 +11,7 @@ export type DashboardReport = {
   kpis: { revenue: number; sales_count: number; items_sold: number; gold_weight_sold: number; average_sale: number };
   inventory: null | { in_stock_items: number; in_stock_weight: number; customer_value: number; missing_price_items: number };
   status_counts: null | Record<"IN_STOCK" | "SOLD" | "REMOVED", number>;
-  recent_sales: { id: string; sale_number: string; sold_at: string; shop: string; employee: string; item_count: number; total_sale_price: number }[];
+  recent_sales: { id: string; sale_number: string; sold_at: string; shop: string; employee: string; category_summary: string; item_count: number; total_sale_price: number }[];
   sales_over_time: null | { date: string; revenue: number; sales_count: number }[];
   categories: null | { category: string; items_sold: number; revenue: number; weight_sold: number }[];
   shops: null | { shop_id: string; shop: string; revenue: number; sales_count: number; items_sold: number; weight_sold: number; in_stock_items: number; in_stock_weight: number; inventory_value: number }[];

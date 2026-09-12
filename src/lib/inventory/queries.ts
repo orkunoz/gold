@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 
 import { notFound, redirect } from "next/navigation";
 import type { EmployeeRole, InventoryStatus, Tables } from "@/lib/database.types";
@@ -21,7 +22,7 @@ export type InventoryFilters = {
   search?: string;
 };
 
-export async function getCurrentEmployee(): Promise<CurrentEmployee> {
+export const getCurrentEmployee = cache(async (): Promise<CurrentEmployee> => {
   const claims = await requireUser();
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -32,18 +33,20 @@ export async function getCurrentEmployee(): Promise<CurrentEmployee> {
 
   if (error || !data?.is_active) redirect("/login");
   return data;
-}
-export async function getInventoryOptions() {
+});
+export const getActiveShops = cache(async () => {
   const supabase = await createClient();
-  const [{ data: categories, error: categoryError }, { data: shops, error: shopError }] =
-    await Promise.all([
-      supabase.rpc("get_inventory_category_options"),
-      supabase.from("shops").select("id, name, code").eq("is_active", true).order("name"),
-    ]);
+  const { data, error } = await supabase.from("shops").select("id, name, code").eq("is_active", true).order("name");
+  if (error) throw new Error("Unable to load shops.");
+  return data ?? [];
+});
+export const getInventoryOptions = cache(async () => {
+  const supabase = await createClient();
+  const [{ data: categories, error: categoryError }, shops] = await Promise.all([supabase.rpc("get_inventory_category_options"), getActiveShops()]);
 
-  if (categoryError || shopError) throw new Error("Unable to load inventory options.");
+  if (categoryError) throw new Error("Unable to load inventory options.");
   return { categories: (categories ?? []).map(({ id, name }) => ({ id, name })), shops: shops ?? [] };
-}
+});
 
 function safeSearch(value: string | undefined) {
   return value?.trim().slice(0, 100).replace(/[,%()]/g, "") ?? "";

@@ -31,7 +31,7 @@ describe("Excel value parsing", () => {
 describe("flexible inventory import validation", () => {
   it("imports a sparse workbook and leaves unmapped fields null", () => {
     const row = validateImportRows([["Ring", "2,5", "A-1", "100"]], base).rows[0];
-    expect(row).toMatchObject({ classification: "Ready", item: { shop_id: "main-id", category_id: "ring-id", category_name: "Ring", weight_grams: 2.5, article_number: "A-1", price: 250, barcode: null, metal: null, producer: null, price_per_gram: 100, discount: null, status: "IN_STOCK" } });
+    expect(row).toMatchObject({ classification: "Ready", item: { shop_id: "main-id", category_id: "ring-id", category_name: "Ring", weight_grams: 2.5, article_number: "A-1", price: 250, barcode: null, metal: null, gold_fineness: null, producer: null, price_per_gram: 100, discount: null, status: "IN_STOCK" } });
   });
   it("imports a new Ukrainian category without an unknown-category warning", () => {
     const row = validateImportRows([["  Браслет   оф ", "2", "UA-1", "100"]], base).rows[0];
@@ -71,5 +71,9 @@ describe("flexible inventory import validation", () => {
   it("uses a mapped shop when valid", () => {
     const context = { ...base, mapping: { shop: 0 } };
     expect(validateImportRows([["OTHER"]], context).rows[0].item?.shop_id).toBe("other-id");
+  });
+  it("maps optional fineness without restricting business values", () => {
+    const row = validateImportRows([["585"]], { ...base, mapping: { fineness: 0 } }).rows[0];
+    expect(row.item?.gold_fineness).toBe("585");
   });
 });

@@ -126,7 +126,7 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
           {!availableShops.length ? <option value="">No active shop available</option> : null}
           {availableShops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}
         </select>
-      </label> : <div className="min-w-64 text-sm font-medium">Shop<p className="mt-2 rounded-lg border border-stone-200 bg-stone-100 px-3 py-2.5">{availableShops[0]?.name ?? "Unassigned"}</p></div>}<p className="pb-2.5 text-sm font-medium">{employee.username||employee.full_name||"Account"} · {employee.role==="owner"?"Owner":availableShops[0]?.name??"Unassigned"}</p>
+      </label> : null}
     </div>
 
     <form onSubmit={scan} className="mt-6 rounded-xl border-2 border-amber-700 bg-amber-50 p-5">

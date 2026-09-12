@@ -5,6 +5,7 @@ const aliases: Record<ImportField, string[]> = {
   article_number: ["article", "article number", "article no", "артикул", "номер артикула"],
   category: ["category", "product", "product category", "виріб", "вироби", "вироб", "категорія", "категорія виробу", "найменування", "назва виробу"],
   metal: ["metal", "метал", "металл"],
+  fineness: ["fineness", "проба"],
   producer: ["producer", "manufacturer", "виробник", "производитель"],
   weight_grams: ["weight", "weight grams", "weight g", "вага", "вага г", "вес"],
   size: ["size", "розмір", "размер"],
