@@ -79,8 +79,10 @@ describe("localization completion", () => {
     expect(source).toMatch(/<Link href=\{`\/sales\/\$\{sale.id\}`\}[^>]*>\{sale.sale_number\}<\/Link>/);
     expect(source).not.toContain('t("sales.viewDetails")');
     expect(source).not.toContain('t("common.total"),""');
-    expect(en.dashboard.inStockGoldWeight).toBe("In-stock Gold Weight");
-    expect(ua.dashboard.inStockGoldWeight).toBe("Вага золота в наявності");
+    expect(en.dashboard.goldWeightSold).toBe("Weight Sold");
+    expect(ua.dashboard.goldWeightSold).toBe("Продана вага");
+    expect(en.dashboard.inStockGoldWeight).toBe("In-stock Weight");
+    expect(ua.dashboard.inStockGoldWeight).toBe("Вага в наявності");
   });
   it("changes only the notes guard in the current database function", () => {
     const original=read("supabase/migrations/20260910190000_task11_dynamic_categories_checkout.sql");

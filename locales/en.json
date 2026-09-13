@@ -233,7 +233,7 @@
     "title": "Dashboard",
     "revenue": "Revenue",
     "itemsSold": "Items sold",
-    "goldWeightSold": "Gold Weight Sold",
+    "goldWeightSold": "Weight Sold",
     "inventoryValue": "Inventory value",
     "inStock": "In stock",
     "dailyRevenue": "Daily revenue",
@@ -252,7 +252,7 @@
     "categoryPerformance": "Category performance",
     "shopPerformance": "Shop performance",
     "noSales": "No sales in this period.",
-    "inStockGoldWeight": "In-stock Gold Weight",
+    "inStockGoldWeight": "In-stock Weight",
     "invalidRange": "Select a valid custom date or date range. Showing This Month instead.",
     "reversedRange": "Start date must be on or before end date. Showing This Month instead."
   },
