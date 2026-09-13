@@ -1,3 +1,4 @@
+import { getTranslations } from "@/lib/i18n/server";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -7,12 +8,13 @@ import { toInsert } from "@/lib/inventory/import/validation";
 import { batchImportRows } from "@/lib/inventory/import/batch";
 
 export async function POST(request: Request) {
+  const { t } = await getTranslations();
   const employee = await getCurrentEmployee();
-  if (!canManageInventory(employee.role)) return NextResponse.json({ error: "You do not have permission to import inventory." }, { status: 403 });
+  if (!canManageInventory(employee.role)) return NextResponse.json({ error: t("import.messages.permission") }, { status: 403 });
   let input: unknown;
-  try { input = await request.json(); } catch { return NextResponse.json({ error: "Invalid import request." }, { status: 400 }); }
+  try { input = await request.json(); } catch { return NextResponse.json({ error: t("import.messages.invalidRequest") }, { status: 400 }); }
   const payload = parseImportPayload(input);
-  if (!payload) return NextResponse.json({ error: "Invalid rows, mapping, or target shop." }, { status: 400 });
+  if (!payload) return NextResponse.json({ error: t("import.messages.invalidPayload") }, { status: 400 });
 
   try {
     const preview = await buildImportPreview(payload);
@@ -26,13 +28,13 @@ export async function POST(request: Request) {
       if (!error) { imported += batch.length; continue; }
       for (let itemIndex = 0; itemIndex < batch.length; itemIndex += 1) {
         const { error: rowError } = await supabase.rpc("import_inventory_items",{p_items:[inserts[itemIndex]]});
-        if (rowError) failures.push({ row: batch[itemIndex].sourceRow, message: rowError.code === "23505" ? "Barcode already exists" : "Database rejected this row" });
+        if (rowError) failures.push({ row: batch[itemIndex].sourceRow, message: rowError.code === "23505" ? t("import.messages.barcodeExists") : t("import.messages.databaseRejected") });
         else imported += 1;
       }
     }
     revalidatePath("/inventory");
     return NextResponse.json({ imported, skipped: preview.summary.errors, footerSkipped: preview.summary.footerSkipped, duplicates: preview.summary.duplicates, failed: failures.length, failures });
   } catch {
-    return NextResponse.json({ error: "The import could not be completed." }, { status: 500 });
+    return NextResponse.json({ error: t("import.messages.notCompleted") }, { status: 500 });
   }
 }

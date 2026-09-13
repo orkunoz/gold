@@ -1,3 +1,4 @@
+import { createTranslator, type Locale } from "@/lib/i18n/core";
 import type { ColumnMapping, ImportField, SpreadsheetRow } from "./types";
 
 const aliases: Record<ImportField, string[]> = {
@@ -45,10 +46,11 @@ export function detectHeaderRow(rows: SpreadsheetRow[]) {
   return best.index;
 }
 
-export function uniqueHeaders(row: SpreadsheetRow) {
+export function uniqueHeaders(row: SpreadsheetRow, locale: Locale = "en") {
+  const t = createTranslator(locale);
   const used = new Map<string, number>();
   return row.map((cell, index) => {
-    const base = String(cell ?? "").trim() || `Column ${index + 1}`;
+    const base = String(cell ?? "").trim() || t("import.column",{count:index+1});
     const count = (used.get(base) ?? 0) + 1;
     used.set(base, count);
     return count === 1 ? base : `${base} (${count})`;

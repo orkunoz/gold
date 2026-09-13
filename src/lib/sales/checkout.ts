@@ -1,3 +1,4 @@
+import { createTranslator, type Locale } from "@/lib/i18n/core";
 import type { EffectivePriceSource, EmployeeRole, InventoryStatus, Json, PricingRuleType } from "@/lib/database.types";
 
 export type CheckoutProduct = {
@@ -30,9 +31,10 @@ export const ARTICLE_MATCH_PAGE_SIZE=50;
 export function articleMatchPage(value:string|null){const requested=Number(value??"1");return Number.isInteger(requested)&&requested>0&&requested<=1000?requested:1;}
 export function articleMatchRange(page:number){const from=(page-1)*ARTICLE_MATCH_PAGE_SIZE;return{from,to:from+ARTICLE_MATCH_PAGE_SIZE-1};}
 
-export function unavailableMessage(status: InventoryStatus) {
-  if (status === "SOLD") return "This item is already sold.";
-  if (status === "REMOVED") return "This item has been removed from inventory.";
+export function unavailableMessage(status: InventoryStatus, locale: Locale = "en") {
+  const t = createTranslator(locale);
+  if (status === "SOLD") return t("sales.errors.sold");
+  if (status === "REMOVED") return t("sales.errors.removed");
   return null;
 }
 
@@ -40,19 +42,21 @@ export function defaultListPrice(product: Pick<CheckoutProduct, "effective_price
   return product.effective_price;
 }
 
-export function addProductToCart(cart: CartItem[], product: CheckoutProduct) {
-  const unavailable = unavailableMessage(product.status);
+export function addProductToCart(cart: CartItem[], product: CheckoutProduct, locale: Locale = "en") {
+  const t = createTranslator(locale);
+  const unavailable = unavailableMessage(product.status, locale);
   if (unavailable) return { cart, error: unavailable };
-  if (cart.some((item) => item.id === product.id)) return { cart, error: "This item is already in the current sale." };
+  if (cart.some((item) => item.id === product.id)) return { cart, error: t("sales.errors.inCart") };
   const listPrice = defaultListPrice(product);
   return { cart: [...cart, { ...product, listPrice, discountPercent: "0" }], error: null };
 }
 
-export function parseDiscountPercent(value: string) {
+export function parseDiscountPercent(value: string, locale: Locale = "en") {
+  const t = createTranslator(locale);
   const normalized=value.trim().replace(",", ".")||"0";
-  if(!/^\d+(?:\.\d{1,4})?$/.test(normalized))return {value:null,error:"Enter a discount from 0 to 100."};
+  if(!/^\d+(?:\.\d{1,4})?$/.test(normalized))return {value:null,error:t("sales.errors.discount")};
   const discount=Number(normalized);
-  if(!Number.isFinite(discount)||discount<0||discount>100)return {value:null,error:"Enter a discount from 0 to 100."};
+  if(!Number.isFinite(discount)||discount<0||discount>100)return {value:null,error:t("sales.errors.discount")};
   return {value:discount,error:null};
 }
 
@@ -70,13 +74,14 @@ export function removeCartItem(cart: CartItem[], id: string) {
   return cart.filter((item) => item.id !== id);
 }
 
-export function buildSaleRpcItems(cart: CartItem[]): { value: Json | null; error: string | null } {
-  if (cart.length === 0) return { value: null, error: "Add at least one item before completing the sale." };
+export function buildSaleRpcItems(cart: CartItem[], locale: Locale = "en"): { value: Json | null; error: string | null } {
+  const t = createTranslator(locale);
+  if (cart.length === 0) return { value: null, error: t("sales.errors.addFirst") };
   const items: { inventory_item_id: string; discount_percent: number }[] = [];
   for (const item of cart) {
-    const discount=parseDiscountPercent(item.discountPercent);
-    if(discount.error||discount.value===null)return {value:null,error:`Check the discount for ${item.barcode??item.article_number??"this item"}.`};
-    if (item.listPrice === null) return { value: null, error: `A list price is required for ${item.barcode??item.article_number??"this item"}.` };
+    const discount=parseDiscountPercent(item.discountPercent, locale);
+    if(discount.error||discount.value===null)return {value:null,error:t("sales.errors.checkDiscount",{name:item.barcode??item.article_number??t("sales.errors.thisItem")})};
+    if (item.listPrice === null) return { value: null, error: t("sales.errors.priceRequired",{name:item.barcode??item.article_number??t("sales.errors.thisItem")}) };
     items.push({ inventory_item_id: item.id, discount_percent: discount.value });
   }
   return { value: items, error: null };

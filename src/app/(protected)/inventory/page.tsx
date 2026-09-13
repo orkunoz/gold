@@ -13,7 +13,7 @@ import {
 } from "@/lib/inventory/queries";
 import { getTranslations } from "@/lib/i18n/server";
 
-export const metadata = { title: "Inventory" };
+export async function generateMetadata() { const { t } = await getTranslations(); return { title: t("inventory.title") }; }
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -22,7 +22,7 @@ function parameter(params: Record<string, string | string[] | undefined>, name: 
   return typeof value === "string" ? value : "";
 }
 export default async function InventoryPage({ searchParams }: { searchParams: SearchParams }) {
-  const { t } = await getTranslations();
+  const { t, locale } = await getTranslations();
   const params = await searchParams;
   const barcode = parameter(params, "barcode");
 
@@ -57,7 +57,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
       </div> : <InventoryBulkTable items={items} shops={options.shops} page={page} pageSize={pageSize} canManage={canManage}/>}
     </div>
     <nav aria-label={t("inventory.pages")} className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <span className="text-sm font-medium text-stone-700">{inventoryResultSummary(page, pageSize, count, items.length)}</span>
+      <span className="text-sm font-medium text-stone-700">{inventoryResultSummary(page, pageSize, count, items.length, locale)}</span>
       <div className="flex gap-2">
         {page > 1 ? <Link href={pageHref(page - 1)} className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium">{t("common.previous")}</Link> : null}
         {Array.from({length:totalPages},(_,index)=>index+1).filter(value=>totalPages<=7||Math.abs(value-page)<=2||value===1||value===totalPages).map(value=><Link key={value} href={pageHref(value)} aria-current={value===page?"page":undefined} className={`rounded-lg border px-4 py-2 text-sm font-medium ${value===page?"border-stone-900 bg-stone-900 text-white":"border-stone-300 bg-white"}`}>{value}</Link>)}

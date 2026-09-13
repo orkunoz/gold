@@ -1,5 +1,7 @@
 "use server";
 
+import { getTranslations } from "@/lib/i18n/server";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -107,13 +109,14 @@ export async function deleteInventoryItemPermanently(id: string): Promise<void> 
 }
 
 export async function bulkMoveInventoryItems(ids: string[], shopId: string | null): Promise<BulkMoveState> {
+  const { t } = await getTranslations();
   const employee = await getCurrentEmployee();
-  if (!canManageInventory(employee.role)) return { error: "Owner access required." };
+  if (!canManageInventory(employee.role)) return { error: t("inventory.ownerRequired") };
   const uniqueIds = [...new Set(ids)];
-  if (!uniqueIds.length || uniqueIds.length > 50 || uniqueIds.some((id) => !/^[0-9a-f-]{36}$/i.test(id))) return { error: "Select between 1 and 50 valid products." };
-  if (shopId !== null && !/^[0-9a-f-]{36}$/i.test(shopId)) return { error: "Select a valid destination shop." };
+  if (!uniqueIds.length || uniqueIds.length > 50 || uniqueIds.some((id) => !/^[0-9a-f-]{36}$/i.test(id))) return { error: t("inventory.validSelection") };
+  if (shopId !== null && !/^[0-9a-f-]{36}$/i.test(shopId)) return { error: t("inventory.validDestination") };
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("bulk_move_inventory_items", { p_inventory_item_ids: uniqueIds, p_shop_id: shopId });
-  if (error) return { error: error.message };
-  return { error: "", success: `${data ?? 0} product${data === 1 ? "" : "s"} moved.` };
+  if (error) return { error: t("inventory.moveFailed") };
+  return { error: "", success: t("inventory.moved",{count:data??0}) };
 }

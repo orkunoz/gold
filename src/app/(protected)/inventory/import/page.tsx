@@ -4,7 +4,7 @@ import { InventoryImport } from "@/components/inventory-import";
 import { canManageInventory, getCurrentEmployee, getInventoryOptions } from "@/lib/inventory/queries";
 import { getTranslations } from "@/lib/i18n/server";
 
-export const metadata = { title: "Import inventory" };
+export async function generateMetadata() { const { t } = await getTranslations(); return { title: t("inventory.import") }; }
 
 export default async function ImportInventoryPage() {
   const { t } = await getTranslations();

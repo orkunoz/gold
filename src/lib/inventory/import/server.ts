@@ -1,3 +1,4 @@
+import { getTranslations } from "@/lib/i18n/server";
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
@@ -18,6 +19,7 @@ export function parseImportPayload(input: unknown): ImportPayload | null {
 }
 
 export async function buildImportPreview(payload: ImportPayload) {
+  const { t, locale } = await getTranslations();
   const supabase = await createClient();
   const options = await getInventoryOptions();
   const barcodeIndex = payload.mapping.barcode;
@@ -25,10 +27,11 @@ export async function buildImportPreview(payload: ImportPayload) {
   const existingBarcodes = new Set<string>();
   for (let index = 0; index < barcodes.length; index += 200) {
     const { data, error } = await supabase.from("inventory_items").select("barcode").in("barcode", barcodes.slice(index, index + 200));
-    if (error) throw new Error("Unable to check existing barcodes.");
+    if (error) throw new Error(t("import.messages.checkBarcodes"));
     data?.forEach((item) => { if (item.barcode) existingBarcodes.add(item.barcode); });
   }
   return validateImportRows(payload.rows, {
+    locale,
     mapping: payload.mapping, targetShopId: payload.targetShopId, categories: options.categories, shops: options.shops,
     existingBarcodes, headerRow: payload.headerRow, sourceRows: payload.sourceRows,
   });
