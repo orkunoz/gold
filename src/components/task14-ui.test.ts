@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 describe("Task 14 focused UI", () => {
-  it("shows fineness after metal in inventory form and detail", () => {
-    expect(read("./inventory-form.tsx")).toMatch(/fields\.metal[\s\S]*fields\.fineness/);
-    expect(read("../app/(protected)/inventory/[id]/page.tsx")).toMatch(/fields\.metal[\s\S]*fields\.fineness[\s\S]*fields\.size/);
+  it("shows fineness and removes metal from current inventory UI", () => {
+    expect(read("./inventory-form.tsx")).toContain('fields.fineness');
+    expect(read("../app/(protected)/inventory/[id]/page.tsx")).not.toContain('fields.metal');
   });
   it("simplifies administration controls", () => {
     const shops = read("../app/(protected)/admin/shops/page.tsx");

@@ -3,7 +3,6 @@ import { createTranslator, type Locale } from "@/lib/i18n/core";
 const fields: Record<string, string> = {
   "CREATED": "history.fields.created",
   "Product Category": "fields.productCategory",
-  "Metal": "fields.metal",
   "Fineness": "fields.fineness",
   "Producer": "fields.producer",
   "Size": "fields.size",

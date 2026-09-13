@@ -12,7 +12,7 @@ const links = [
 ];
 
 export function navigationLinks(role: EmployeeRole) {
-  return role === "owner" ? [...links, { href: "/admin", key: "nav.administration" }] : links;
+  return role === "owner" ? [...links, { href: "/transfers", key: "transfers.title" }, { href: "/admin", key: "nav.administration" }] : links;
 }
 
 export function Navigation({ role }: { role: EmployeeRole }) {

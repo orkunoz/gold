@@ -13,7 +13,7 @@ export type InventoryActionState = {
   fieldErrors?: InventoryFormErrors;
 };
 
-export type BulkMoveState = { error: string; success?: string };
+export type BulkMoveState = { error: string; success?: string; transferId?: string };
 
 function databaseError(error: { code?: string; message?: string } | null): InventoryActionState {
   if (error?.code === "23505") {
@@ -116,7 +116,9 @@ export async function bulkMoveInventoryItems(ids: string[], shopId: string | nul
   if (!uniqueIds.length || uniqueIds.length > 50 || uniqueIds.some((id) => !/^[0-9a-f-]{36}$/i.test(id))) return { error: t("inventory.validSelection") };
   if (shopId !== null && !/^[0-9a-f-]{36}$/i.test(shopId)) return { error: t("inventory.validDestination") };
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("bulk_move_inventory_items", { p_inventory_item_ids: uniqueIds, p_shop_id: shopId });
+  const { data, error } = await supabase.rpc("bulk_move_inventory_items_with_transfer", { p_inventory_item_ids: uniqueIds, p_shop_id: shopId! });
   if (error) return { error: t("inventory.moveFailed") };
-  return { error: "", success: t("inventory.moved",{count:data??0}) };
+  return { error: "", success: t("inventory.moved",{count:uniqueIds.length}), transferId:data??undefined };
 }
+export async function bulkChangePricePerGram(ids:string[],raw:string):Promise<BulkMoveState>{const{t}=await getTranslations();const employee=await getCurrentEmployee();if(!canManageInventory(employee.role))return{error:t("inventory.ownerRequired")};const unique=[...new Set(ids)],price=Number(raw);if(!unique.length||unique.length>50||!Number.isFinite(price)||price<0)return{error:t("inventory.validSelection")};const db=await createClient();const{data,error}=await db.rpc("bulk_change_price_per_gram",{p_inventory_item_ids:unique,p_price_per_gram:price});if(error)return{error:error.message};revalidatePath("/inventory");return{error:"",success:t("inventory.priceChanged",{count:data??0})}}
+export async function bulkDeleteInventoryItems(ids:string[]):Promise<BulkMoveState>{const{t}=await getTranslations();const employee=await getCurrentEmployee();if(!canManageInventory(employee.role))return{error:t("inventory.ownerRequired")};const unique=[...new Set(ids)];if(!unique.length||unique.length>50)return{error:t("inventory.validSelection")};const db=await createClient();const{data,error}=await db.rpc("bulk_delete_inventory_items",{p_inventory_item_ids:unique});if(error)return{error:error.message};revalidatePath("/inventory");revalidatePath("/dashboard");return{error:"",success:t("inventory.deleted",{count:data??0})}}

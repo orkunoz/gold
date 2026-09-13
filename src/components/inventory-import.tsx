@@ -9,8 +9,8 @@ import { useI18n } from "./i18n-provider";
 type Result = { imported: number; skipped: number; footerSkipped: number; duplicates: number; failed: number; failures: { row: number; message: string }[] };
 type Props = { employeeShopId: string | null; shops: Pick<Tables<"shops">, "id" | "name" | "code">[] };
 
-const fieldKeys: Record<typeof IMPORT_FIELDS[number], string> = {
-  category: "productCategory", metal: "metal", fineness: "fineness", producer: "producer", size: "size",
+const fieldKeys: Partial<Record<typeof IMPORT_FIELDS[number], string>> = {
+  category: "productCategory", fineness: "fineness", producer: "producer", size: "size",
   weight_grams: "weight", price_per_gram: "pricePerGram", article_number: "article",
   discount: "discount", notes: "notes", status: "status", shop: "shop", barcode: "barcode",
 };
@@ -27,7 +27,7 @@ export function InventoryImport({ employeeShopId, shops }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [parsed, setParsed] = useState<ParsedSheet | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping>({});
-  const [targetShopId, setTargetShopId] = useState(employeeShopId ?? shops[0]?.id ?? "");
+  const [targetShopId] = useState(employeeShopId ?? shops[0]?.id ?? "");
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState("");
@@ -90,15 +90,13 @@ export function InventoryImport({ employeeShopId, shops }: Props) {
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {parsed.headers.map((header, sourceIndex) => { const selected = IMPORT_FIELDS.find((field) => mapping[field] === sourceIndex) ?? ""; return <label key={`${header}-${sourceIndex}`} className="text-sm font-medium">{header}
             <select value={selected} onChange={(event) => { const target = event.target.value as typeof IMPORT_FIELDS[number] | ""; setMapping((current) => { const next = { ...current }; IMPORT_FIELDS.forEach((field) => { if (next[field] === sourceIndex || field === target) delete next[field]; }); if (target) next[target] = sourceIndex; return next; }); }} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5">
-              <option value="">{t("import.doNotImport")}</option>{IMPORT_FIELDS.map((field) => <option key={field} value={field}>{t(`fields.${fieldKeys[field]}`)}</option>)}
+              <option value="">{t("import.doNotImport")}</option>{IMPORT_FIELDS.filter(field=>field!=="metal").map((field) => <option key={field} value={field}>{t(`fields.${fieldKeys[field]}`)}</option>)}
             </select>
           </label>; })}
         </div>
       </section>
 
-      <section><h2 className="text-lg font-semibold">{t("import.targetShop")}</h2>
-        <select aria-label={t("import.targetShop")} value={targetShopId} onChange={(event) => setTargetShopId(event.target.value)} className="mt-3 w-full max-w-md rounded-lg border border-stone-300 bg-white px-3 py-2.5"><option value="">{t("import.selectShop")}</option>{shops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}</select>
-      </section>
+      <p className="rounded-lg bg-amber-50 p-4 text-sm">{t("import.warehouseDestination")}</p>
       <button disabled={busy} onClick={() => void validate()} className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">{busy ? t("common.loading") : t("import.validate")}</button></> : null}
 
       {preview ? <section className="border-t border-stone-200 pt-8"><h2 className="text-lg font-semibold">4. {t("import.preview")}</h2>

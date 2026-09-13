@@ -241,6 +241,15 @@ Task 13 implements permanent Owner-confirmed account/shop deletion, Auth-user ca
 
 Keep this file current after meaningful milestones. Record actual completed work, test evidence and remaining limitations; never secrets or initial passwords. Preserve unrelated user changes and report proposed versus applied/deployed work accurately.
 
+## Warehouse and transfer workflow (Task 20)
+
+- `shops` remains the location table. `location_type` is `SHOP` or `WAREHOUSE`; the single active Warehouse holds stock but is excluded from checkout, salesperson assignment, shop selectors, and Shop Performance. Locations have an editable nullable address.
+- Owner XLSX imports always land in the active Warehouse. The browser has no target selector, spreadsheet Shop/Status/Metal values are not authoritative, and the database rejects import when Warehouse is missing/inactive. Salespeople remain blocked at page, API, and RPC layers.
+- Owner bulk moves are one-step atomic internal transfers of 1–50 same-source IN_STOCK/REMOVED physical items. Each move creates immutable `transfers`/`transfer_items` snapshots and a UA-default printable “Накладна переміщення”; history can regenerate it.
+- Only `complete_sale` may transition a product to SOLD. Manual status controls omit SOLD, direct mutations are database-blocked, and existing SOLD rows remain immutable.
+- Owner bulk price-per-gram changes and permanent deletes are atomic, current-page, 1–50 item operations. SOLD/ineligible selection rejects the whole request. Formula price/history triggers remain authoritative; deletion retains Task 15 footprint semantics.
+- Metal database columns remain as unused legacy nullable compatibility columns to avoid disproportionate forward-migration risk. Current UI, search, import, checkout/sale presentation, reporting, and new transfer snapshots do not use Metal.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

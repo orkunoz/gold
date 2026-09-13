@@ -70,7 +70,7 @@
     "number": "Nr",
     "productCategory": "Product Category",
     "producer": "Producer",
-    "metal": "Metal",
+    "metal": "Metal", "address":"Address", "locationType":"Location type",
     "fineness": "Fineness",
     "size": "Size",
     "weight": "Weight",
@@ -155,6 +155,7 @@
     "validSelection": "Select between 1 and 50 valid products.",
     "validDestination": "Select a valid destination shop.",
     "moveFailed": "Unable to move the selected products."
+    ,"selectLocation":"Select destination location","changeGramPrice":"Change Price per Gram","priceChanged":"Price per gram changed for {count} products.","deleted":"Permanently deleted {count} products.","bulk":{"moveTitle":"Move selected products?","moveDescription":"Move {count} products and create a permanent transfer note.","priceTitle":"Change Price per Gram?","priceDescription":"Set one price per gram for {count} products. All changes are atomic.","deleteTitle":"Permanently delete {count} products?","deleteDescription":"Historical product and sale data for these products will also be removed. This cannot be undone."}
   },
   "sales": {
     "title": "Sales",
@@ -289,7 +290,7 @@
     "file": "XLSX file",
     "chooseFile": "Choose an .xlsx file",
     "worksheet": "Worksheet",
-    "targetShop": "Target shop",
+    "targetShop": "Target shop", "warehouseDestination":"Imported products are assigned to Warehouse.",
     "upload": "Read workbook",
     "mapping": "Column mapping",
     "doNotImport": "Do not import",
@@ -375,6 +376,7 @@
     "required": "This field is required.",
     "invalid": "Enter a valid value."
   },
+  "transfers":{"title":"Transfer History","generate":"Generate transfer note","number":"Transfer Number","from":"From","to":"To","items":"Items","totalWeight":"Total Weight","totalValue":"Total Value","performedBy":"Created / performed by","signatures":"Sender / Receiver signatures"},
   "history": {
     "fields": {
       "created": "Created",

@@ -53,7 +53,7 @@ describe("flexible inventory import validation", () => {
   });
   it("imports new Ukrainian metal and producer values without warnings", () => {
     const row = validateImportRows([["  Золота Україна  ", "  Жадент  "]], { ...base, mapping: { metal: 0, producer: 1 } }).rows[0];
-    expect(row).toMatchObject({ classification: "Ready", warnings: [], errors: [], item: { metal: "Золота Україна", producer: "Жадент" } });
+    expect(row).toMatchObject({ classification: "Ready", warnings: [], errors: [], item: { metal: null, producer: "Жадент" } });
   });
   it("imports blank metal and producer values as null", () => {
     const row = validateImportRows([["   ", null]], { ...base, mapping: { metal: 0, producer: 1 } }).rows[0];

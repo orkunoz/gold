@@ -35,13 +35,19 @@ export const getCurrentEmployee = cache(async (): Promise<CurrentEmployee> => {
 });
 export const getActiveShops = cache(async () => {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("shops").select("id, name, code").eq("is_active", true).order("name");
+  const { data, error } = await supabase.from("shops").select("id, name, code, location_type").eq("is_active", true).eq("location_type", "SHOP").order("name");
   if (error) throw new Error("Unable to load shops.");
+  return data ?? [];
+});
+export const getActiveLocations = cache(async () => {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("shops").select("id, name, code, location_type").eq("is_active", true).order("name");
+  if (error) throw new Error("Unable to load locations.");
   return data ?? [];
 });
 export const getInventoryOptions = cache(async () => {
   const supabase = await createClient();
-  const [{ data: categories, error: categoryError }, shops] = await Promise.all([supabase.rpc("get_inventory_category_options"), getActiveShops()]);
+  const [{ data: categories, error: categoryError }, shops] = await Promise.all([supabase.rpc("get_inventory_category_options"), getActiveLocations()]);
 
   if (categoryError) throw new Error("Unable to load inventory options.");
   return { categories: (categories ?? []).map(({ id, name }) => ({ id, name })), shops: shops ?? [] };
@@ -68,7 +74,7 @@ export async function getInventoryItems(filters: InventoryFilters, page = 1, pag
   if (filters.category) query = query.eq("category_id", filters.category);
   if (filters.status) query = query.eq("status", filters.status);
   if (filters.shop) query = query.eq("shop_id", filters.shop);
-  if (search) query = query.or(`barcode.ilike.%${search}%,article_number.ilike.%${search}%,producer.ilike.%${search}%,metal.ilike.%${search}%,notes.ilike.%${search}%`);
+  if (search) query = query.or(`barcode.ilike.%${search}%,article_number.ilike.%${search}%,producer.ilike.%${search}%,notes.ilike.%${search}%`);
 
   const { data, error, count } = await query;
   if (error) throw new Error("Unable to load inventory.");

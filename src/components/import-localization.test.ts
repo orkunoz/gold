@@ -16,7 +16,7 @@ describe("Import Inventory rendered states",()=>{
     const preview={summary:{sourceRows:1,total:1,ready:1,warnings:0,errors:0,duplicates:0,footerSkipped:0},rows:[{sourceRow:4,classification:"Ready",errors:[],warnings:[],item:{category_name:"Original English Data",metal:"Gold",producer:"Producer",status:"IN_STOCK"}}]};
     state.values=[{name:"items.xlsx"},parsed,{},"shop",preview,null,"",false];
     const html=renderToStaticMarkup(React.createElement(InventoryImport,{employeeShopId:"shop",shops:[{id:"shop",name:"English Shop",code:null}]}));
-    for(const text of ["Заголовки виявлено в рядку 3","Рядок джерела","Попередження","Помилки","Імпортувати 1 коректний виріб","В наявності","Original English Header","Original English Data","English Shop"]){expect(html).toContain(text);}
+    for(const text of ["Заголовки виявлено в рядку 3","Рядок джерела","Попередження","Помилки","Імпортувати 1 коректний виріб","В наявності","Original English Header","Original English Data"]){expect(html).toContain(text);}
     expect(html).not.toMatch(/Detected headers|>Ready<|>Warnings<|>Errors<|>IN_STOCK</);
   });
   it("renders successful import results and navigation in Ukrainian",()=>{

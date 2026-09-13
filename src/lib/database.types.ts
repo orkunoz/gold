@@ -410,30 +410,46 @@ export type Database = {
       }
       shops: {
         Row: {
+          address: string | null
           code: string | null
           created_at: string
           id: string
           is_active: boolean
+          location_type: "SHOP" | "WAREHOUSE"
           name: string
           updated_at: string
         }
         Insert: {
+          address?: string | null
           code?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
+          location_type?: "SHOP" | "WAREHOUSE"
           name: string
           updated_at?: string
         }
         Update: {
+          address?: string | null
           code?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
+          location_type?: "SHOP" | "WAREHOUSE"
           name?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      transfers: {
+        Row:{id:string;transfer_number:string;transferred_at:string;source_location_id:string|null;destination_location_id:string|null;source_name:string;destination_name:string;source_address:string|null;destination_address:string|null;performed_by_employee_id:string|null;performed_by_name:string;item_count:number;total_weight:number;total_value:number;created_at:string}
+        Insert:{transfer_number:string;source_name:string;destination_name:string;performed_by_name:string;item_count:number;total_weight:number;total_value:number;id?:string;transferred_at?:string;source_location_id?:string|null;destination_location_id?:string|null;source_address?:string|null;destination_address?:string|null;performed_by_employee_id?:string|null;created_at?:string}
+        Update:{[key:string]:never};Relationships:[]
+      }
+      transfer_items: {
+        Row:{id:string;transfer_id:string;line_number:number;inventory_item_id:string|null;category_name:string|null;producer:string|null;fineness:string|null;size:string|null;weight_grams:number|null;price_per_gram:number|null;price:number|null;article_number:string|null;barcode:string|null}
+        Insert:{transfer_id:string;line_number:number;id?:string;inventory_item_id?:string|null;category_name?:string|null;producer?:string|null;fineness?:string|null;size?:string|null;weight_grams?:number|null;price_per_gram?:number|null;price?:number|null;article_number?:string|null;barcode?:string|null}
+        Update:{[key:string]:never};Relationships:[]
       }
     }
     Views: {
@@ -442,6 +458,7 @@ export type Database = {
     Functions: {
       admin_create_shop: { Args: { p_name: string; p_code: string }; Returns: string }
       admin_update_shop: { Args: { p_shop_id: string; p_name: string; p_code: string }; Returns: undefined }
+      admin_update_location: { Args:{p_shop_id:string;p_name:string;p_code:string;p_address:string;p_location_type:string};Returns:undefined }
       admin_set_shop_active: { Args: { p_shop_id: string; p_active: boolean }; Returns: undefined }
       admin_delete_shop: { Args: { p_shop_id: string }; Returns: undefined }
       admin_prepare_account_deletion: { Args: { p_employee_id: string }; Returns: string }
@@ -517,6 +534,9 @@ export type Database = {
       import_inventory_items: { Args:{p_items:Json}; Returns:number }
       delete_inventory_item_permanently: { Args:{p_inventory_item_id:string}; Returns:undefined }
       bulk_move_inventory_items: { Args:{p_inventory_item_ids:string[];p_shop_id?:string|null}; Returns:number }
+      bulk_move_inventory_items_with_transfer: { Args:{p_inventory_item_ids:string[];p_shop_id:string}; Returns:string }
+      bulk_change_price_per_gram: { Args:{p_inventory_item_ids:string[];p_price_per_gram:number}; Returns:number }
+      bulk_delete_inventory_items: { Args:{p_inventory_item_ids:string[]}; Returns:number }
       resolve_product_category: { Args:{p_name:string}; Returns:string|null }
     }
     Enums: {

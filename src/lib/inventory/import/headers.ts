@@ -1,11 +1,10 @@
 import { createTranslator, type Locale } from "@/lib/i18n/core";
 import type { ColumnMapping, ImportField, SpreadsheetRow } from "./types";
 
-const aliases: Record<ImportField, string[]> = {
+const aliases: Partial<Record<ImportField, string[]>> = {
   barcode: ["barcode", "bar code", "штрихкод", "штрих код", "штрих-код", "код"],
   article_number: ["article", "article number", "article no", "артикул", "номер артикула"],
   category: ["category", "product", "product category", "виріб", "вироби", "вироб", "категорія", "категорія виробу", "найменування", "назва виробу"],
-  metal: ["metal", "метал", "металл"],
   fineness: ["fineness", "проба"],
   producer: ["producer", "manufacturer", "виробник", "производитель"],
   weight_grams: ["weight", "weight grams", "weight g", "вага", "вага г", "вес"],
