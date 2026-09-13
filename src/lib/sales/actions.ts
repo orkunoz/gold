@@ -20,15 +20,13 @@ function friendlySaleError(message: string | undefined, t: (key: string) => stri
   return t("sales.errors.notCompleted");
 }
 
-export async function completeSaleAction(input: { shopId: string; items: Json; notes: string | null }): Promise<CompleteSaleResult> {
+export async function completeSaleAction(input: { shopId: string; items: Json }): Promise<CompleteSaleResult> {
   await getCurrentEmployee();
   const { t } = await getTranslations();
   if (!input.shopId || !Array.isArray(input.items) || input.items.length === 0) return { success: false, error: t("sales.errors.validItem") };
 
-  if (input.notes !== null && typeof input.notes !== "string") return { success: false, error: t("sales.errors.invalidNotes") };
-
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("complete_sale", { p_shop_id: input.shopId, p_items: input.items, p_notes: input.notes ?? undefined });
+  const { data, error } = await supabase.rpc("complete_sale", { p_shop_id: input.shopId, p_items: input.items, p_notes: undefined });
   const sale = data?.[0];
   if (error || !sale) return { success: false, error: friendlySaleError(error?.message,t) };
   revalidatePath("/inventory");

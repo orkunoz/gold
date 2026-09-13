@@ -22,7 +22,7 @@ export function InventoryFilters({ filters, role, categories, shops, children }:
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [draft, setDraft] = useState({ barcode: filters.barcode ?? "", article: filters.article ?? "", search: filters.search ?? "" });
+  const [draft, setDraft] = useState({ barcode: filters.barcode ?? "", article: filters.article ?? "" });
   const [isPending, startTransition] = useTransition();
   const initialized = useRef(false);
 
@@ -50,7 +50,6 @@ export function InventoryFilters({ filters, role, categories, shops, children }:
       <label className="text-sm font-medium">{t("fields.productCategory")}<select name="category" value={filters.category ?? ""} onChange={(event) => applySelect("category", event.target.value)} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5"><option value="">{t("inventory.filters.allCategories")}</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
       <label className="text-sm font-medium">{t("fields.status")}<select name="status" value={filters.status ?? ""} onChange={(event) => applySelect("status", event.target.value)} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5"><option value="">{t("inventory.filters.allStatuses")}</option>{(["IN_STOCK", "SOLD"] as InventoryStatus[]).map((status) => <option key={status} value={status}>{t(`status.${status}`)}</option>)}</select></label>
       {role === "owner" ? <label className="text-sm font-medium">{t("fields.shop")}<select name="shop" value={filters.shop ?? ""} onChange={(event) => applySelect("shop", event.target.value)} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5"><option value="">{t("inventory.filters.allShops")}</option>{shops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}</select></label> : null}
-      <label className="text-sm font-medium lg:col-span-2">{t("common.search")}<input name="search" value={draft.search} onChange={(event) => setDraft((current) => ({ ...current, search: event.target.value }))} placeholder={t("inventory.filters.text")} className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2.5" /></label>
     </div>
     <div className="mt-5 flex min-h-9 items-center gap-3"><Link href="/inventory" scroll={false} className="rounded-lg px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100">{t("inventory.filters.clear")}</Link>{isPending ? <span role="status" className="text-sm text-stone-500">{t("common.loading")}</span> : null}</div>
   </form><div aria-busy={isPending} className="relative">

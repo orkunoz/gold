@@ -34,7 +34,6 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
     article: parameter(params, "article"),
     category: parameter(params, "category"),
     shop: parameter(params, "shop"),
-    search: parameter(params, "search"),
     status: (["IN_STOCK", "SOLD"] as InventoryStatus[]).includes(rawStatus as InventoryStatus) ? rawStatus as InventoryStatus : undefined,
   };
   const [employee, options, inventory] = await Promise.all([getCurrentEmployee(), getInventoryOptions(), getInventoryItems(filters, page)]);

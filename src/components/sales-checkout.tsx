@@ -17,7 +17,6 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
   const availableShops = checkoutShops(employee.role, employee.shop_id, shops);
   const [shopId, setShopId] = useState(employee.role === "owner" ? availableShops[0]?.id ?? "" : employee.shop_id ?? "");
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [notes, setNotes] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [confirmation, setConfirmation] = useState<SaleConfirmation | null>(null);
@@ -96,10 +95,9 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
     if (rpcItems.error || !rpcItems.value) { setMessage(rpcItems.error); return; }
     setMessage(null);
     startTransition(async () => {
-      const result = await completeSaleAction({ shopId, items: rpcItems.value!, notes: notes.trim() || null });
+      const result = await completeSaleAction({ shopId, items: rpcItems.value! });
       if (!result.success) { setMessage(result.error); refocusScanner(); return; }
       setCart([]);
-      setNotes("");
       setConfirmation(result.sale);
       router.refresh();
     });
@@ -147,7 +145,7 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
         <tbody className="divide-y divide-stone-100">{cart.map((item) => {
           const discountError=parseDiscountPercent(item.discountPercent,locale).error;
           return <tr key={item.id}>
-            <td className="px-4 py-3"><p className="font-semibold">{item.barcode??t("sales.noBarcode")}</p><p className="text-xs text-stone-500">{item.article_number || t("sales.noArticle")} · {item.category || t("sales.uncategorized")}</p><p className="text-xs text-stone-500">{[item.gold_fineness, item.gold_color, item.size && `${t("fields.size")} ${item.size}`].filter(Boolean).join(" · ") || "—"}</p></td>
+            <td className="px-4 py-3"><p className="font-semibold">{item.barcode??t("sales.noBarcode")}</p><p className="text-xs text-stone-500">{item.article_number || t("sales.noArticle")} · {item.category || t("sales.uncategorized")}</p><p className="text-xs text-stone-500">{[item.gold_color, item.size && `${t("fields.size")} ${item.size}`].filter(Boolean).join(" · ") || "—"}</p></td>
             <td className="px-4 py-3">{item.weight_grams === null ? "—" : `${item.weight_grams} ${t("common.grams")}`}</td>
             <td className="px-4 py-3"><InventoryStatus status={item.status} /></td>
             <td className="px-4 py-3"><input aria-label={t("sales.discountFor",{name:item.barcode??item.article_number??t("sales.product")})} type="number" min="0" max="100" step="0.01" inputMode="decimal" value={item.discountPercent} onChange={(event)=>setCart(updateCartDiscount(cart,item.id,event.target.value))} className={`w-24 rounded-lg border px-3 py-2 ${discountError?"border-red-500":"border-stone-300"}`} />{discountError?<p className="mt-1 text-xs text-red-700">{discountError}</p>:null}</td>
@@ -158,11 +156,8 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
       </table></div>}
     </div>
 
-    <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
-      <label className="text-sm font-medium">{t("sales.saleNotes")} <span className="font-normal text-stone-500">({t("common.optional")})</span>
-        <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} className="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2.5" />
-      </label>
-      <div className="min-w-64 rounded-xl bg-stone-950 p-5 text-white"><p className="text-xs uppercase tracking-wide text-stone-400">{t("sales.currentTotal")}</p><p className="mt-2 text-2xl font-semibold">{formatPrice(cartTotal(cart),locale)}</p><button onClick={complete} disabled={cart.length === 0 || isPending || !shopId} className="mt-4 w-full rounded-lg bg-amber-500 px-5 py-3 font-semibold text-stone-950 disabled:cursor-not-allowed disabled:opacity-50">{isPending ? t("sales.completing") : t("sales.complete")}</button></div>
+    <div className="mt-6 flex justify-end">
+      <div className="w-full min-w-64 rounded-xl bg-stone-950 p-5 text-white sm:w-auto"><p className="text-xs uppercase tracking-wide text-stone-400">{t("sales.currentTotal")}</p><p className="mt-2 text-2xl font-semibold">{formatPrice(cartTotal(cart),locale)}</p><button onClick={complete} disabled={cart.length === 0 || isPending || !shopId} className="mt-4 w-full rounded-lg bg-amber-500 px-5 py-3 font-semibold text-stone-950 disabled:cursor-not-allowed disabled:opacity-50">{isPending ? t("sales.completing") : t("sales.complete")}</button></div>
     </div>
   </section>;
 }

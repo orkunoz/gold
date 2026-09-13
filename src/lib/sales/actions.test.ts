@@ -7,22 +7,14 @@ vi.mock("@/lib/i18n/server",()=>({getTranslations:async()=>({locale:"ua",t:creat
 vi.mock("next/cache",()=>({revalidatePath:mocks.revalidate}));
 import { completeSaleAction } from "./actions";
 beforeEach(()=>{vi.clearAllMocks();mocks.employee.mockResolvedValue({id:"employee"});mocks.rpc.mockResolvedValue({data:[{sale_id:"sale"}],error:null});});
-describe("sale notes",()=>{
-  it("passes long Unicode notes safely as an RPC parameter",async()=>{
-    const notes="Примітка <script> ' & \n".repeat(400);
-    expect(notes.length).toBeGreaterThan(5000);
-    expect((await completeSaleAction({shopId:"shop",items:[{inventory_item_id:"item",discount_percent:0}],notes})).success).toBe(true);
-    expect(mocks.rpc).toHaveBeenCalledWith("complete_sale",expect.objectContaining({p_notes:notes}));
-  });
-  it("keeps notes optional and rejects non-text input",async()=>{
-    expect((await completeSaleAction({shopId:"shop",items:[{}],notes:null})).success).toBe(true);
-    mocks.rpc.mockClear();
-    expect((await completeSaleAction({shopId:"shop",items:[{}],notes:42 as unknown as string})).success).toBe(false);
-    expect(mocks.rpc).not.toHaveBeenCalled();
+describe("sale completion",()=>{
+  it("does not accept or submit checkout notes",async()=>{
+    expect((await completeSaleAction({shopId:"shop",items:[{inventory_item_id:"item",discount_percent:0}]})).success).toBe(true);
+    expect(mocks.rpc).toHaveBeenCalledWith("complete_sale",{p_shop_id:"shop",p_items:[{inventory_item_id:"item",discount_percent:0}],p_notes:undefined});
   });
   it("preserves authentication and localizes sale failures",async()=>{
     mocks.rpc.mockResolvedValue({error:{message:"IN_STOCK"}});
-    const result=await completeSaleAction({shopId:"shop",items:[{}],notes:null});
+    const result=await completeSaleAction({shopId:"shop",items:[{}]});
     expect(mocks.employee).toHaveBeenCalled();
     expect(result).toEqual({success:false,error:createTranslator("ua")("sales.errors.unavailable")});
   });
