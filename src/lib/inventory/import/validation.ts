@@ -110,8 +110,10 @@ export function validateImportRows(rows: SpreadsheetRow[], context: Context): Im
 
     const weight = parseImportedNumber(mapped(row, context.mapping, "weight_grams"));
     const pricePerGram = parseImportedNumber(mapped(row, context.mapping, "price_per_gram"));
+    const purchasePrice = parseImportedNumber(mapped(row, context.mapping, "purchase_price"));
     if (weight.error) warnings.push(t("import.messages.invalidWeight")); else if (weight.value !== null && weight.value < 0) errors.push(t("import.messages.negativeWeight"));
     if (pricePerGram.error) warnings.push(t("import.messages.invalidGramPrice")); else if (pricePerGram.value !== null && pricePerGram.value < 0) errors.push(t("import.messages.negativeGramPrice"));
+    if (purchasePrice.error) warnings.push(t("import.messages.invalidPurchasePrice")); else if (purchasePrice.value !== null && purchasePrice.value < 0) errors.push(t("import.messages.negativePurchasePrice"));
     const category = matchCategory(mapped(row, context.mapping, "category"), context.categories);
     const status = normalizeImportedStatus(mapped(row, context.mapping, "status"), context.locale);
     if (status.warning) warnings.push(status.warning);
@@ -119,11 +121,12 @@ export function validateImportRows(rows: SpreadsheetRow[], context: Context): Im
 
     const item: ImportRow["item"] = shopId ? {
       shop_id: shopId, shop_name: context.shops.find((shop) => shop.id === shopId)?.name ?? t("common.unknown"), barcode, article_number: text(mapped(row, context.mapping, "article_number")), category_id: category.id, category_name: category.name ?? null,
-      metal:null, gold_fineness: text(mapped(row, context.mapping, "fineness")), producer: text(mapped(row, context.mapping, "producer")),
+      metal:null, gold_fineness:null, producer: text(mapped(row, context.mapping, "producer")),
       weight_grams: weight.error ? null : weight.value, size: text(mapped(row, context.mapping, "size")),
       price_per_gram: pricePerGram.error ? null : pricePerGram.value,
+      purchase_price: purchasePrice.error ? null : purchasePrice.value,
       price: weight.error || pricePerGram.error ? null : calculateInventoryPrice(weight.value,pricePerGram.value),
-      discount: text(mapped(row, context.mapping, "discount")), status: status.value, notes: text(mapped(row, context.mapping, "notes")),
+      discount:null, status: status.value, notes:null,
     } : null;
     return { sourceRow: context.sourceRows?.[index] ?? index + (context.headerRow ?? 0) + 2, classification: errors.length ? "Error" : warnings.length ? "Warning" : "Ready", errors, warnings, item };
   });
@@ -148,8 +151,8 @@ export function validMapping(input: unknown): input is ColumnMapping {
 export function toInsert(item: NonNullable<ImportRow["item"]>, createdBy: string) {
   return {
     shop_id: item.shop_id, barcode: item.barcode, article_number: item.article_number, category_name: item.category_name,
-    gold_fineness: item.gold_fineness, producer: item.producer, size: item.size, weight_grams: item.weight_grams,
-    price_per_gram: item.price_per_gram, price: item.price, discount: item.discount, notes: item.notes,
+    producer: item.producer, size: item.size, weight_grams: item.weight_grams,
+    purchase_price: item.purchase_price, price_per_gram: item.price_per_gram, price: item.price,
     status: item.status, created_by: createdBy,
   };
 }

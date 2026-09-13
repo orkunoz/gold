@@ -1,7 +1,7 @@
 import type { InventoryStatus } from "@/lib/database.types";
 
 export const IMPORT_FIELDS = [
-  "category", "metal", "fineness", "producer", "size", "weight_grams", "price_per_gram",
+  "category", "metal", "fineness", "producer", "size", "weight_grams", "purchase_price", "price_per_gram",
   "article_number", "discount", "notes", "status", "shop", "barcode",
 ] as const;
 
@@ -37,8 +37,9 @@ export type ImportRow = {
     weight_grams: number | null;
     size: string | null;
     price_per_gram: number | null;
-    price: number | null;
+    purchase_price: number | null;
     discount: string | null;
+    price: number | null;
     status: InventoryStatus;
     notes: string | null;
     shop_name: string;

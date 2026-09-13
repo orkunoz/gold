@@ -88,6 +88,7 @@ export type Database = {
           metal: string | null
           price: number | null
           price_per_gram: number | null
+          purchase_price: number | null
           producer: string | null
           received_at: string | null
           selling_price: number | null
@@ -112,6 +113,7 @@ export type Database = {
           metal?: string | null
           price?: number | null
           price_per_gram?: number | null
+          purchase_price?: number | null
           producer?: string | null
           received_at?: string | null
           selling_price?: number | null
@@ -136,6 +138,7 @@ export type Database = {
           metal?: string | null
           price?: number | null
           price_per_gram?: number | null
+          purchase_price?: number | null
           producer?: string | null
           received_at?: string | null
           selling_price?: number | null
@@ -279,6 +282,7 @@ export type Database = {
           metal: string | null
           notes: string | null
           price_per_gram: number | null
+          purchase_price_snapshot: number | null
           producer: string | null
           sale_id: string
           sale_price: number
@@ -297,6 +301,7 @@ export type Database = {
           metal?: string | null
           notes?: string | null
           price_per_gram?: number | null
+          purchase_price_snapshot?: number | null
           producer?: string | null
           sale_id: string
           sale_price: number
@@ -315,6 +320,7 @@ export type Database = {
           metal?: string | null
           notes?: string | null
           price_per_gram?: number | null
+          purchase_price_snapshot?: number | null
           producer?: string | null
           sale_id?: string
           sale_price?: number
@@ -447,8 +453,8 @@ export type Database = {
         Update:{[key:string]:never};Relationships:[]
       }
       transfer_items: {
-        Row:{id:string;transfer_id:string;line_number:number;inventory_item_id:string|null;category_name:string|null;producer:string|null;fineness:string|null;size:string|null;weight_grams:number|null;price_per_gram:number|null;price:number|null;article_number:string|null;barcode:string|null}
-        Insert:{transfer_id:string;line_number:number;id?:string;inventory_item_id?:string|null;category_name?:string|null;producer?:string|null;fineness?:string|null;size?:string|null;weight_grams?:number|null;price_per_gram?:number|null;price?:number|null;article_number?:string|null;barcode?:string|null}
+        Row:{id:string;transfer_id:string;line_number:number;inventory_item_id:string|null;category_name:string|null;producer:string|null;fineness:string|null;size:string|null;weight_grams:number|null;purchase_price:number|null;price_per_gram:number|null;price:number|null;article_number:string|null;barcode:string|null}
+        Insert:{transfer_id:string;line_number:number;id?:string;inventory_item_id?:string|null;category_name?:string|null;producer?:string|null;fineness?:string|null;size?:string|null;weight_grams?:number|null;purchase_price?:number|null;price_per_gram?:number|null;price?:number|null;article_number?:string|null;barcode?:string|null}
         Update:{[key:string]:never};Relationships:[]
       }
     }
@@ -519,6 +525,7 @@ export type Database = {
         Args: { p_period?: string; p_shop_id?: string | null; p_start_date?: string | null; p_end_date?: string | null }
         Returns: Json
       }
+      get_net_profit_report: { Args: { p_period:string; p_shop_id:string|null; p_start_date:string|null; p_end_date:string|null }; Returns: Json }
       get_sales_register: {
         Args: {
           p_category_filter?: string | null

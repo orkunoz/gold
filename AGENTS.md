@@ -249,6 +249,9 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Only `complete_sale` may transition a product to SOLD. Manual status controls omit SOLD, direct mutations are database-blocked, and existing SOLD rows remain immutable.
 - Owner bulk price-per-gram changes and permanent deletes are atomic, current-page, 1–50 item operations. SOLD/ineligible selection rejects the whole request. Formula price/history triggers remain authoritative; deletion retains Task 15 footprint semantics.
 - Metal database columns remain as unused legacy nullable compatibility columns to avoid disproportionate forward-migration risk. Current UI, search, import, checkout/sale presentation, reporting, and new transfer snapshots do not use Metal.
+- Current product workflows also leave legacy `gold_fineness`, `notes`, `discount`, and received-date columns nullable and unused; checkout `discount_percent`, sale notes, and `sales.sold_at` remain authoritative and visible where appropriate.
+- `inventory_items.purchase_price` is the Owner-only per-item acquisition total. Checkout snapshots it to `sale_items.purchase_price_snapshot`; historical Net Profit uses the snapshot and reports a missing-cost item count. Transfer snapshots may include purchase price because transfer history and PDF access are Owner-only.
+- Transfer PDF downloads are regenerated from immutable transfer snapshots. The bulk transfer RPC locks the selection, creates snapshots, updates every inventory location, verifies the row result, and rolls the entire transaction back on failure.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 describe("Task 14 focused UI", () => {
-  it("shows fineness and removes metal from current inventory UI", () => {
-    expect(read("./inventory-form.tsx")).toContain('fields.fineness');
+  it("removes fineness and metal from current inventory UI", () => {
+    expect(read("./inventory-form.tsx")).not.toContain('fields.fineness');
     expect(read("../app/(protected)/inventory/[id]/page.tsx")).not.toContain('fields.metal');
   });
   it("simplifies administration controls", () => {

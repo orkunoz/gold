@@ -24,6 +24,7 @@ export function dashboardSections(role: EmployeeRole) { return { inventory: role
 export type DashboardReport = {
   role: EmployeeRole; period: ReportingPeriod; timezone: "Europe/Kyiv"; start_at: string; end_at: string; shop_id: string | null;
   kpis: { revenue: number; sales_count: number; items_sold: number; gold_weight_sold: number; average_sale: number };
+  profit?: { net_profit:number; missing_purchase_cost_items:number };
   inventory: null | { in_stock_items: number; in_stock_weight: number; customer_value: number; missing_price_items: number };
   status_counts: null | Record<"IN_STOCK" | "SOLD", number>;
   recent_sales: { id: string; sale_number: string; sold_at: string; shop: string; employee: string; category_summary: string; item_count: number; total_sale_price: number }[];

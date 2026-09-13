@@ -15,7 +15,6 @@ const TEXT_FIELDS = [
   "barcode",
   "article_number",
   "category_name",
-  "gold_fineness",
   "gold_color",
   "metal",
   "producer",
@@ -24,10 +23,9 @@ const TEXT_FIELDS = [
   "owner_price",
   "selling_price",
   "price_per_gram",
-  "discount",
+  "purchase_price",
   "status",
   "received_at",
-  "notes",
 ] as const;
 
 function nullableText(value: string) {
@@ -65,6 +63,7 @@ export function validateInventoryForm(formData: FormData): InventoryValidationRe
   const ownerPrice = parseNonnegativeNumber("owner_price", "Owner price", values, errors);
   const sellingPrice = parseNonnegativeNumber("selling_price", "Selling price", values, errors);
   const pricePerGram = parseNonnegativeNumber("price_per_gram", "Price per gram", values, errors);
+  const purchasePrice = parseNonnegativeNumber("purchase_price", "Purchase price", values, errors);
 
   let receivedAt: string | null = null;
   if (values.received_at) {
@@ -82,7 +81,6 @@ export function validateInventoryForm(formData: FormData): InventoryValidationRe
       barcode: nullableText(values.barcode),
       article_number: nullableText(values.article_number),
       category_name: nullableText(values.category_name)?.replace(/\s+/g, " ") ?? null,
-      gold_fineness: nullableText(values.gold_fineness),
       gold_color: nullableText(values.gold_color),
       metal: nullableText(values.metal),
       producer: nullableText(values.producer),
@@ -91,10 +89,9 @@ export function validateInventoryForm(formData: FormData): InventoryValidationRe
       owner_price: ownerPrice,
       selling_price: sellingPrice,
       price_per_gram: pricePerGram,
-      discount: nullableText(values.discount),
+      purchase_price: purchasePrice,
       status,
       received_at: receivedAt,
-      notes: nullableText(values.notes),
     },
   };
 }

@@ -24,6 +24,6 @@ export default async function ApplicationLayout({ children }: { children: React.
         <div className="w-full"><Navigation role={employee.role} /></div>
       </div>
     </header>
-    <main id="main-content" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">{children}</main>
+    <main id="main-content" className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 sm:py-12">{children}</main>
   </>;
 }

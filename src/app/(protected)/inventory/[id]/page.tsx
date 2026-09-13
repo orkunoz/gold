@@ -16,9 +16,10 @@ export default async function InventoryItemPage({ params,searchParams }: { param
   const [item, employee, history] = await Promise.all([getInventoryItem(id), getCurrentEmployee(), getInventoryHistory(id)]);
   const details = [
     [t("fields.productCategory"), item.product_categories?.name ?? "—"], [t("fields.producer"), displayValue(item.producer)],
-    [t("fields.fineness"), displayValue(item.gold_fineness)], [t("fields.size"), displayValue(item.size)],
+    [t("fields.size"), displayValue(item.size)],
     [t("fields.weight"), item.weight_grams === null ? "—" : `${item.weight_grams} ${t("common.grams")}`], [t("fields.pricePerGram"), formatPrice(item.price_per_gram,locale)],
-    [t("fields.article"), displayValue(item.article_number)], [t("fields.priceUah"), formatPrice(item.price,locale)], [t("fields.notes"), item.notes || "—"],
+    ...(employee.role==="owner"?[[t("fields.purchasePrice"),formatPrice(item.purchase_price,locale)]]:[]),
+    [t("fields.article"), displayValue(item.article_number)], [t("fields.priceUah"), formatPrice(item.price,locale)],
     [t("fields.status"), t(`status.${item.status}`)], [t("fields.shop"), item.shops?.name ?? t("common.unassigned")], [t("fields.barcode"), displayValue(item.barcode)],
   ];
   const canEdit=canManageInventory(employee.role)&&item.status!=="SOLD";

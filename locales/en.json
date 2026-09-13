@@ -9,6 +9,7 @@
     "saving": "Saving…",
     "save": "Save",
     "cancel": "Cancel",
+    "confirm": "Confirm",
     "edit": "Edit",
     "delete": "Delete",
     "actions": "Actions",
@@ -74,6 +75,7 @@
     "fineness": "Fineness",
     "size": "Size",
     "weight": "Weight",
+    "purchasePrice": "Purchase Price",
     "pricePerGram": "Price per Gram",
     "article": "Article",
     "priceUah": "Price (UAH)",
@@ -235,6 +237,8 @@
     "revenue": "Revenue",
     "itemsSold": "Items sold",
     "goldWeightSold": "Weight Sold",
+    "netProfit": "Net Profit",
+    "missingPurchaseCost": "{count} sold item(s) have no purchase cost; profit excludes their cost.",
     "inventoryValue": "Inventory value",
     "inStock": "In stock",
     "dailyRevenue": "Daily revenue",
@@ -376,7 +380,7 @@
     "required": "This field is required.",
     "invalid": "Enter a valid value."
   },
-  "transfers":{"title":"Transfer History","generate":"Generate transfer note","number":"Transfer Number","from":"From","to":"To","items":"Items","totalWeight":"Total Weight","totalValue":"Total Value","performedBy":"Created / performed by","signatures":"Sender / Receiver signatures"},
+  "transfers":{"title":"Transfer History","generate":"Download PDF","downloadPdf":"Download PDF","number":"Transfer Number","from":"From","to":"To","items":"Items","totalWeight":"Total Weight","totalValue":"Total Value","performedBy":"Created / performed by","signatures":"Sender / Receiver signatures"},
   "history": {
     "fields": {
       "created": "Created",

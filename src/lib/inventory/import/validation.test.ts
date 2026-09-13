@@ -80,8 +80,8 @@ describe("flexible inventory import validation", () => {
     const context = { ...base, mapping: { shop: 0 } };
     expect(validateImportRows([["OTHER"]], context).rows[0].item?.shop_id).toBe("other-id");
   });
-  it("maps optional fineness without restricting business values", () => {
+  it("ignores removed fineness mappings", () => {
     const row = validateImportRows([["585"]], { ...base, mapping: { fineness: 0 } }).rows[0];
-    expect(row.item?.gold_fineness).toBe("585");
+    expect(row.item?.gold_fineness).toBeNull();
   });
 });
