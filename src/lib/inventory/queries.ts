@@ -11,7 +11,7 @@ import { readWithRetry } from "@/lib/supabase/read";
 export type CurrentEmployee = Pick<
   Tables<"employees">,
   "id" | "username" | "full_name" | "role" | "shop_id" | "is_active"
-> & { shops: { name: string } | null };
+> & { shops: { name: string; location_type: string } | null };
 
 export type InventoryFilters = {
   barcode?: string;
@@ -30,7 +30,7 @@ export const getCurrentEmployee = cache(async (): Promise<CurrentEmployee> => {
   const supabase = await createClient();
   const { data, error } = await readWithRetry("current_employee", () => supabase
     .from("employees")
-    .select("id, username, full_name, role, shop_id, is_active, shops(name)")
+    .select("id, username, full_name, role, shop_id, is_active, shops(name, location_type)")
     .eq("auth_user_id", String(claims.sub))
     .maybeSingle());
 

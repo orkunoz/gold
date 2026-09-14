@@ -25,7 +25,7 @@ export const getAdminShops = cache(async () => {
 
 export const getAdminEmployees = cache(async () => {
   await requireOwner(); const supabase=await createClient();
-  const {data,error}=await readWithRetry("admin_employees",()=>supabase.from("employees").select("id,email,username,full_name,role,shop_id,is_active,created_at,shops(name)").order("created_at"));
+  const {data,error}=await readWithRetry("admin_employees",()=>supabase.from("employees").select("id,email,username,full_name,role,shop_id,is_active,created_at,shops(name,location_type)").order("created_at"));
   if(error) throw new Error("Unable to load accounts.");
   return data??[];
 });

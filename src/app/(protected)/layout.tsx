@@ -4,12 +4,13 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { getCurrentEmployee } from "@/lib/inventory/queries";
 import { LanguageSelector } from "@/components/language-selector";
 import { getTranslations } from "@/lib/i18n/server";
+import { locationDisplayName } from "@/lib/locations/display";
 
 export const dynamic = "force-dynamic";
 
 export default async function ApplicationLayout({ children }: { children: React.ReactNode }) {
-  const [employee, { t }] = await Promise.all([getCurrentEmployee(), getTranslations()]);
-  const shopName=employee.shops?.name;
+  const [employee, { t, locale }] = await Promise.all([getCurrentEmployee(), getTranslations()]);
+  const shopName=locationDisplayName(employee.shops,locale);
   return <>
     <a href="#main-content" className="sr-only focus:not-sr-only focus:block focus:p-4">{t("nav.skip")}</a>
     <header className="border-b border-stone-200 bg-white">

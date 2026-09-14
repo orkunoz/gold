@@ -9,8 +9,9 @@ import { addProductToCart, buildSaleRpcItems, cartTotal, checkoutShops, discount
 import { formatPrice } from "@/lib/inventory/format";
 import { InventoryStatus } from "@/components/inventory-status";
 import { useI18n } from "./i18n-provider";
+import { locationDisplayName } from "@/lib/locations/display";
 
-type Shop = { id: string; name: string };
+type Shop = { id: string; name: string; location_type?: string | null };
 
 export function SalesCheckout({ employee, shops }: { employee: { username?:string|null; full_name: string | null; role: EmployeeRole; shop_id: string | null; shops?: { name: string } | null }; shops: Shop[] }) {
   const { t, locale } = useI18n();
@@ -122,7 +123,7 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
       {employee.role === "owner" ? <label className="min-w-64 text-sm font-medium">{t("fields.shop")}
         <select value={shopId} onChange={(event) => changeShop(event.target.value)} className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5">
           {!availableShops.length ? <option value="">{t("sales.noShop")}</option> : null}
-          {availableShops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}
+          {availableShops.map((shop) => <option key={shop.id} value={shop.id}>{locationDisplayName(shop,locale)}</option>)}
         </select>
       </label> : null}
     </div>
