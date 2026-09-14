@@ -15,6 +15,14 @@ describe("transfer PDF",()=>{
     expect(pdf.toString("latin1")).toContain("/MediaBox [0 0 595 842]");
     expect(pdf.toString("latin1")).toContain("/FontFile2");
     expect(pdf.byteLength).toBeGreaterThan(readFileSync("public/fonts/geist-regular.ttf").byteLength);
+    expect(pdf.toString("latin1").match(/ re [fS]/g)?.length).toBeGreaterThan(12);
+  });
+  it("paginates long transfers and repeats a real bordered table",()=>{
+    const many=Array.from({length:70},(_,index)=>({...items[0],line_number:index+1,category_name:`Каблучка ${index+1}`}));
+    const pdf=transferPdf(transfer,many),source=pdf.toString("latin1");
+    expect(source).toContain("/Count 3");
+    expect(source.match(/\/Type \/Page /g)).toHaveLength(3);
+    expect(source.match(/ re S/g)?.length).toBeGreaterThan(700);
   });
   it("uses a stable meaningful filename",()=>expect(transferPdfFilename(transfer.transfer_number)).toBe("transfer-000123.pdf"));
   it("has localized UA and EN confirmation labels without placeholders",()=>{
