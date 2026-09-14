@@ -9,6 +9,9 @@ import {
   getCurrentEmployee,
   getInventoryItems,
   getInventoryOptions,
+  INVENTORY_SORTS,
+  type InventorySort,
+  type SortDirection,
   type InventoryFilters as InventoryFilterValues,
 } from "@/lib/inventory/queries";
 import { getTranslations } from "@/lib/i18n/server";
@@ -26,6 +29,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
   const params = await searchParams;
   const barcode = parameter(params, "barcode");
 
+  const hasStatus = Object.prototype.hasOwnProperty.call(params, "status");
   const rawStatus = parameter(params, "status");
   const requestedPage = Number(parameter(params, "page"));
   const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
@@ -34,11 +38,14 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
     article: parameter(params, "article"),
     category: parameter(params, "category"),
     shop: parameter(params, "shop"),
-    status: (["IN_STOCK", "SOLD"] as InventoryStatus[]).includes(rawStatus as InventoryStatus) ? rawStatus as InventoryStatus : undefined,
+    status: rawStatus === "ALL" ? "ALL" : (["IN_STOCK", "SOLD"] as InventoryStatus[]).includes(rawStatus as InventoryStatus) ? rawStatus as InventoryStatus : hasStatus ? "ALL" : "IN_STOCK",
   };
-  const employeePromise = getCurrentEmployee();
-  const inventoryPromise = getInventoryItems(filters, page);
-  const employee = await employeePromise;
+  const employee = await getCurrentEmployee();
+  const rawSort = parameter(params, "sort");
+  const requestedSort = INVENTORY_SORTS.includes(rawSort as InventorySort) ? rawSort as InventorySort : "number";
+  const sort = requestedSort === "purchasePrice" && employee.role !== "owner" ? "number" : requestedSort;
+  const direction: SortDirection = parameter(params, "direction") === "desc" ? "desc" : "asc";
+  const inventoryPromise = getInventoryItems(filters, page, 50, sort, direction);
   const [options, inventory] = await Promise.all([getInventoryOptions(employee.role === "owner"), inventoryPromise]);
   const { items, count, pageSize } = inventory;
   const canManage = canManageInventory(employee.role);
@@ -56,7 +63,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
       {items.length === 0 ? <div className="p-10 text-center">
         <h2 className="font-medium">{t("inventory.noItems")}</h2>
         <p className="mt-2 text-sm text-stone-600">{t("inventory.clearFilters")}{canManage ? t("inventory.orAdd") : ""}.</p>
-      </div> : <InventoryBulkTable items={items} shops={options.shops} page={page} pageSize={pageSize} canManage={canManage}/>}
+      </div> : <InventoryBulkTable items={items} shops={options.shops} page={page} pageSize={pageSize} count={count} canManage={canManage} currentQuery={currentQuery} sort={sort} direction={direction}/>}
     </div>
     <nav aria-label={t("inventory.pages")} className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <span className="text-sm font-medium text-stone-700">{inventoryResultSummary(page, pageSize, count, items.length, locale)}</span>

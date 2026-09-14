@@ -36,3 +36,11 @@ export function inventoryPageHref(currentQuery: string, page: number) {
   else params.delete("page");
   return `/inventory${params.size ? `?${params.toString()}` : ""}`;
 }
+
+export function inventorySortHref(currentQuery: string, sort: string, direction: "asc" | "desc") {
+  const params = new URLSearchParams(currentQuery);
+  params.set("sort", sort);
+  params.set("direction", direction);
+  params.delete("page");
+  return `/inventory?${params.toString()}`;
+}

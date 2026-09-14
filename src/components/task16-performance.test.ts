@@ -37,9 +37,10 @@ describe("protected navigation performance guards", () => {
     expect(source).not.toContain('from("inventory_items").select("shop_id")');
   });
 
-  it("starts the core Inventory read before awaiting role-specific options", () => {
+  it("authorizes role-specific sorting before starting inventory and options in parallel", () => {
     const source = read("../app/(protected)/inventory/page.tsx");
-    expect(source).toContain("const inventoryPromise = getInventoryItems(filters, page)");
+    expect(source.indexOf("const employee = await getCurrentEmployee()")).toBeLessThan(source.indexOf("const inventoryPromise = getInventoryItems"));
+    expect(source).toContain("const [options, inventory] = await Promise.all");
     expect(source).toContain('getInventoryOptions(employee.role === "owner")');
   });
 });

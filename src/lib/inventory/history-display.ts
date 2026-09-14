@@ -1,4 +1,5 @@
 import { createTranslator, type Locale } from "@/lib/i18n/core";
+import { historicalLocationDisplayName } from "@/lib/locations/display";
 
 const fields: Record<string, string> = {
   "CREATED": "history.fields.created",
@@ -29,6 +30,7 @@ export function historyValue(field: string, value: string | null, locale: Locale
   const t = createTranslator(locale);
   if (value === null) return "—";
   if (field.toLowerCase() === "status" && ["IN_STOCK", "SOLD", "REMOVED"].includes(value)) return t(`status.${value}`);
+  if (field === "Shop") return historicalLocationDisplayName(value, locale);
   if (field === "CREATED" && value === "Inventory item created") return t("history.created");
   return value;
 }

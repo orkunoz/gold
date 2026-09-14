@@ -17,9 +17,13 @@ export type InventoryFilters = {
   barcode?: string;
   article?: string;
   category?: string;
-  status?: InventoryStatus;
+  status?: InventoryStatus | "ALL";
   shop?: string;
 };
+
+export const INVENTORY_SORTS = ["number", "productCategory", "article", "producer", "size", "weight", "purchasePrice", "pricePerGram", "priceUah", "shop"] as const;
+export type InventorySort = typeof INVENTORY_SORTS[number];
+export type SortDirection = "asc" | "desc";
 
 export const getCurrentEmployee = cache(async (): Promise<CurrentEmployee> => {
   const claims = await requireUser();
@@ -61,13 +65,27 @@ function safeSearch(value: string | undefined) {
   return value?.trim().slice(0, 100).replace(/[,%()]/g, "") ?? "";
 }
 
-export async function getInventoryItems(filters: InventoryFilters, page = 1, pageSize = 50) {
+const inventorySortColumns: Record<InventorySort, string> = {
+  number: "created_at",
+  productCategory: "product_categories(name)",
+  article: "article_number",
+  producer: "producer",
+  size: "size",
+  weight: "weight_grams",
+  purchasePrice: "purchase_price",
+  pricePerGram: "price_per_gram",
+  priceUah: "price",
+  shop: "shops(name)",
+};
+
+export async function getInventoryItems(filters: InventoryFilters, page = 1, pageSize = 50, sort: InventorySort = "number", direction: SortDirection = "asc") {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
   let query = supabase
     .from("inventory_items")
-    .select("*, product_categories(name), shops(name, code)", { count: "exact" })
-    .order("created_at", { ascending: false })
+    .select("*, product_categories(name), shops(name, code, location_type)", { count: "exact" })
+    .order(inventorySortColumns[sort], { ascending: direction === "asc", nullsFirst: false })
+    .order("id", { ascending: direction === "asc" })
     .range(from, from + pageSize - 1);
 
   const barcode = safeSearch(filters.barcode);
@@ -75,7 +93,7 @@ export async function getInventoryItems(filters: InventoryFilters, page = 1, pag
   if (barcode) query = query.ilike("barcode", `%${barcode}%`);
   if (article) query = query.ilike("article_number", `%${article}%`);
   if (filters.category) query = query.eq("category_id", filters.category);
-  if (filters.status) query = query.eq("status", filters.status);
+  if (filters.status && filters.status !== "ALL") query = query.eq("status", filters.status);
   if (filters.shop) query = query.eq("shop_id", filters.shop);
 
   const { data, error, count } = await readWithRetry("inventory_items", () => query);
@@ -97,7 +115,7 @@ export async function getInventoryItem(id: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("inventory_items")
-    .select("*, product_categories(name), shops(name, code), employees(full_name)")
+    .select("*, product_categories(name), shops(name, code, location_type), employees(full_name)")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new Error("Unable to load this inventory item.");

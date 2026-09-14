@@ -6,8 +6,9 @@ import type {InventoryActionState} from "@/lib/inventory/actions";
 import {INVENTORY_STATUSES} from "@/lib/inventory/constants";
 import {formatPrice} from "@/lib/inventory/format";
 import {useI18n} from "./i18n-provider";
+import {locationDisplayName} from "@/lib/locations/display";
 type Action=(state:InventoryActionState,formData:FormData)=>Promise<InventoryActionState>;
-type Props={action:Action;categories:Pick<Tables<"product_categories">,"id"|"name">[];shops:Pick<Tables<"shops">,"id"|"name"|"code">[];item?:Tables<"inventory_items">;categoryName?:string|null;cancelHref:string};
+type Props={action:Action;categories:Pick<Tables<"product_categories">,"id"|"name">[];shops:Pick<Tables<"shops">,"id"|"name"|"code"|"location_type">[];item?:Tables<"inventory_items">;categoryName?:string|null;cancelHref:string};
 const input="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-amber-700";
 const label="block text-sm font-medium text-stone-800";
 const ErrorText=({text}:{text?:string})=>text?<p className="mt-1 text-sm text-red-700">{text}</p>:null;
@@ -25,7 +26,7 @@ export function InventoryForm({action,categories,shops,item,categoryName,cancelH
   <div className={label}>{t("fields.priceUah")}<p className={`${input} bg-stone-100`}>{formatPrice(calculated,locale)}</p></div>
   {item?<label className={label}>{t("fields.status")}<select name="status" required defaultValue={item.status as InventoryStatus} className={input}>{INVENTORY_STATUSES.filter(s=>s!=="SOLD").map(s=><option key={s} value={s}>{t(`status.${s}`)}</option>)}</select><ErrorText text={state.fieldErrors?.status}/></label>:<input type="hidden" name="status" value="IN_STOCK"/>}
   <input type="hidden" name="metal" value=""/>
-  <label className={label}>{t("fields.shop")}<select name="shop_id" defaultValue={item?.shop_id??(shops.length===1?shops[0].id:"")} className={input}><option value="">{t("common.unassigned")}</option>{shops.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select><ErrorText text={state.fieldErrors?.shop_id}/></label>
+  <label className={label}>{t("fields.shop")}<select name="shop_id" defaultValue={item?.shop_id??(shops.length===1?shops[0].id:"")} className={input}><option value="">{t("common.unassigned")}</option>{shops.map(s=><option key={s.id} value={s.id}>{locationDisplayName(s,locale)}</option>)}</select><ErrorText text={state.fieldErrors?.shop_id}/></label>
   <label className={label}>{t("fields.barcode")}<input name="barcode" maxLength={200} defaultValue={item?.barcode??""} className={input}/><ErrorText text={state.fieldErrors?.barcode}/></label>
   <input type="hidden" name="owner_price" value={item?.owner_price??""}/><input type="hidden" name="selling_price" value={item?.selling_price??""}/><input type="hidden" name="discount" value=""/><input type="hidden" name="notes" value=""/><input type="hidden" name="gold_fineness" value=""/><input type="hidden" name="received_at" value={item?.received_at?.slice(0,10)??""}/><input type="hidden" name="gold_color" value={item?.gold_color??""}/>
  </div><div className="flex flex-col gap-3 border-t border-stone-200 pt-6 sm:flex-row"><button disabled={pending} className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">{pending?t("common.saving"):item?t("inventory.form.update"):t("inventory.form.create")}</button><Link href={cancelHref} className="px-5 py-2.5 text-center text-sm">{t("common.cancel")}</Link></div></form>;
