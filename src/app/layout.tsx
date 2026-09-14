@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: { default: "Zlata Jewelry", template: "%s | Zlata Jewelry" },
   description: "Jewelry inventory and sales workspace.",
   robots: { index: false, follow: false },
-  icons: { icon: "/zlata-logo.png", apple: "/zlata-logo.png" },
+  icons: { icon: "/logoZlataBrown.png", apple: "/logoZlataBrown.png" },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

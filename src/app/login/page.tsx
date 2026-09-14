@@ -15,7 +15,7 @@ export default async function LoginPage() {
   return (
     <main className="login-shell flex min-h-screen items-center justify-center px-6 py-12">
       <section className="w-full max-w-md rounded-3xl border border-amber-200/60 bg-white/95 p-8 shadow-2xl backdrop-blur">
-        <Image src="/zlata-logo.png" alt="Zlata Jewelry" width={112} height={112} priority className="mx-auto mb-8 h-28 w-28 rounded-2xl object-cover shadow-md" />
+        <Image src="/logoZlataBrown.png" alt="Zlata Jewelry" width={626} height={405} priority className="mx-auto mb-8 h-auto w-64 object-contain" />
         <div className="mb-5 flex justify-end"><LanguageSelector /></div>
         <h1 className="text-3xl font-semibold tracking-tight">{t("auth.welcome")}</h1>
         <p className="mt-3 text-sm leading-6 text-stone-600">{t("auth.hint")}</p>
