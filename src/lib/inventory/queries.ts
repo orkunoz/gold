@@ -6,6 +6,7 @@ import type { EmployeeRole, InventoryStatus, Tables } from "@/lib/database.types
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { applyExactBarcodeMatch } from "@/lib/inventory/scanner";
+import { readWithRetry } from "@/lib/supabase/read";
 
 export type CurrentEmployee = Pick<
   Tables<"employees">,
@@ -23,33 +24,37 @@ export type InventoryFilters = {
 export const getCurrentEmployee = cache(async (): Promise<CurrentEmployee> => {
   const claims = await requireUser();
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await readWithRetry("current_employee", () => supabase
     .from("employees")
     .select("id, username, full_name, role, shop_id, is_active, shops(name)")
     .eq("auth_user_id", String(claims.sub))
-    .single();
+    .maybeSingle());
 
-  if (error || !data?.is_active) redirect("/login");
+  if (error) throw new Error("Unable to verify the current account.");
+  if (!data?.is_active) redirect("/login");
   return data;
 });
 export const getActiveShops = cache(async () => {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("shops").select("id, name, code, location_type").eq("is_active", true).eq("location_type", "SHOP").order("name");
+  const { data, error } = await readWithRetry("active_shops", () => supabase.from("shops").select("id, name, code, location_type").eq("is_active", true).eq("location_type", "SHOP").order("name"));
   if (error) throw new Error("Unable to load shops.");
   return data ?? [];
 });
 export const getActiveLocations = cache(async () => {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("shops").select("id, name, code, location_type").eq("is_active", true).order("name");
+  const { data, error } = await readWithRetry("active_locations", () => supabase.from("shops").select("id, name, code, location_type").eq("is_active", true).order("name"));
   if (error) throw new Error("Unable to load locations.");
   return data ?? [];
 });
-export const getInventoryOptions = cache(async () => {
+export const getInventoryOptions = cache(async (includeLocations = true) => {
   const supabase = await createClient();
-  const [{ data: categories, error: categoryError }, shops] = await Promise.all([supabase.rpc("get_inventory_category_options"), getActiveLocations()]);
-
-  if (categoryError) throw new Error("Unable to load inventory options.");
-  return { categories: (categories ?? []).map(({ id, name }) => ({ id, name })), shops: shops ?? [] };
+  const [categoryResult, locationResult] = await Promise.all([
+    readWithRetry("inventory_category_options", () => supabase.rpc("get_inventory_category_options")),
+    includeLocations ? getActiveLocations().then(data => ({ data, error: null })).catch(() => ({ data: [], error: true })) : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (categoryResult.error) console.error("inventory_options_fallback", { option: "categories" });
+  if (locationResult.error) console.error("inventory_options_fallback", { option: "locations" });
+  return { categories: (categoryResult.data ?? []).map(({ id, name }) => ({ id, name })), shops: locationResult.data };
 });
 
 function safeSearch(value: string | undefined) {
@@ -73,7 +78,7 @@ export async function getInventoryItems(filters: InventoryFilters, page = 1, pag
   if (filters.status) query = query.eq("status", filters.status);
   if (filters.shop) query = query.eq("shop_id", filters.shop);
 
-  const { data, error, count } = await query;
+  const { data, error, count } = await readWithRetry("inventory_items", () => query);
   if (error) throw new Error("Unable to load inventory.");
   return { items: data ?? [], count: count ?? 0, page, pageSize };
 }

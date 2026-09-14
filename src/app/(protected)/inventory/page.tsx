@@ -36,7 +36,10 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
     shop: parameter(params, "shop"),
     status: (["IN_STOCK", "SOLD"] as InventoryStatus[]).includes(rawStatus as InventoryStatus) ? rawStatus as InventoryStatus : undefined,
   };
-  const [employee, options, inventory] = await Promise.all([getCurrentEmployee(), getInventoryOptions(), getInventoryItems(filters, page)]);
+  const employeePromise = getCurrentEmployee();
+  const inventoryPromise = getInventoryItems(filters, page);
+  const employee = await employeePromise;
+  const [options, inventory] = await Promise.all([getInventoryOptions(employee.role === "owner"), inventoryPromise]);
   const { items, count, pageSize } = inventory;
   const canManage = canManageInventory(employee.role);
   const totalPages = Math.max(1, Math.ceil(count / pageSize));

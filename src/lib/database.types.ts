@@ -462,6 +462,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_admin_shop_counts: { Args: never; Returns: { shop_id: string; employee_count: number; in_stock_count: number }[] }
       admin_create_shop: { Args: { p_name: string; p_code: string }; Returns: string }
       admin_update_shop: { Args: { p_shop_id: string; p_name: string; p_code: string }; Returns: undefined }
       admin_update_location: { Args:{p_shop_id:string;p_name:string;p_code:string;p_address:string;p_location_type:string};Returns:undefined }

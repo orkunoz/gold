@@ -24,7 +24,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
   const range = customDateRange(period, textParam(params.start), textParam(params.end));
   const shopId = employee.role === "owner" ? requestedShop : employee.shop_id;
   const reportPeriod = range.error ? "THIS_MONTH" : period;
-  const [report, shops] = await Promise.all([getDashboardReport(reportPeriod, shopId, range.start, range.end), employee.role === "owner" ? getActiveShops() : Promise.resolve([])]);
+  const [report, shopOptions] = await Promise.all([
+    getDashboardReport(reportPeriod, shopId, range.start, range.end, employee.role),
+    employee.role === "owner" ? getActiveShops().catch(() => { console.error("dashboard_secondary_fallback", { section: "shop_options" }); return null; }) : Promise.resolve([]),
+  ]);
+  const shops = shopOptions ?? [];
+  if (report.shops && shopOptions) {
+    const activeShopIds = new Set(shopOptions.map(shop => shop.id));
+    report.shops = report.shops.filter(shop => activeShopIds.has(shop.shop_id));
+  }
   const sections = dashboardSections(employee.role);
 
   return <section>
