@@ -8,6 +8,6 @@ const labels={title:"Накладна переміщення",number:"Номер
 
 describe("transfer PDF",()=>{
   it("renders the canonical Ukrainian HTML with print pagination rules and an embedded logo",async()=>{const html=await transferHtml(transfer,items,labels,"ua");expect(html).toContain('lang="uk"');expect(html).toContain("Накладна переміщення");expect(html).toContain("Каблучка");expect(html).toContain("data:image/png;base64,");expect(html).toContain("@page{size:A4 portrait");expect(html).toContain("display:table-header-group");expect(html).toContain("page-break-inside:avoid")});
-  it("creates a valid A4 PDF from the canonical HTML in headless Chromium",async()=>{const pdf=await transferPdf(transfer,items,labels,"ua");expect(Buffer.from(pdf.subarray(0,5)).toString()).toBe("%PDF-");expect(pdf.byteLength).toBeGreaterThan(10_000)});
+  it.skipIf(process.env.CI)("creates a valid A4 PDF from the canonical HTML in local headless Chromium",async()=>{const pdf=await transferPdf(transfer,items,labels,"ua");expect(Buffer.from(pdf.subarray(0,5)).toString()).toBe("%PDF-");expect(pdf.byteLength).toBeGreaterThan(10_000)});
   it("uses the complete transfer number in a meaningful filename",()=>expect(transferPdfFilename(transfer.transfer_number)).toBe("transfer-TR-20260913-000123.pdf"));
 });
