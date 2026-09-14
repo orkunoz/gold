@@ -230,6 +230,8 @@ Reliability follow-up (September 14): protected claims and current-employee read
 
 Inventory defaults/sorting follow-up (September 14): opening Inventory without a `status` query defaults to `IN_STOCK`; explicit `status=ALL` and `status=SOLD` remain URL-backed. Sortable headers use database ordering before the existing 50-row range, persist `sort`/`direction` through filters and pagination, and default to Number ascending. Purchase Price remains Owner-only in both rendering and sort authorization. Stored location records stay unchanged; display helpers render Warehouse/Kamin/Horokhiv/Novovolynsk/Volodymyr as Склад/Камінь/Горохів/Нововолинськ/Володимир in UA while retaining the stored English names in EN across operational location displays, selectors, history, transfers, and transfer PDFs.
 
+Dashboard/Administration localization follow-up (September 14): Shop Performance, Recent Sales, and Administration → Shops also pass stored location names through the display-only locale mapping. Dashboard Recent Sales no longer shows the Accounts/employee column; sale attribution remains stored and available on Sale Detail.
+
 Task 13 implements permanent Owner-confirmed account/shop deletion, Auth-user cascade deletion, immutable sale/audit actor/shop labels, Unassigned current products/accounts, exact inventory field ordering, real XLSX mapping with `Ціна(грн)` ignored, and simplified Dashboard/Inventory/Sales/Administration UI. Do not call Task 13 fully live until Vercel deploys its commit and authenticated production acceptance confirms the destructive dialogs and representative responsive layouts. Recovery archive and controlled setup helper scripts are not app migrations.
 
 ## Navigation for future development
