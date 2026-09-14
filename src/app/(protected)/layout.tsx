@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Navigation } from "@/components/navigation";
 import { SignOutButton } from "@/components/sign-out-button";
-import { getCurrentEmployee } from "@/lib/inventory/queries";
+import { getCurrentEmployee, getShopName } from "@/lib/inventory/queries";
 import { LanguageSelector } from "@/components/language-selector";
 import { getTranslations } from "@/lib/i18n/server";
 import { locationDisplayName } from "@/lib/locations/display";
@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 
 export default async function ApplicationLayout({ children }: { children: React.ReactNode }) {
   const [employee, { t, locale }] = await Promise.all([getCurrentEmployee(), getTranslations()]);
-  const shopName=locationDisplayName(employee.shops,locale);
+  const rawShopName=employee.role === "salesperson" && employee.shop_id ? await getShopName(employee.shop_id) : null;
+  const shopName=rawShopName ? locationDisplayName({ name: rawShopName },locale) : null;
   return <>
     <a href="#main-content" className="sr-only focus:not-sr-only focus:block focus:p-4">{t("nav.skip")}</a>
     <header className="border-b border-stone-200 bg-white">

@@ -11,7 +11,7 @@ import { readWithRetry } from "@/lib/supabase/read";
 export type CurrentEmployee = Pick<
   Tables<"employees">,
   "id" | "username" | "full_name" | "role" | "shop_id" | "is_active"
-> & { shops: { name: string; location_type: string } | null };
+>;
 
 export type InventoryFilters = {
   barcode?: string;
@@ -30,13 +30,19 @@ export const getCurrentEmployee = cache(async (): Promise<CurrentEmployee> => {
   const supabase = await createClient();
   const { data, error } = await readWithRetry("current_employee", () => supabase
     .from("employees")
-    .select("id, username, full_name, role, shop_id, is_active, shops(name, location_type)")
+    .select("id, username, full_name, role, shop_id, is_active")
     .eq("auth_user_id", String(claims.sub))
     .maybeSingle());
 
   if (error) throw new Error("Unable to verify the current account.");
   if (!data?.is_active) redirect("/login");
   return data;
+});
+export const getShopName = cache(async (shopId: string): Promise<string | null> => {
+  const supabase = await createClient();
+  const { data, error } = await readWithRetry("current_employee_shop", () => supabase.from("shops").select("name").eq("id", shopId).maybeSingle());
+  if (error) throw new Error("Unable to load the assigned shop.");
+  return data?.name ?? null;
 });
 export const getActiveShops = cache(async () => {
   const supabase = await createClient();
