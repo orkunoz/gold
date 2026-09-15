@@ -10,6 +10,7 @@ import { formatPrice } from "@/lib/inventory/format";
 import { InventoryStatus } from "@/components/inventory-status";
 import { useI18n } from "./i18n-provider";
 import { locationDisplayName } from "@/lib/locations/display";
+import { CameraBarcodeScanner } from "./camera-barcode-scanner";
 
 type Shop = { id: string; name: string; location_type?: string | null };
 
@@ -39,8 +40,8 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
     });
   }
 
-  async function scan(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function scan(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
     const barcode = normalizeSalesBarcode(scannerRef.current?.value ?? "");
     if (!barcode) { refocusScanner(); return; }
     if (isLookingUp || isPending) return;
@@ -133,6 +134,7 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
       <p className="mt-1 text-sm text-stone-600">{t("sales.scanHint")}</p>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
         <input ref={scannerRef} id="sales-barcode" type="search" autoComplete="off" spellCheck={false} placeholder={t("sales.scanPlaceholder")} className="min-w-0 flex-1 rounded-lg border border-amber-800 bg-white px-4 py-3 text-lg font-medium outline-none ring-amber-500 focus:ring-2" />
+        <CameraBarcodeScanner returnFocus={scannerRef} onDetected={value=>{if(scannerRef.current)scannerRef.current.value=value;void scan()}}/>
         <button disabled={isPending || isLookingUp} className="rounded-lg bg-amber-800 px-6 py-3 font-medium text-white disabled:opacity-50">{isLookingUp ? t("sales.lookingUp") : t("sales.addItem")}</button>
       </div>
       {message ? <p role="status" className="mt-4 rounded-lg border border-amber-300 bg-white px-4 py-3 font-medium text-stone-900">{message}</p> : null}
