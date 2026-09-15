@@ -60,13 +60,16 @@ export const getActiveLocations = cache(async () => {
 });
 export const getInventoryOptions = cache(async (includeLocations = true) => {
   const supabase = await createClient();
-  const [categoryResult, locationResult] = await Promise.all([
+  const [categoryResult, locationResult, lookupResult] = await Promise.all([
     readWithRetry("inventory_category_options", () => supabase.rpc("get_inventory_category_options")),
     includeLocations ? getActiveLocations().then(data => ({ data, error: null })).catch(() => ({ data: [], error: true })) : Promise.resolve({ data: [], error: null }),
+    readWithRetry("inventory_entry_lookup_options", () => supabase.from("inventory_items").select("producer,size")),
   ]);
   if (categoryResult.error) console.error("inventory_options_fallback", { option: "categories" });
   if (locationResult.error) console.error("inventory_options_fallback", { option: "locations" });
-  return { categories: (categoryResult.data ?? []).map(({ id, name }) => ({ id, name })), shops: locationResult.data };
+  if (lookupResult.error) console.error("inventory_options_fallback", { option: "entry_lookups" });
+  const unique = (values: (string | null)[]) => [...new Set(values.map(value => value?.trim()).filter((value): value is string => Boolean(value)))].sort((a,b)=>a.localeCompare(b,"uk"));
+  return { categories: (categoryResult.data ?? []).map(({ id, name }) => ({ id, name })), shops: locationResult.data, producers: unique((lookupResult.data ?? []).map(row => row.producer)), sizes: unique((lookupResult.data ?? []).map(row => row.size)) };
 });
 
 function safeSearch(value: string | undefined) {
@@ -87,7 +90,7 @@ const inventorySortColumns: Record<InventorySort, string> = {
   createdDate: "created_at",
 };
 
-export async function getInventoryItems(filters: InventoryFilters, page = 1, pageSize = 50, sort: InventorySort = "number", direction: SortDirection = "asc") {
+export async function getInventoryItems(filters: InventoryFilters, page = 1, pageSize = 50, sort: InventorySort = "createdDate", direction: SortDirection = "desc") {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
   let query = supabase

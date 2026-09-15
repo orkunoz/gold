@@ -43,9 +43,9 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
   };
   const employee = await getCurrentEmployee();
   const rawSort = parameter(params, "sort");
-  const requestedSort = INVENTORY_SORTS.includes(rawSort as InventorySort) ? rawSort as InventorySort : "number";
-  const sort = requestedSort === "purchasePrice" && employee.role !== "owner" ? "number" : requestedSort;
-  const direction: SortDirection = parameter(params, "direction") === "desc" ? "desc" : "asc";
+  const requestedSort = INVENTORY_SORTS.includes(rawSort as InventorySort) ? rawSort as InventorySort : "createdDate";
+  const sort = requestedSort === "purchasePrice" && employee.role !== "owner" ? "createdDate" : requestedSort;
+  const direction: SortDirection = parameter(params, "direction") === "asc" ? "asc" : "desc";
   const inventoryPromise = getInventoryItems(filters, page, 50, sort, direction);
   const [options, inventory] = await Promise.all([getInventoryOptions(employee.role === "owner"), inventoryPromise]);
   const { items, count, pageSize } = inventory;
