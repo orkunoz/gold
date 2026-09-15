@@ -38,6 +38,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
     article: parameter(params, "article"),
     category: parameter(params, "category"),
     shop: parameter(params, "shop"),
+    createdDate: parameter(params, "createdDate"),
     status: rawStatus === "ALL" ? "ALL" : (["IN_STOCK", "SOLD"] as InventoryStatus[]).includes(rawStatus as InventoryStatus) ? rawStatus as InventoryStatus : hasStatus ? "ALL" : "IN_STOCK",
   };
   const employee = await getCurrentEmployee();

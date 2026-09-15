@@ -3,12 +3,15 @@
 import { getTranslations } from "@/lib/i18n/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import type { Json } from "@/lib/database.types";
 import { canManageInventory, getCurrentEmployee } from "./queries";
 import { inventoryMutationTimer } from "./mutation-timing";
 import { toInventoryUpdate, validateInventoryForm, type InventoryFormErrors } from "./validation";
 
 export type InventoryActionState = { error: string; fieldErrors?: InventoryFormErrors };
 export type BulkMoveState = { error: string; success?: string; transferId?: string };
+export type DraftProduct = { category_name:string;article_number:string;producer:string;size:string;weight_grams:string;purchase_price:string;price_per_gram:string;barcode:string };
+export type BatchCreateState = { error:string; success?:string; count?:number; rowErrors?:Record<number,string> };
 
 function databaseError(error: { code?: string; message?: string } | null): InventoryActionState {
   if (error?.code === "23505") return { error: "An item with this barcode already exists.", fieldErrors: { barcode: "Barcode must be unique." } };
@@ -42,6 +45,38 @@ export async function createInventoryItem(_previous: InventoryActionState, formD
   timing.mark("revalidation_skipped_redirect_reads_fresh_data");
   timing.finish();
   redirect(`/inventory/${data.id}`);
+}
+
+export async function createInventoryBatch(drafts: DraftProduct[]): Promise<BatchCreateState> {
+  const timing = inventoryMutationTimer("create_batch");
+  const [{t}, employee] = await timing.phase("authorization_and_locale", () => Promise.all([getTranslations(), getCurrentEmployee()]));
+  if (!canManageInventory(employee.role)) { timing.finish(); return {error:t("inventory.batch.ownerRequired")}; }
+  if (!Array.isArray(drafts) || drafts.length < 1 || drafts.length > 100) { timing.finish(); return {error:t("inventory.batch.invalidCount")}; }
+  const rows: Json[] = [], rowErrors: Record<number,string> = {};
+  const seen = new Map<string,number>();
+  drafts.forEach((draft,index) => {
+    const formData = new FormData();
+    for (const [key,value] of Object.entries(draft)) formData.set(key, typeof value === "string" ? value : "");
+    for (const [key,value] of Object.entries({status:"IN_STOCK",shop_id:"",metal:"",gold_color:"",owner_price:"",selling_price:"",received_at:""})) formData.set(key,value);
+    const validation = validateInventoryForm(formData);
+    if (!validation.success) rowErrors[index] = t("inventory.batch.rowInvalid",{row:index+1});
+    else {
+      const barcode = validation.data.barcode;
+      if (barcode && seen.has(barcode)) { rowErrors[index] = t("inventory.batch.duplicateDraft",{row:index+1,barcode}); rowErrors[seen.get(barcode)!] = t("inventory.batch.duplicateDraft",{row:seen.get(barcode)!+1,barcode}); }
+      else if (barcode) seen.set(barcode,index);
+      const {shop_id:unusedShop,...row}=validation.data; void unusedShop; rows.push(row);
+    }
+  });
+  if (Object.keys(rowErrors).length) { timing.finish(); return {error:t("inventory.batch.fixRows"),rowErrors}; }
+  const supabase = await createClient();
+  const {data,error} = await timing.phase("atomic_database_rpc", () => supabase.rpc("create_inventory_items_batch",{p_items:rows}));
+  timing.mark("revalidation_skipped_add_page_has_no_inventory_read"); timing.finish();
+  if (error) {
+    const match = /Row (\d+):\s*(.*)/i.exec(error.message ?? "");
+    if (match) { const barcode=/barcode\s+(.+?)\s+already exists/i.exec(match[2]); return {error:t("inventory.batch.notAdded"),rowErrors:{[Number(match[1])-1]:barcode?t("inventory.batch.duplicateExisting",{barcode:barcode[1]}):t("inventory.batch.rowRejected",{row:match[1]})}}; }
+    return {error:t("inventory.batch.notAdded")};
+  }
+  return {error:"",success:t("inventory.batch.added",{count:data??drafts.length}),count:data??drafts.length};
 }
 
 export async function updateInventoryItem(id: string, _previous: InventoryActionState, formData: FormData): Promise<InventoryActionState> {

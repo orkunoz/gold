@@ -83,6 +83,7 @@
     "status": "Status",
     "shop": "Shop",
     "barcode": "Barcode",
+    "createdDate": "Created Date",
     "goldColor": "Gold color",
     "discount": "Discount %",
     "salePrice": "Sale Price",
@@ -157,7 +158,8 @@
     "validSelection": "Select between 1 and 50 valid products.",
     "validDestination": "Select a valid destination shop.",
     "moveFailed": "Unable to move the selected products."
-    ,"selectLocation":"Select destination location","changeGramPrice":"Change Price per Gram","priceChanged":"Price per gram changed for {count} products.","deleted":"Permanently deleted {count} products.","bulk":{"moveTitle":"Move selected products?","moveDescription":"Move {count} products and create a permanent transfer note.","priceTitle":"Change Price per Gram?","priceDescription":"Set one price per gram for {count} products. All changes are atomic.","deleteTitle":"Permanently delete {count} products?","deleteDescription":"Historical product and sale data for these products will also be removed. This cannot be undone."}
+    ,"selectLocation":"Select destination location","changeGramPrice":"Change Price per Gram","priceChanged":"Price per gram changed for {count} products.","deleted":"Permanently deleted {count} products.","bulk":{"moveTitle":"Move selected products?","moveDescription":"Move {count} products and create a permanent transfer note.","priceTitle":"Change Price per Gram?","priceDescription":"Set one price per gram for {count} products. All changes are atomic.","deleteTitle":"Permanently delete {count} products?","deleteDescription":"Historical product and sale data for these products will also be removed. This cannot be undone."},
+    "batch":{"addToBasket":"Add to Basket","productsToAdd":"Products to Add","draft":"Draft — not yet in Inventory","clearBasket":"Clear basket","clearConfirm":"Clear all draft products?","remove":"Remove","empty":"Add a product above to begin a draft batch.","addProducts":"Add {count} Products","added":"{count} products added","ownerRequired":"Owner access required.","invalidCount":"Add between 1 and 100 draft products.","rowInvalid":"Row {row} contains invalid values.","rowRejected":"Row {row} was rejected by Inventory validation.","duplicateDraft":"Row {row}: duplicate barcode {barcode} in this draft basket.","duplicateExisting":"Barcode {barcode} already exists in Inventory.","fixRows":"Correct the highlighted draft rows. No products were added.","notAdded":"The batch was rejected. No products were added.","editCell":"Edit draft row {row}","warehouseMissing":"Warehouse is not configured"}
   },
   "sales": {
     "title": "Sales",

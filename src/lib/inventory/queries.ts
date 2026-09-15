@@ -7,6 +7,7 @@ import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { applyExactBarcodeMatch } from "@/lib/inventory/scanner";
 import { readWithRetry } from "@/lib/supabase/read";
+import { kyivCalendarDateBoundaries } from "@/lib/inventory/created-date";
 
 export type CurrentEmployee = Pick<
   Tables<"employees">,
@@ -19,9 +20,10 @@ export type InventoryFilters = {
   category?: string;
   status?: InventoryStatus | "ALL";
   shop?: string;
+  createdDate?: string;
 };
 
-export const INVENTORY_SORTS = ["number", "productCategory", "article", "producer", "size", "weight", "purchasePrice", "pricePerGram", "priceUah", "shop"] as const;
+export const INVENTORY_SORTS = ["number", "productCategory", "article", "producer", "size", "weight", "purchasePrice", "pricePerGram", "priceUah", "shop", "createdDate"] as const;
 export type InventorySort = typeof INVENTORY_SORTS[number];
 export type SortDirection = "asc" | "desc";
 
@@ -82,6 +84,7 @@ const inventorySortColumns: Record<InventorySort, string> = {
   pricePerGram: "price_per_gram",
   priceUah: "price",
   shop: "shops(name)",
+  createdDate: "created_at",
 };
 
 export async function getInventoryItems(filters: InventoryFilters, page = 1, pageSize = 50, sort: InventorySort = "number", direction: SortDirection = "asc") {
@@ -101,6 +104,10 @@ export async function getInventoryItems(filters: InventoryFilters, page = 1, pag
   if (filters.category) query = query.eq("category_id", filters.category);
   if (filters.status && filters.status !== "ALL") query = query.eq("status", filters.status);
   if (filters.shop) query = query.eq("shop_id", filters.shop);
+  if (filters.createdDate) {
+    const boundaries = kyivCalendarDateBoundaries(filters.createdDate);
+    if (boundaries) query = query.gte("created_at", boundaries.start).lt("created_at", boundaries.end);
+  }
 
   const { data, error, count } = await readWithRetry("inventory_items", () => query);
   if (error) throw new Error("Unable to load inventory.");

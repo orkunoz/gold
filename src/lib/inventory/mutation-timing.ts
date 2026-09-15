@@ -1,6 +1,6 @@
 import "server-only";
 
-type InventoryMutationOperation = "create" | "update" | "permanent_delete" | "bulk_move" | "bulk_price_change" | "bulk_delete" | "import_execute";
+type InventoryMutationOperation = "create" | "create_batch" | "update" | "permanent_delete" | "bulk_move" | "bulk_price_change" | "bulk_delete" | "import_execute";
 
 export function inventoryMutationTimer(operation: InventoryMutationOperation) {
   const correlationId = crypto.randomUUID();

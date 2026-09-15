@@ -3,7 +3,7 @@ import type { EmployeeRole } from "@/lib/database.types";
 export const INVENTORY_FILTER_DEBOUNCE_MS = 400;
 
 export const TEXT_INVENTORY_FILTERS = ["barcode", "article"] as const;
-export const SELECT_INVENTORY_FILTERS = ["category", "status", "shop"] as const;
+export const SELECT_INVENTORY_FILTERS = ["category", "status", "shop", "createdDate"] as const;
 
 export function inventoryFilterFields(role: EmployeeRole) {
   return role === "owner"

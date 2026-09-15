@@ -261,6 +261,12 @@ Keep this file current after meaningful milestones. Record actual completed work
 - `inventory_items.purchase_price` is the Owner-only per-item acquisition total. Checkout snapshots it to `sale_items.purchase_price_snapshot`; historical Net Profit uses the snapshot and reports a missing-cost item count. Transfer snapshots may include purchase price because transfer history and PDF access are Owner-only.
 - Transfer Note HTML is the canonical document design. The Owner-authorized Node download route renders that same shared React markup in headless Chromium with print backgrounds and returns a private A4 PDF named from the full transfer number. Browser printing hides all application chrome and repeats table headings across pages. PDF generation remains independent from transfer creation and continues to use immutable snapshots. The bulk transfer RPC locks the selection, creates snapshots, updates every inventory location, verifies the row result, and rolls the entire transaction back on failure.
 
+## Created Date and rapid manual entry (September 15)
+
+- Inventory Created Date is the existing immutable, database-generated `inventory_items.created_at` timestamp. It is displayed in Europe/Kyiv, is never client-controlled or editable, and its single-date Inventory filter converts the selected Kyiv calendar date to an inclusive UTC start and exclusive UTC end before querying. Created Date sorting is database-side before pagination and persists in the URL.
+- Owner Add Product uses a client-side draft basket styled as temporary Inventory rows. Add to Basket performs no database write; drafts accumulate, support keyboard-accessible inline editing/removal, recalculate formula Price locally, and stay on the page after errors or completion. Useful category/producer/gram-price defaults remain between entries; created products always use the active Warehouse and IN_STOCK defaults.
+- Final Add Products performs one Server Action and one hardened `create_inventory_items_batch(jsonb)` RPC for 1–100 products. The RPC reauthorizes Owner access, validates the active Warehouse, resolves categories, checks barcode conflicts, and inserts the whole batch in one transaction; any row failure rolls back every row. The action performs only required validation/database work, does not revalidate unrelated routes, redirect, or call `router.refresh`, and returns promptly with row-scoped errors or a success count.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
