@@ -457,6 +457,16 @@ export type Database = {
         Insert:{transfer_id:string;line_number:number;id?:string;inventory_item_id?:string|null;category_name?:string|null;producer?:string|null;fineness?:string|null;size?:string|null;weight_grams?:number|null;purchase_price?:number|null;price_per_gram?:number|null;price?:number|null;article_number?:string|null;barcode?:string|null}
         Update:{[key:string]:never};Relationships:[]
       }
+      added_product_documents: {
+        Row:{id:string;document_number:string;created_at:string;created_by_employee_id:string|null;created_by_name:string;location_names:string[];product_count:number;total_weight:number;total_purchase_value:number;total_value:number}
+        Insert:{document_number:string;created_by_name:string;location_names:string[];product_count:number;total_weight:number;total_purchase_value:number;total_value:number;id?:string;created_at?:string;created_by_employee_id?:string|null}
+        Update:{[key:string]:never};Relationships:[]
+      }
+      added_product_document_items: {
+        Row:{id:string;document_id:string;line_number:number;inventory_item_id:string|null;category_name:string;article_number:string|null;producer:string;size:string|null;weight_grams:number;purchase_price:number|null;price_per_gram:number;price:number;status:string;location_id:string|null;location_name:string;barcode:string|null;product_created_at:string}
+        Insert:{document_id:string;line_number:number;category_name:string;producer:string;weight_grams:number;price_per_gram:number;price:number;status:string;location_name:string;product_created_at:string;id?:string;inventory_item_id?:string|null;article_number?:string|null;size?:string|null;purchase_price?:number|null;location_id?:string|null;barcode?:string|null}
+        Update:{[key:string]:never};Relationships:[]
+      }
     }
     Views: {
       [_ in never]: never
@@ -540,7 +550,7 @@ export type Database = {
       is_active_employee: { Args: never; Returns: boolean }
       is_owner: { Args: never; Returns: boolean }
       import_inventory_items: { Args:{p_items:Json}; Returns:number }
-      create_inventory_items_batch: { Args:{p_items:Json}; Returns:number }
+      create_inventory_items_batch: { Args:{p_items:Json}; Returns:Json }
       delete_inventory_item_permanently: { Args:{p_inventory_item_id:string}; Returns:undefined }
       bulk_move_inventory_items: { Args:{p_inventory_item_ids:string[];p_shop_id?:string|null}; Returns:number }
       bulk_move_inventory_items_with_transfer: { Args:{p_inventory_item_ids:string[];p_shop_id:string}; Returns:string }

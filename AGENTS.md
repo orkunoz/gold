@@ -271,6 +271,14 @@ Keep this file current after meaningful milestones. Record actual completed work
 - The shared `CameraBarcodeScanner` control is used by Add Product, Inventory Barcode filtering, and Sales checkout; detection feeds each screen's existing input/filter/lookup path. Keep the response header restricted to `Permissions-Policy: camera=(self), microphone=(), geolocation=()` and never disable same-origin camera access or broaden it to `camera=*`.
 - Manual Add Product draft baskets are locally persisted and must never be cleared until successful atomic database confirmation or explicit Owner Clear List confirmation.
 
+## Documents workspace and Added Products receipts (September 19)
+
+- Owner navigation uses `/documents` as the common Documents workspace. Its URL-backed controls show either Transfer History or Added Products without rendering both tables. Existing transfer details, immutable snapshots, and Transfer Note PDFs remain available through their established routes and architecture.
+- Every successful final manual Add Products submission creates exactly one immutable `added_product_documents` header and matching `added_product_document_items` snapshots in the same `create_inventory_items_batch(jsonb)` transaction as the inventory rows. The RPC returns both the created product count and document ID. Failed validation or insertion rolls back products, header, and all lines together; merely adding a local draft creates no document.
+- Added Products snapshots contain the creation-time category, article, producer, size, weight, purchase price, price per gram, calculated price, status, location, barcode, and database product timestamp. Historical receipt views/PDFs read only these snapshots, never mutable inventory rows. Receipt tables are Owner-readable only and do not expose purchase costs to Salespeople.
+- Added Products detail and PDF reuse the Transfer Note canonical styling/rendering family, with UA/EN labels, Europe/Kyiv timestamps, Zlata branding, repeated print headers, totals, and immutable document-number filenames.
+- After confirmed atomic success, Add Product remains on the page, retains the returned document ID for its immediate Download PDF action, and only then clears the visible and locally persisted basket. Any failure or missing document ID preserves both copies of the basket.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

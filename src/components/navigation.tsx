@@ -12,7 +12,7 @@ const links = [
 ];
 
 export function navigationLinks(role: EmployeeRole) {
-  return role === "owner" ? [...links, { href: "/transfers", key: "transfers.title" }, { href: "/admin", key: "nav.administration" }] : links;
+  return role === "owner" ? [...links, { href: "/documents", key: "documents.title" }, { href: "/admin", key: "nav.administration" }] : links;
 }
 
 export function Navigation({ role }: { role: EmployeeRole }) {
@@ -21,7 +21,7 @@ export function Navigation({ role }: { role: EmployeeRole }) {
   const visibleLinks = navigationLinks(role);
   return <nav aria-label={t("nav.main")} className="flex gap-2 overflow-x-auto">
     {visibleLinks.map(({ href, key }) => {
-      const active = pathname === href || pathname.startsWith(`${href}/`);
+      const active = pathname === href || pathname.startsWith(`${href}/`) || (href==="/documents"&&pathname.startsWith("/transfers/"));
       return <Link key={href} href={href} aria-current={active ? "page" : undefined}
         className={`rounded-xl px-4 py-2.5 text-sm font-medium transition ${active ? "bg-amber-950 text-amber-50 shadow-sm" : "text-stone-600 hover:bg-amber-50 hover:text-amber-950"}`}>{t(key)}<NavigationPending /></Link>;
     })}

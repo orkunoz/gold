@@ -394,7 +394,9 @@
     "required": "Обов'язкове поле",
     "invalid": "Введіть коректне значення."
   },
-  "transfers":{"title":"Історія переміщень","generate":"Завантажити PDF","downloadPdf":"Завантажити PDF","number":"Номер накладної","from":"Звідки","to":"Куди","items":"Вироби","totalWeight":"Загальна вага","totalValue":"Загальна вартість","performedBy":"Створив / виконав","signatures":"Підписи відправника / одержувача"},
+  "documents":{"title":"Документи","types":"Типи документів"},
+  "transfers":{"title":"Переміщення","generate":"Завантажити PDF","downloadPdf":"Завантажити PDF","number":"Номер накладної","from":"Звідки","to":"Куди","items":"Вироби","totalWeight":"Загальна вага","totalValue":"Загальна вартість","performedBy":"Створив / виконав","signatures":"Підписи відправника / одержувача"},
+  "addedProducts":{"title":"Додані вироби","noteTitle":"НАКЛАДНА НАДХОДЖЕННЯ ТОВАРУ","number":"Номер документа","date":"Дата","locations":"Локації","products":"Вироби","totalWeight":"Загальна вага","purchaseValue":"Закупівельна вартість","totalValue":"Загальна вартість","createdBy":"Створив","pdf":"PDF / Перегляд","downloadPdf":"Завантажити PDF","signature":"Прийняв"},
   "history": {
     "fields": {
       "created": "Створено",

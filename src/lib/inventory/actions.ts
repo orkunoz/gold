@@ -11,7 +11,7 @@ import { toInventoryUpdate, validateInventoryForm, type InventoryFormErrors } fr
 export type InventoryActionState = { error: string; fieldErrors?: InventoryFormErrors };
 export type BulkMoveState = { error: string; success?: string; transferId?: string };
 export type DraftProduct = { shop_id:string;category_name:string;article_number:string;producer:string;size:string;weight_grams:string;purchase_price:string;price_per_gram:string;barcode:string };
-export type BatchCreateState = { error:string; success?:string; count?:number; rowErrors?:Record<number,string> };
+export type BatchCreateState = { error:string; success?:string; count?:number; documentId?:string; rowErrors?:Record<number,string> };
 
 function databaseError(error: { code?: string; message?: string } | null): InventoryActionState {
   if (error?.code === "23505") return { error: "An item with this barcode already exists.", fieldErrors: { barcode: "Barcode must be unique." } };
@@ -78,7 +78,9 @@ export async function createInventoryBatch(drafts: DraftProduct[]): Promise<Batc
     if (match) { const barcode=/barcode\s+(.+?)\s+already exists/i.exec(match[2]); return {error:t("inventory.batch.notAdded"),rowErrors:{[Number(match[1])-1]:barcode?t("inventory.batch.duplicateExisting",{barcode:barcode[1]}):t("inventory.batch.rowRejected",{row:match[1]})}}; }
     return {error:t("inventory.batch.notAdded")};
   }
-  return {error:"",success:t("inventory.batch.added",{count:data??drafts.length}),count:data??drafts.length};
+  const result=data as {count?:number;document_id?:string}|null, count=result?.count??drafts.length;
+  if (!result?.document_id) return {error:t("inventory.batch.notAdded")};
+  return {error:"",success:t("inventory.batch.added",{count}),count,documentId:result.document_id};
 }
 
 export async function updateInventoryItem(id: string, _previous: InventoryActionState, formData: FormData): Promise<InventoryActionState> {
