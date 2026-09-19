@@ -8,6 +8,8 @@ describe("manual product entry",()=>{
  it("accepts a valid draft and preserves leading-zero barcode",()=>{expect(draftValidation(valid)).toEqual({});expect(valid.barcode).toBe("001234")});
  it("renders cached creatable comboboxes, selectable locations, and scanner-safe Enter",()=>{const source=read("./inventory-draft-basket.tsx");expect(source).toContain("CreatableCombobox");expect(source).toContain("locations.map");expect(source).not.toContain('t("common.unassigned")');expect(source).toContain('if(e.key==="Enter")e.preventDefault()');expect(source).toContain("CameraBarcodeScanner")});
  it("defaults location state from the Warehouse option",()=>expect(read("./inventory-draft-basket.tsx")).toContain('shop_id:warehouse?.id??""'));
+ it("restores Owner-scoped drafts, enforces the limit, and confirms intentional clearing",()=>{const source=read("./inventory-draft-basket.tsx");expect(source).toContain("loadManualDrafts(window.localStorage,ownerId)");expect(source).toContain("drafts.length>=MANUAL_DRAFT_LIMIT");expect(source).toContain('window.confirm(t("inventory.batch.clearConfirm"))');});
+ it("clears persisted and visible drafts only after confirmed batch success",()=>{const source=read("./inventory-draft-basket.tsx");expect(source).toContain('if(!result.error){clearManualDrafts(window.localStorage,ownerId);setDrafts([])}');expect(source).not.toMatch(/catch[^}]*setDrafts\(\[\]\)/);expect(source).not.toMatch(/finally[^}]*setDrafts\(\[\]\)/);});
 });
 describe("camera scanner safety",()=>{
  const source=read("./camera-barcode-scanner.tsx");

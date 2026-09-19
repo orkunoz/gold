@@ -16,6 +16,6 @@ export default async function NewInventoryItemPage() {
   return <section>
     <Link href="/inventory" className="text-sm font-medium text-stone-600 hover:text-stone-900">← {t("inventory.title")}</Link>
     <h1 className="mt-6 text-3xl font-semibold tracking-tight">{t("inventory.add")}</h1>
-    <div className="mt-6"><InventoryDraftBasket categories={categories} producers={sortUkrainian(options.producers)} sizes={sortSizes(options.sizes)} locations={options.shops} warehouse={warehouse}/></div>
+    <div className="mt-6"><InventoryDraftBasket ownerId={employee.id} categories={categories} producers={sortUkrainian(options.producers)} sizes={sortSizes(options.sizes)} locations={options.shops} warehouse={warehouse}/></div>
   </section>;
 }

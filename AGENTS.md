@@ -269,6 +269,7 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Product Category, Producer, and Size are Unicode-safe creatable lookups populated once per Add Product page load from existing accessible product data; they are never hardcoded and do not query per keystroke. Category, Producer, positive Weight, and positive Price per Gram are required in both draft UX and the atomic database RPC. Owner may select any active location, with the active Warehouse selected initially.
 - Add Product barcode entry is always text and trims only surrounding whitespace, preserving leading zeroes. HID scanner Enter is consumed by the barcode field. Camera access begins only from the localized Scan button; the modal supports camera switching, native `BarcodeDetector` retail formats with ZXing fallback, localized failures, and stops every media track on success, close, cancellation, or unmount.
 - The shared `CameraBarcodeScanner` control is used by Add Product, Inventory Barcode filtering, and Sales checkout; detection feeds each screen's existing input/filter/lookup path. Keep the response header restricted to `Permissions-Policy: camera=(self), microphone=(), geolocation=()` and never disable same-origin camera access or broaden it to `camera=*`.
+- Manual Add Product draft baskets are locally persisted and must never be cleared until successful atomic database confirmation or explicit Owner Clear List confirmation.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
