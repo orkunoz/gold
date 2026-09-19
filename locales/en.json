@@ -384,9 +384,9 @@
     "required": "Required field",
     "invalid": "Enter a valid value."
   },
-  "documents":{"title":"Documents","types":"Document types"},
-  "transfers":{"title":"Transfer History","generate":"Download PDF","downloadPdf":"Download PDF","number":"Transfer Number","from":"From","to":"To","items":"Items","totalWeight":"Total Weight","totalValue":"Total Value","performedBy":"Created / performed by","signatures":"Sender / Receiver signatures"},
-  "addedProducts":{"title":"Added Products","noteTitle":"GOODS RECEIPT NOTE","number":"Document Number","date":"Date","locations":"Locations","products":"Products","totalWeight":"Total Weight","purchaseValue":"Purchase Value","totalValue":"Total Value","createdBy":"Created By","pdf":"PDF / View","downloadPdf":"Download PDF","signature":"Received by"},
+  "documents":{"title":"Documents","types":"Document types","documentNumber":"Document Nr","createdBy":"Created by","view":"View","actions":"PDF / View"},
+  "transfers":{"title":"Transfer History","noteTitle":"Transfer Note","generate":"Download PDF","downloadPdf":"Download PDF","number":"Transfer Number","from":"From","to":"To","items":"Items","totalWeight":"Total Weight","totalValue":"Total Value","sender":"Sent by","receiver":"Received by","signatures":"Sender / Receiver signatures"},
+  "addedProducts":{"title":"Added Products","noteTitle":"Goods Receipt","number":"Document Nr","date":"Created Date","locations":"Locations","products":"Products","totalWeight":"Total Weight","totalValue":"Total Value","createdBy":"Created by","pdf":"PDF / View","downloadPdf":"Download PDF","signature":"Received by"},
   "history": {
     "fields": {
       "created": "Created",

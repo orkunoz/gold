@@ -59,9 +59,9 @@ export async function createInventoryBatch(drafts: DraftProduct[]): Promise<Batc
     for (const [key,value] of Object.entries(draft)) formData.set(key, typeof value === "string" ? value : "");
     for (const [key,value] of Object.entries({status:"IN_STOCK",metal:"",gold_color:"",owner_price:"",selling_price:"",received_at:""})) formData.set(key,value);
     const validation = validateInventoryForm(formData);
-    const required = !draft.category_name.trim() || !draft.producer.trim() || !draft.weight_grams.trim() || !draft.price_per_gram.trim() || !draft.shop_id.trim();
-    const positive = Number(draft.weight_grams) > 0 && Number(draft.price_per_gram) > 0;
-    if (!validation.success || required || !positive) rowErrors[index] = t("inventory.batch.rowInvalid",{row:index+1});
+    const required = !draft.category_name.trim() || !draft.article_number.trim() || !draft.producer.trim() || !draft.weight_grams.trim() || !draft.purchase_price.trim() || !draft.price_per_gram.trim() || !draft.shop_id.trim();
+    const numeric = Number(draft.weight_grams) > 0 && Number(draft.purchase_price) >= 0 && Number(draft.price_per_gram) > 0;
+    if (!validation.success || required || !numeric) rowErrors[index] = t("inventory.batch.rowInvalid",{row:index+1});
     else {
       const barcode = validation.data.barcode;
       if (barcode && seen.has(barcode)) { rowErrors[index] = t("inventory.batch.duplicateDraft",{row:index+1,barcode}); rowErrors[seen.get(barcode)!] = t("inventory.batch.duplicateDraft",{row:seen.get(barcode)!+1,barcode}); }

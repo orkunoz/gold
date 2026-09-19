@@ -278,6 +278,9 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Added Products snapshots contain the creation-time category, article, producer, size, weight, purchase price, price per gram, calculated price, status, location, barcode, and database product timestamp. Historical receipt views/PDFs read only these snapshots, never mutable inventory rows. Receipt tables are Owner-readable only and do not expose purchase costs to Salespeople.
 - Added Products detail and PDF reuse the Transfer Note canonical styling/rendering family, with UA/EN labels, Europe/Kyiv timestamps, Zlata branding, repeated print headers, totals, and immutable document-number filenames.
 - After confirmed atomic success, Add Product remains on the page, retains the returned document ID for its immediate Download PDF action, and only then clears the visible and locally persisted basket. Any failure or missing document ID preserves both copies of the basket.
+- Purchase Price is confidential Owner information rendered only in Inventory/Product Details. Documents can be physically handed to salespeople: Added Products and Transfer histories, HTML, PDFs, totals, and document-facing query responses must never expose purchase cost, even though immutable database snapshots may retain it for integrity and internal accounting.
+- Documents and their HTML/PDF routes are Owner-only in navigation, server authorization, RLS, and grants. Goods Receipts show exactly Nr, Product Category, Article, Producer, Size, Weight, Price per Gram, Price (UAH), Shop / Location, and Barcode; they omit Status and per-product Created Date because the batch header is authoritative.
+- Document creator labels use the immutable username/account identifier rather than a role or mutable display name. Shared document metadata uses localized Created Date and Document Nr / № документа labels; download actions are native file links in both UA and EN.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
