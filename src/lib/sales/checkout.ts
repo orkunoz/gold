@@ -38,13 +38,17 @@ export function unavailableMessage(status: InventoryStatus, locale: Locale = "en
   return null;
 }
 
+export function isSellableForCheckout(status: InventoryStatus) {
+  return status === "IN_STOCK";
+}
+
 export function defaultListPrice(product: Pick<CheckoutProduct, "effective_price">) {
   return product.effective_price;
 }
 
 export function addProductToCart(cart: CartItem[], product: CheckoutProduct, locale: Locale = "en") {
   const t = createTranslator(locale);
-  const unavailable = unavailableMessage(product.status, locale);
+  const unavailable = isSellableForCheckout(product.status) ? null : unavailableMessage(product.status, locale) ?? t("sales.errors.unavailable");
   if (unavailable) return { cart, error: unavailable };
   if (cart.some((item) => item.id === product.id)) return { cart, error: t("sales.errors.inCart") };
   const listPrice = defaultListPrice(product);

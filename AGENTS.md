@@ -344,6 +344,13 @@ Keep this file current after meaningful milestones. Record actual completed work
 - V2.4 validation: clean lint and typecheck; 321 tests across 60 files; successful webpack production build; single-page A4 visual review for both long-value document families. Protected Light/Dark browser acceptance could not be performed because this checkout has no Supabase public environment configuration and production opened at login.
 - No migration, RPC, dependency, permission, reporting-semantic, production-data, push, or deployment change was added.
 
+## ZLATA V2.4 production acceptance follow-up (September 21)
+
+- Sell barcode and exact-article lookup now restrict database results and candidate counts to the existing authoritative sellable state, `IN_STOCK`, while preserving shop/role scope. The cart independently rejects every non-`IN_STOCK` item, and the unchanged `complete_sale` transaction still locks rows and rechecks shop plus `IN_STOCK` status before any sale mutation.
+- Dashboard Recent Sales presents at most the newest five records from the existing period/shop-filtered report. The existing Sales link remains, and a pointer-transparent Light/Dark semantic fade appears only when the report contains more than five matches.
+- Transfer Notes and Goods Receipts use document-specific EN/UA currency-bearing headers and locale-formatted numeric-only price cells. Explicit semantic colgroups prioritize narrow number/size/weight fields, flexible word-wrapped category/producer fields, protected one-line numeric prices, safe article wrapping, and complete barcode preservation.
+- Focused long-value A4 fixtures for Transfer Note and Goods Receipt were rendered in EN and UA as one page each and visually inspected with no overlap, clipping, lost barcode digits, character-by-character headers, or unreadable prices. No migration, RPC, dependency, permission, reporting-semantic, snapshot, production-data, push, or deployment change was needed.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

@@ -4,7 +4,7 @@ import { SalesTrend } from "@/components/sales-trend";
 import { getActiveLocations, getCurrentEmployee } from "@/lib/inventory/queries";
 import { formatDateTime, formatPrice } from "@/lib/inventory/format";
 import { getDashboardReport, getInventoryLocationCounts } from "@/lib/dashboard/queries";
-import { customDateRange, dashboardSections, reportingPeriod } from "@/lib/dashboard/model";
+import { customDateRange, dashboardSections, recentSalesWindow, reportingPeriod } from "@/lib/dashboard/model";
 import { inventoryDistribution } from "@/lib/dashboard/inventory-distribution";
 import { getTranslations } from "@/lib/i18n/server";
 import { translate, localeTag, type Locale } from "@/lib/i18n/core";
@@ -46,6 +46,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
   const statisticsPresentation = `${reportPeriod}:${range.start ?? ""}:${range.end ?? ""}:${shopId ?? ""}`;
   if (report.shops && locationOptions) { const active = new Set(shops.map(shop => shop.id)); report.shops = report.shops.filter(shop => active.has(shop.shop_id)); }
   const sections = dashboardSections(employee.role);
+  const recentSales = recentSalesWindow(report.recent_sales);
 
   return <section className="space-y-4" data-dashboard-content>
     <PageHeading title={t("dashboard.title")} description={t("dashboard.subtitle")} />
@@ -70,7 +71,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
 
     <div className={`grid gap-4 ${sections.comparisons ? "xl:grid-cols-2" : ""}`}>
       {sections.comparisons ? <ReportTable title={t("dashboard.categoryPerformance")} headings={[t("fields.productCategory"),t("dashboard.itemsSold"),t("dashboard.revenue"),t("dashboard.goldWeightSold")]} empty={t("dashboard.noSales")} rows={(report.categories ?? []).map(row => [row.category,String(row.items_sold),formatPrice(row.revenue,locale),grams(row.weight_sold,locale)])} /> : null}
-      <section className="zl-surface h-full overflow-hidden"><div className="flex items-center justify-between px-5 py-3"><h2 className="zl-card-title text-stone-950">{t("dashboard.recentSales")}</h2><Link href="/sales" className="zl-dashboard-view-all">{t("dashboard.viewAll")} →</Link></div>{report.recent_sales.length ? <div className="overflow-x-auto"><table className="zl-table zl-table--dashboard min-w-[620px]"><thead><tr>{[t("sales.saleId"),t("fields.shop"),t("dashboard.itemsSold"),t("common.total"),t("common.date")].map((heading,index) => <th key={heading} className={index === 2 || index === 3 ? "zl-table-number" : ""}>{heading}</th>)}</tr></thead><tbody>{report.recent_sales.map(sale => <tr key={sale.id}><td className="whitespace-nowrap font-semibold"><Link href={`/sales/${sale.id}`} className="text-amber-800 underline decoration-amber-500/40 underline-offset-4 hover:text-amber-950">{sale.sale_number}</Link></td><td>{historicalLocationDisplayName(sale.shop,locale)}</td><td className="zl-table-number">{sale.item_count}</td><td className="zl-table-number whitespace-nowrap font-medium">{formatPrice(sale.total_sale_price,locale)}</td><td className="whitespace-nowrap text-stone-500">{formatDateTime(sale.sold_at,locale)}</td></tr>)}</tbody></table></div> : <p className="border-t border-stone-200 px-5 py-8 text-sm text-stone-500">{t("dashboard.noSales")}</p>}</section>
+      <section className="zl-surface h-full overflow-hidden"><div className="flex items-center justify-between px-5 py-3"><h2 className="zl-card-title text-stone-950">{t("dashboard.recentSales")}</h2><Link href="/sales" className="zl-dashboard-view-all">{t("dashboard.viewAll")} →</Link></div>{recentSales.sales.length ? <div className={`zl-recent-sales ${recentSales.hasMore ? "zl-recent-sales--continued" : ""}`}><div className="overflow-x-auto"><table className="zl-table zl-table--dashboard min-w-[620px]"><thead><tr>{[t("sales.saleId"),t("fields.shop"),t("dashboard.itemsSold"),t("common.total"),t("common.date")].map((heading,index) => <th key={heading} className={index === 2 || index === 3 ? "zl-table-number" : ""}>{heading}</th>)}</tr></thead><tbody>{recentSales.sales.map(sale => <tr key={sale.id}><td className="whitespace-nowrap font-semibold"><Link href={`/sales/${sale.id}`} className="text-amber-800 underline decoration-amber-500/40 underline-offset-4 hover:text-amber-950">{sale.sale_number}</Link></td><td>{historicalLocationDisplayName(sale.shop,locale)}</td><td className="zl-table-number">{sale.item_count}</td><td className="zl-table-number whitespace-nowrap font-medium">{formatPrice(sale.total_sale_price,locale)}</td><td className="whitespace-nowrap text-stone-500">{formatDateTime(sale.sold_at,locale)}</td></tr>)}</tbody></table></div></div> : <p className="border-t border-stone-200 px-5 py-8 text-sm text-stone-500">{t("dashboard.noSales")}</p>}</section>
     </div>
   </section>;
 }

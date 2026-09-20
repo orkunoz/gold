@@ -55,7 +55,8 @@ describe("ZLATA V2.3 dashboard, motion, and document polish", () => {
     expect(transfer).toContain(".transfer-note__table th{font-size:9.75pt}");
     expect(transfer).not.toContain("min-height:88px");
     expect(transfer).not.toContain("min-height:20mm");
-    expect(transfer).toContain("word-break:break-all");
+    expect(transfer).toContain("transfer-note__cell--barcode");
+    expect(transfer).toContain("overflow-wrap:anywhere");
     expect(receipt).toContain(".added-products-note .transfer-note__table{font-size:12px}");
     expect(receipt).toContain(".added-products-note .transfer-note__table th{font-size:13px}");
   });

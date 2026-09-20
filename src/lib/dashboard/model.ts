@@ -22,6 +22,11 @@ export function customDateRange(period: ReportingPeriod, startValue?: string, en
 }
 export function dashboardSections(role: EmployeeRole) { return { inventory: role === "owner", comparisons: role === "owner", shopPerformance: role === "owner" }; }
 
+export const DASHBOARD_RECENT_SALES_LIMIT = 5;
+export function recentSalesWindow<T>(sales: T[]) {
+  return { sales: sales.slice(0, DASHBOARD_RECENT_SALES_LIMIT), hasMore: sales.length > DASHBOARD_RECENT_SALES_LIMIT };
+}
+
 export function formatDashboardRange(start: string, end: string, locale: "ua" | "en") {
   const parse = (value: string) => { const [year, month, day] = value.split("-").map(Number); return new Date(Date.UTC(year, month - 1, day)); };
   const formatter = new Intl.DateTimeFormat(locale === "ua" ? "uk-UA" : "en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });

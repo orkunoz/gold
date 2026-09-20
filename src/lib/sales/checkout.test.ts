@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addProductToCart, articleMatchPage, articleMatchRange, buildSaleRpcItems, cartAfterCompletion, cartTotal, checkoutShopLocked, checkoutShops, defaultListPrice, discountedPrice, normalizeSalesBarcode, parseDiscountPercent, removeCartItem, updateCartDiscount, type CheckoutProduct } from "./checkout";
+import { addProductToCart, articleMatchPage, articleMatchRange, buildSaleRpcItems, cartAfterCompletion, cartTotal, checkoutShopLocked, checkoutShops, defaultListPrice, discountedPrice, isSellableForCheckout, normalizeSalesBarcode, parseDiscountPercent, removeCartItem, updateCartDiscount, type CheckoutProduct } from "./checkout";
 
 const product = (overrides: Partial<CheckoutProduct> = {}): CheckoutProduct => ({ id: "item-1", shop_id: "shop-1", barcode: "ABC-1", article_number: "ART", category: "Ring", gold_fineness: "585", gold_color: "Yellow", weight_grams: 2.5, size: "17", owner_price: 100, selling_price: 120, effective_price: 120, source: "MANUAL", pricing_rule_id: null, rule_type: null, rule_value: null, status: "IN_STOCK", ...overrides });
 
@@ -17,6 +17,13 @@ describe("sales checkout", () => {
     ["SOLD", "already sold"], ["REMOVED", "removed"],
   ] as const)("rejects %s products", (status, message) => {
     expect(addProductToCart([], product({ status })).error).toContain(message);
+  });
+
+  it("treats only IN_STOCK physical items as sellable",()=>{
+    const sharedArticle=[product({id:"stock-1"}),product({id:"stock-2"}),product({id:"sold",status:"SOLD"})];
+    expect(sharedArticle.filter(item=>isSellableForCheckout(item.status)).map(item=>item.id)).toEqual(["stock-1","stock-2"]);
+    expect([product({status:"SOLD"})].filter(item=>isSellableForCheckout(item.status))).toEqual([]);
+    expect(isSellableForCheckout("REMOVED")).toBe(false);
   });
 
   it("rejects a duplicate physical item in the current cart", () => {

@@ -16,12 +16,12 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
   const selection="id, shop_id, barcode, article_number, gold_fineness, gold_color, weight_grams, size, owner_price, selling_price, status, product_categories(name)" as const;
-  const { data, error } = await supabase.from("inventory_items").select(selection).eq("barcode", code).eq("shop_id", shopId).maybeSingle();
+  const { data, error } = await supabase.from("inventory_items").select(selection).eq("barcode", code).eq("shop_id", shopId).eq("status", "IN_STOCK").maybeSingle();
   if (error) return NextResponse.json({ error: t("sales.errors.lookupFailed") }, { status: 500 });
   try {
     if(data){const pricing=await getEffectivePrice(supabase,data.id);return NextResponse.json({item:{...data,category:data.product_categories?.name??null,product_categories:undefined,...pricing},matchedBy:"barcode"});}
     const {from,to}=articleMatchRange(articlePage);
-    const {data:articleItems,error:articleError,count}=await supabase.from("inventory_items").select(selection,{count:"exact"}).eq("article_number",code).eq("shop_id",shopId).order("created_at").range(from,to);
+    const {data:articleItems,error:articleError,count}=await supabase.from("inventory_items").select(selection,{count:"exact"}).eq("article_number",code).eq("shop_id",shopId).eq("status","IN_STOCK").order("created_at").range(from,to);
     if(articleError)return NextResponse.json({error:t("sales.errors.lookupFailed")},{status:500});
     if(!articleItems?.length)return NextResponse.json({error:t("sales.errors.notFound")},{status:404});
     const prices=await getEffectivePrices(supabase,articleItems.map(item=>item.id));
