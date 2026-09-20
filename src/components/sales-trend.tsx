@@ -22,7 +22,7 @@ export function SalesTrend({ points }: { points: Point[] }) {
   const max = Math.max(1, ...points.map((point) => point.items_sold));
   if (!points.length) return <p className="py-10 text-center text-sm text-stone-500">{t("dashboard.noDays")}</p>;
   return <div className="w-full min-w-0 overflow-visible" data-chart-container="bounded-tooltips">
-    <div className="relative h-44 w-full min-w-0 border-b border-stone-300 bg-[linear-gradient(to_top,rgba(168,162,158,0.12)_1px,transparent_1px)] bg-[size:100%_25%] pt-3" role="img" aria-label={t("dashboard.chartLabel")}>
+    <div className="zl-chart-grid relative h-44 w-full min-w-0 border-b border-stone-300 pt-3" role="img" aria-label={t("dashboard.chartLabel")}>
       {points.map((point, index) => {
         const height = Math.max(point.items_sold ? 4 : 1, point.items_sold / max * 148);
         const position = chartPointPosition(points, index);

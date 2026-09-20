@@ -317,6 +317,13 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Inventory by Location remains the same current all-active-location IN_STOCK distribution, independent of Dashboard filters. Selling locations are sorted by current count descending with localized-name tie ordering. Warehouse is always last and uses restrained neutral text/progress styling. The former two-column cards and denominator copy were replaced with compact single-column rows showing name, percentage, thin progress, and item count.
 - Follow-up validation: clean lint and typecheck; 307 tests across 57 files; successful webpack production build; isolated Light-mode acceptance review at 1440×900 and 390×844 confirmed aligned labels, no horizontal overflow, compact rows, gold selling-location bars, neutral Warehouse treatment, and exact final Statistics values. No migration, RPC, dependency, production-data, push, or deployment change was made.
 
+## ZLATA V2.2 dark visual system (September 20)
+
+- Dark Mode now resolves the established Stone and Amber utility palette through runtime semantic variables instead of compile-time literal colors. This fixes the prior dark-on-dark labels, Light card/control remnants, bright separators, and inconsistent table/header states without changing the approved Light values or component structure.
+- Shared dark styling covers page/surface elevation, header logo treatment, controls and placeholders, disabled states, buttons, status/feedback colors, tables and selected rows, charts, progress bars, loading skeletons, popovers, dialogs, and tooltips. The Sell action remains the restrained premium gold treatment, while Warehouse remains neutral.
+- Transfer Notes and Goods Receipts remain explicitly Light in app previews, browser print, and generated PDF HTML. Theme initialization and `zlata-theme` persistence remain exactly Light/Dark with Light as the default and no System mode.
+- V2.2 validation: clean lint and typecheck; 311 tests across 58 files; successful webpack production build; representative Light/Dark acceptance at 1440×900 and 390×844 confirmed readable hierarchy, dark-compatible overlays and controls, preserved printable documents, and no page-level mobile overflow. No migration, RPC, dependency, production-data, push, or deployment change was made.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
