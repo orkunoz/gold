@@ -13,9 +13,9 @@ const RECEIPT_CSS=String.raw`
 .added-products-note .transfer-note__table th,.added-products-note .transfer-note__table td{padding:5px 4px}
 .added-products-note .transfer-note__table th:nth-child(1){width:4%}
 .added-products-note .transfer-note__table th:nth-child(2){width:13%}
-.added-products-note .transfer-note__table th:nth-child(3){width:9%}
-.added-products-note .transfer-note__table th:nth-child(4){width:11%}
-.added-products-note .transfer-note__table th:nth-child(5){width:5%}
+.added-products-note .transfer-note__table th:nth-child(3){width:8%}
+.added-products-note .transfer-note__table th:nth-child(4){width:10%}
+.added-products-note .transfer-note__table th:nth-child(5){width:7%;white-space:nowrap;overflow-wrap:normal}
 .added-products-note .transfer-note__table th:nth-child(6){width:7%}
 .added-products-note .transfer-note__table th:nth-child(7){width:11%}
 .added-products-note .transfer-note__table th:nth-child(8){width:10%}
