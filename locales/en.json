@@ -381,7 +381,7 @@
     "generic": "Something went wrong.",
     "load": "Could not be loaded",
     "notChanged": "Your data was not changed.",
-    "required": "Required field",
+    "required": "Required",
     "invalid": "Enter a valid value."
   },
   "documents":{"title":"Documents","types":"Document types","documentNumber":"Document Nr","createdBy":"Created by","view":"View","actions":"PDF / View"},

@@ -8,6 +8,7 @@ const labels={title:"Накладна переміщення",number:"№ док
 
 describe("transfer PDF",()=>{
   it("renders safe canonical Ukrainian HTML with print pagination rules",async()=>{const html=await transferHtml(transfer,items,labels,"ua");expect(html).toContain('lang="uk"');expect(html).toContain("Дата створення");expect(html).toContain("Створив");expect(html).toContain("admin");expect(html).not.toContain("Створив / виконав");expect(html).not.toContain("Ціна закупки");expect(html).toContain("data:image/png;base64,");expect(html).toContain("@page{size:A4 portrait");expect(html).toContain("display:table-header-group");expect(html).toContain("page-break-inside:avoid")});
+  it("shows both locations, preserves a real address, and omits the empty-address dash",async()=>{const html=await transferHtml(transfer,items,labels,"ua"),locations=html.slice(html.indexOf('class="transfer-note__locations"'),html.indexOf('class="transfer-note__table-wrap"'));expect(locations).toContain("Склад");expect(locations).toContain("Камінь");expect(locations).toContain("вул. Центральна, 1");expect(locations).not.toContain("—")});
   it.skipIf(process.env.CI)("creates a valid A4 PDF from the canonical HTML in local headless Chromium",async()=>{const pdf=await transferPdf(transfer,items,labels,"ua");expect(Buffer.from(pdf.subarray(0,5)).toString()).toBe("%PDF-");expect(pdf.byteLength).toBeGreaterThan(10_000)});
   it("uses the complete transfer number in a meaningful filename",()=>expect(transferPdfFilename(transfer.transfer_number)).toBe("transfer-TR-20260913-000123.pdf"));
 });

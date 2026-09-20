@@ -281,6 +281,7 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Purchase Price is confidential Owner information rendered only in Inventory/Product Details. Documents can be physically handed to salespeople: Added Products and Transfer histories, HTML, PDFs, totals, and document-facing query responses must never expose purchase cost, even though immutable database snapshots may retain it for integrity and internal accounting.
 - Documents and their HTML/PDF routes are Owner-only in navigation, server authorization, RLS, and grants. Goods Receipts show exactly Nr, Product Category, Article, Producer, Size, Weight, Price per Gram, Price (UAH), Shop / Location, and Barcode; they omit Status and per-product Created Date because the batch header is authoritative.
 - Document creator labels use the immutable username/account identifier rather than a role or mutable display name. Shared document metadata uses localized Created Date and Document Nr / № документа labels; download actions are native file links in both UA and EN.
+- Goods Receipt barcodes are protected identification data: reserve sufficient printable width, never clip or truncate them, and allow exceptionally long values to wrap within the same logical product row. Empty optional Transfer Note addresses render nothing rather than a placeholder dash.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
