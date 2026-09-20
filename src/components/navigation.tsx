@@ -23,7 +23,7 @@ export function Navigation({ role }: { role: EmployeeRole }) {
     <div className="flex items-center gap-1">{visibleLinks.map(({ href, key }) => {
       const active = pathname === href || pathname.startsWith(`${href}/`) || (href==="/documents"&&pathname.startsWith("/transfers/"));
       return <Link key={href} href={href} aria-current={active ? "page" : undefined}
-        className={`relative whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 ${active ? "text-stone-950 after:absolute after:inset-x-3 after:-bottom-2 after:h-0.5 after:rounded-full after:bg-amber-700" : "text-stone-500 hover:bg-stone-50 hover:text-stone-950"}`}>{t(key)}<NavigationPending /></Link>;
+        className={`relative whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 ${active ? "text-stone-950 after:absolute after:inset-x-3 after:-bottom-2 after:h-px after:bg-amber-700" : "text-stone-500 hover:bg-stone-50 hover:text-stone-950"}`}>{t(key)}<NavigationPending /></Link>;
     })}</div>
     <Link href="/sell" aria-current={pathname.startsWith("/sell") ? "page" : undefined} className="sell-cta ml-2 inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold shadow-sm transition duration-150 active:scale-[.98]">
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 6h18M6 6l1 13h10l1-13M9 10v5M15 10v5" strokeLinecap="round" strokeLinejoin="round" /></svg>

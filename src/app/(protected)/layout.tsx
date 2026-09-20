@@ -16,9 +16,9 @@ export default async function ApplicationLayout({ children }: { children: React.
   return <>
     <a href="#main-content" className="sr-only focus:not-sr-only focus:block focus:p-4">{t("nav.skip")}</a>
     <header className="app-header border-b border-stone-200 bg-white">
-      <div className="mx-auto flex min-h-16 max-w-[1600px] items-center gap-4 px-4 sm:px-6">
-        <div className="flex min-w-0 shrink-0 items-center gap-2.5">
-          <Image src="/logoZlataBrown.png" alt="Zlata Jewelry" width={626} height={405} className="h-9 w-auto object-contain" priority />
+      <div className="mx-auto flex min-h-16 max-w-[1600px] items-center gap-5 px-4 sm:px-6">
+        <div className="flex min-w-0 shrink-0 items-center gap-3">
+          <Image src="/logoZlataBrown.png" alt="Zlata Jewelry" width={626} height={405} className="h-10 w-auto object-contain sm:h-11" priority />
           <AccountMenu username={employee.username || employee.full_name || t("auth.teamMember")} roleLabel={employee.role === "owner" ? t("auth.owner") : t("auth.salesperson")} shopName={shopName} />
         </div>
         <div className="min-w-0 flex-1"><Navigation role={employee.role} /></div>

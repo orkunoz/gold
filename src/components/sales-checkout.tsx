@@ -11,6 +11,7 @@ import { InventoryStatus } from "@/components/inventory-status";
 import { useI18n } from "./i18n-provider";
 import { locationDisplayName } from "@/lib/locations/display";
 import { CameraBarcodeScanner } from "./camera-barcode-scanner";
+import { Button, buttonStyles } from "./ui/button";
 
 type Shop = { id: string; name: string; location_type?: string | null };
 
@@ -114,8 +115,8 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
       <div><dt className="text-xs uppercase text-stone-500">{t("common.total")}</dt><dd className="mt-1 text-xl font-semibold">{formatPrice(confirmation.total_sale_price,locale)}</dd></div>
     </dl>
     <div className="mt-6 flex flex-wrap gap-3">
-      <button onClick={() => { setConfirmation(null); setMessage(null); }} className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white">{t("sales.startNew")}</button>
-      <Link href={`/sales/${confirmation.sale_id}`} className="rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-sm font-medium">{t("sales.viewDetails")}</Link>
+      <Button onClick={() => { setConfirmation(null); setMessage(null); }}>{t("sales.startNew")}</Button>
+      <Link href={`/sales/${confirmation.sale_id}`} className={buttonStyles("secondary")}>{t("sales.viewDetails")}</Link>
     </div>
   </section>;
 
@@ -141,19 +142,19 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
     </form>
     {matches.length?<div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">{t("sales.chooseItem")}</h2><span className="text-sm text-stone-600">{t("sales.showing",{shown:matches.length,total:articleTotal})}</span></div><div className="mt-3 grid gap-3">{matches.map(item=><div key={item.id} className="flex flex-col gap-3 rounded-lg bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">{item.category??t("sales.uncategorized")} · {t("fields.article")} {item.article_number??"—"}</p><p className="text-sm text-stone-500">{t("fields.barcode")} {item.barcode??t("sales.noBarcode")} · {item.weight_grams??"—"} {t("common.grams")} · {t(`status.${item.status}`)}</p></div><button type="button" onClick={()=>{const result=addProductToCart(cart,item,locale);setCart(result.cart);setMessage(result.error);setMatches([]);setHasMoreMatches(false);refocusScanner();}} className="w-full rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white sm:w-auto">{t("sales.add")}</button></div>)}</div>{hasMoreMatches?<button type="button" disabled={isLookingUp} onClick={()=>void loadMoreArticleMatches()} className="mt-4 w-full rounded-lg border border-amber-800 bg-white px-4 py-2 text-sm font-medium text-amber-950 disabled:opacity-50">{isLookingUp?t("common.loading"):t("sales.loadMore")}</button>:null}</div>:null}
 
-    <div className="mt-6 overflow-hidden rounded-xl border border-stone-200">
+    <div className="zl-table-wrap mt-6">
       <div className="flex items-center justify-between bg-stone-50 px-4 py-3"><h2 className="font-semibold">{t("sales.current")}</h2><span className="text-sm text-stone-500">{t("sales.itemCount",{count:cart.length})}</span></div>
-      {cart.length === 0 ? <p className="p-8 text-center text-sm text-stone-500">{t("sales.empty")}</p> : <div className="overflow-x-auto"><table className="w-full min-w-[920px] text-left text-sm">
-        <thead className="border-y border-stone-200 bg-stone-50 text-xs uppercase text-stone-500"><tr>{["productDetails", "weight", "status", "discount", "salePrice"].map((key) => <th key={key} className="px-4 py-3">{t(`fields.${key}`)}</th>)}<th /></tr></thead>
-        <tbody className="divide-y divide-stone-100">{cart.map((item) => {
+      {cart.length === 0 ? <p className="p-8 text-center text-sm text-stone-500">{t("sales.empty")}</p> : <div className="overflow-x-auto"><table className="zl-table zl-table--dense min-w-[920px]">
+        <thead><tr>{["productDetails", "weight", "status", "discount", "salePrice"].map((key) => <th key={key}>{t(`fields.${key}`)}</th>)}<th /></tr></thead>
+        <tbody>{cart.map((item) => {
           const discountError=parseDiscountPercent(item.discountPercent,locale).error;
           return <tr key={item.id}>
-            <td className="px-4 py-3"><p className="font-semibold">{item.barcode??t("sales.noBarcode")}</p><p className="text-xs text-stone-500">{item.article_number || t("sales.noArticle")} · {item.category || t("sales.uncategorized")}</p><p className="text-xs text-stone-500">{[item.gold_color, item.size && `${t("fields.size")} ${item.size}`].filter(Boolean).join(" · ") || "—"}</p></td>
-            <td className="px-4 py-3">{item.weight_grams === null ? "—" : `${item.weight_grams} ${t("common.grams")}`}</td>
-            <td className="px-4 py-3"><InventoryStatus status={item.status} /></td>
-            <td className="px-4 py-3"><input aria-label={t("sales.discountFor",{name:item.barcode??item.article_number??t("sales.product")})} type="number" min="0" max="100" step="0.01" inputMode="decimal" value={item.discountPercent} onChange={(event)=>setCart(updateCartDiscount(cart,item.id,event.target.value))} className={`w-24 rounded-lg border px-3 py-2 ${discountError?"border-red-500":"border-stone-300"}`} />{discountError?<p className="mt-1 text-xs text-red-700">{discountError}</p>:null}</td>
-            <td className="px-4 py-3 whitespace-nowrap font-semibold">{formatPrice(discountedPrice(item.listPrice, item.discountPercent),locale)}</td>
-            <td className="px-4 py-3 text-right"><button onClick={() => { setCart(removeCartItem(cart, item.id)); refocusScanner(); }} className="text-sm font-medium text-red-700 hover:underline">{t("sales.remove")}</button></td>
+            <td><p className="font-semibold">{item.barcode??t("sales.noBarcode")}</p><p className="text-xs text-stone-500">{item.article_number || t("sales.noArticle")} · {item.category || t("sales.uncategorized")}</p><p className="text-xs text-stone-500">{[item.gold_color, item.size && `${t("fields.size")} ${item.size}`].filter(Boolean).join(" · ") || "—"}</p></td>
+            <td>{item.weight_grams === null ? "—" : `${item.weight_grams} ${t("common.grams")}`}</td>
+            <td><InventoryStatus status={item.status} /></td>
+            <td><input aria-label={t("sales.discountFor",{name:item.barcode??item.article_number??t("sales.product")})} type="number" min="0" max="100" step="0.01" inputMode="decimal" value={item.discountPercent} onChange={(event)=>setCart(updateCartDiscount(cart,item.id,event.target.value))} className={`zl-control w-24 px-3 ${discountError?"border-red-500":"border-stone-300"}`} />{discountError?<p className="mt-1 text-xs text-red-700">{discountError}</p>:null}</td>
+            <td className="whitespace-nowrap text-right font-semibold">{formatPrice(discountedPrice(item.listPrice, item.discountPercent),locale)}</td>
+            <td className="text-right"><button onClick={() => { setCart(removeCartItem(cart, item.id)); refocusScanner(); }} className="text-sm font-medium text-red-700 hover:underline">{t("sales.remove")}</button></td>
           </tr>;
         })}</tbody>
       </table></div>}

@@ -293,6 +293,15 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Migration `20260920120000_ui_v2_reporting.sql` replaces only the existing reporting functions, preserves both dashboard RPC signatures and grants, adds Last Month/All Time and adaptive day/month buckets, enforces selling-shop authorization, excludes Warehouse from Shop Performance, and returns aggregate profit only. It was applied to linked production; migration history matched and linked database lint returned no errors.
 - Phase 1 validation: clean lint, typecheck, 292 tests across 52 files, and successful webpack production build. No new npm dependency was added.
 
+## ZLATA UI V2.1 Light refinement (September 20)
+
+- Light mode now uses self-hosted `next/font` Manrope for functional UI and DM Serif Display for editorial page titles, with Cyrillic-capable functional typography and graceful serif fallback for Ukrainian display text. Semantic tokens provide cleaner ivory, near-white, charcoal, muted, gold, success, danger, border, focus, and selection roles while preserving the existing dark-theme mechanism.
+- Shared `PageHeading`, `Button`, accessible info-tooltip, table classes, metric count-up, and route-skeleton patterns unify Dashboard, Inventory, Sell, Sales, Documents, and Administration without changing their workflows or permissions. Header/account styling includes a truthful avatar trigger; Sell remains the sole premium gold action.
+- Dashboard filters remain the single URL-backed global reporting source but now live in the Statistics header. Inventory remains an all-active-location current snapshot. Revenue, Net Profit, and inventory value receive reduced-motion-aware count-up presentation; chart bars have a one-time restrained entrance.
+- Shop Performance moved its current-stock explanation into a keyboard-accessible tooltip. The prior invisible Kamin trend was a one-point SVG rendering issue, not an authorization or reporting-calculation defect: the Phase 1 RPC returns active shop buckets, and a single SVG polyline point has no visible segment. V2.1 renders a meaningful dot for one nonzero point, a sparkline for multiple points, and an em dash for empty/zero data; no RPC, migration, or production data changed.
+- Dashboard summary, Inventory operational, Sell cart, Sales history, Documents, and Administration lists now share typography, separators, hover/selection behavior, numeric alignment, overflow behavior, and compact/dense variants. Inventory bulk actions use the shared semantic control variants; transient bulk success uses a toast-style status while serious errors remain alerts and destructive confirmation remains a dialog.
+- V2.1 validation: browser-rendered Light review at mobile and desktop breakpoints; clean lint and typecheck; 296 tests across 53 files; successful webpack production build. No npm dependency, migration, RPC, or business-data change was added.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

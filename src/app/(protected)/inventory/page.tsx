@@ -15,6 +15,8 @@ import {
   type InventoryFilters as InventoryFilterValues,
 } from "@/lib/inventory/queries";
 import { getTranslations } from "@/lib/i18n/server";
+import { PageHeading } from "@/components/ui/page-heading";
+import { buttonStyles } from "@/components/ui/button";
 
 export async function generateMetadata() { const { t } = await getTranslations(); return { title: t("inventory.title") }; }
 
@@ -55,12 +57,10 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
   const pageHref = (nextPage: number) => inventoryPageHref(currentQuery, nextPage);
 
   return <section>
-    <div className="flex flex-wrap justify-end gap-4">
-      {canManage ? <div className="flex flex-wrap gap-3"><Link href="/inventory/import" className="rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-sm font-medium text-stone-800 hover:bg-stone-100">{t("inventory.import")}</Link><Link href="/inventory/new" className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-stone-700">{t("inventory.add")}</Link></div> : null}
-    </div>
+    <PageHeading title={t("inventory.title")} actions={canManage ? <><Link href="/inventory/import" className={buttonStyles("secondary")}>{t("inventory.import")}</Link><Link href="/inventory/new" className={buttonStyles("primary")}>{t("inventory.add")}</Link></> : null} />
 
     <InventoryFilters key={currentQuery} filters={filters} role={employee.role} categories={options.categories} shops={options.shops}>
-    <div className="mt-6 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
+    <div className="zl-surface mt-6 overflow-hidden">
       {items.length === 0 ? <div className="p-10 text-center">
         <h2 className="font-medium">{t("inventory.noItems")}</h2>
         <p className="mt-2 text-sm text-stone-600">{t("inventory.clearFilters")}{canManage ? t("inventory.orAdd") : ""}.</p>
@@ -69,9 +69,9 @@ export default async function InventoryPage({ searchParams }: { searchParams: Se
     <nav aria-label={t("inventory.pages")} className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <span className="text-sm font-medium text-stone-700">{inventoryResultSummary(page, pageSize, count, items.length, locale)}</span>
       <div className="flex gap-2">
-        {page > 1 ? <Link href={pageHref(page - 1)} className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium">{t("common.previous")}</Link> : null}
-        {Array.from({length:totalPages},(_,index)=>index+1).filter(value=>totalPages<=7||Math.abs(value-page)<=2||value===1||value===totalPages).map(value=><Link key={value} href={pageHref(value)} aria-current={value===page?"page":undefined} className={`rounded-lg border px-4 py-2 text-sm font-medium ${value===page?"border-stone-900 bg-stone-900 text-white":"border-stone-300 bg-white"}`}>{value}</Link>)}
-        {page < totalPages ? <Link href={pageHref(page + 1)} className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium">{t("common.next")}</Link> : null}
+        {page > 1 ? <Link href={pageHref(page - 1)} className={buttonStyles("secondary")}>{t("common.previous")}</Link> : null}
+        {Array.from({length:totalPages},(_,index)=>index+1).filter(value=>totalPages<=7||Math.abs(value-page)<=2||value===1||value===totalPages).map(value=><Link key={value} href={pageHref(value)} aria-current={value===page?"page":undefined} className={buttonStyles(value===page?"primary":"secondary","min-w-10 px-3")}>{value}</Link>)}
+        {page < totalPages ? <Link href={pageHref(page + 1)} className={buttonStyles("secondary")}>{t("common.next")}</Link> : null}
       </div>
     </nav></InventoryFilters>
   </section>;

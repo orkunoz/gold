@@ -35,7 +35,7 @@ export function SalesTrend({ points }: { points: Point[] }) {
             <span className="block">{t("dashboard.itemsSold")}: {point.items_sold}</span>
             <span className="block">{t("dashboard.revenue")}: {formatPrice(point.revenue,locale)}</span>
           </span> : null}
-          <span className="block w-full rounded-t bg-amber-700/80 transition-colors group-hover:bg-amber-700 group-focus-visible:ring-2 group-focus-visible:ring-amber-900" style={{ height: `${height}px` }} />
+          <span className="zl-chart-bar block w-full rounded-t bg-amber-700/80 transition-colors group-hover:bg-amber-700 group-focus-visible:ring-2 group-focus-visible:ring-amber-900" style={{ height: `${height}px`, animationDelay: `${Math.min(index * 18, 180)}ms` }} />
         </button>;
       })}
     </div>

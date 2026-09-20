@@ -44,7 +44,7 @@ export function DashboardFilters({ period: initialPeriod, start: initialStart, e
   function changeShop(value: string) { setShopId(value); if (period !== "CUSTOM" || start) navigate(period, value); }
   function completeRange(nextStart: string, nextEnd: string) { setStart(nextStart); setEnd(nextEnd); setCalendarOpen(false); navigate("CUSTOM", shopId, nextStart, nextEnd); }
 
-  const control = "h-10 rounded-lg border border-stone-200 bg-white px-3 text-sm font-medium text-stone-800 shadow-sm focus:border-amber-700 focus:outline-none focus:ring-1 focus:ring-amber-700";
+  const control = "zl-control h-10 bg-white px-3 text-stone-800 shadow-sm focus:border-amber-700 focus:outline-none focus:ring-1 focus:ring-amber-700";
   return <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto" aria-busy={isPending}>
     {isOwner ? <label className="sr-only" htmlFor="dashboard-shop">{t("fields.shop")}</label> : null}
     {isOwner ? <select id="dashboard-shop" name="shop" value={shopId} onChange={(event) => changeShop(event.target.value)} className={control}><option value="">{t("dashboard.allShops")}</option>{shops.map((shop) => <option key={shop.id} value={shop.id}>{locationDisplayName(shop,locale)}</option>)}</select> : null}

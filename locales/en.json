@@ -292,7 +292,7 @@
     "openCalendar": "Open calendar",
     "salesActivity": "Sales activity",
     "itemsOverTime": "Items sold over time",
-    "currentSnapshot": "Current inventory across active locations",
+    "currentSnapshot": "Current inventory across all locations",
     "notPeriodFiltered": "Current",
     "inStockCurrentNote": "In-stock weight is current inventory, independent of the selected period.",
     "trend": "Trend",
