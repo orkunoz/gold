@@ -145,15 +145,15 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
     <div className="zl-table-wrap mt-6">
       <div className="flex items-center justify-between bg-stone-50 px-4 py-3"><h2 className="font-semibold">{t("sales.current")}</h2><span className="text-sm text-stone-500">{t("sales.itemCount",{count:cart.length})}</span></div>
       {cart.length === 0 ? <p className="p-8 text-center text-sm text-stone-500">{t("sales.empty")}</p> : <div className="overflow-x-auto"><table className="zl-table zl-table--dense min-w-[920px]">
-        <thead><tr>{["productDetails", "weight", "status", "discount", "salePrice"].map((key) => <th key={key}>{t(`fields.${key}`)}</th>)}<th /></tr></thead>
+        <thead><tr>{["productDetails", "weight", "status", "discount", "salePrice"].map((key) => <th key={key} className={["weight","discount","salePrice"].includes(key)?"zl-table-number":""}>{t(`fields.${key}`)}</th>)}<th /></tr></thead>
         <tbody>{cart.map((item) => {
           const discountError=parseDiscountPercent(item.discountPercent,locale).error;
           return <tr key={item.id}>
             <td><p className="font-semibold">{item.barcode??t("sales.noBarcode")}</p><p className="text-xs text-stone-500">{item.article_number || t("sales.noArticle")} · {item.category || t("sales.uncategorized")}</p><p className="text-xs text-stone-500">{[item.gold_color, item.size && `${t("fields.size")} ${item.size}`].filter(Boolean).join(" · ") || "—"}</p></td>
-            <td>{item.weight_grams === null ? "—" : `${item.weight_grams} ${t("common.grams")}`}</td>
+            <td className="zl-table-number">{item.weight_grams === null ? "—" : `${item.weight_grams} ${t("common.grams")}`}</td>
             <td><InventoryStatus status={item.status} /></td>
-            <td><input aria-label={t("sales.discountFor",{name:item.barcode??item.article_number??t("sales.product")})} type="number" min="0" max="100" step="0.01" inputMode="decimal" value={item.discountPercent} onChange={(event)=>setCart(updateCartDiscount(cart,item.id,event.target.value))} className={`zl-control w-24 px-3 ${discountError?"border-red-500":"border-stone-300"}`} />{discountError?<p className="mt-1 text-xs text-red-700">{discountError}</p>:null}</td>
-            <td className="whitespace-nowrap text-right font-semibold">{formatPrice(discountedPrice(item.listPrice, item.discountPercent),locale)}</td>
+            <td className="zl-table-number"><input aria-label={t("sales.discountFor",{name:item.barcode??item.article_number??t("sales.product")})} type="number" min="0" max="100" step="0.01" inputMode="decimal" value={item.discountPercent} onChange={(event)=>setCart(updateCartDiscount(cart,item.id,event.target.value))} className={`zl-control w-24 px-3 text-right ${discountError?"border-red-500":"border-stone-300"}`} />{discountError?<p className="mt-1 text-xs text-red-700">{discountError}</p>:null}</td>
+            <td className="zl-table-number whitespace-nowrap font-semibold">{formatPrice(discountedPrice(item.listPrice, item.discountPercent),locale)}</td>
             <td className="text-right"><button onClick={() => { setCart(removeCartItem(cart, item.id)); refocusScanner(); }} className="text-sm font-medium text-red-700 hover:underline">{t("sales.remove")}</button></td>
           </tr>;
         })}</tbody>

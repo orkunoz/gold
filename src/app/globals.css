@@ -91,6 +91,7 @@ button:disabled { cursor: wait; }
 .zl-table thead { border-bottom:1px solid var(--zl-border); background:color-mix(in srgb,var(--zl-surface-soft) 66%,var(--zl-surface)); color:var(--zl-muted); }
 .zl-table th { padding:.72rem 1rem; font-size:.75rem; font-weight:600; letter-spacing:.01em; text-align:left; white-space:nowrap; }
 .zl-table td { padding:.78rem 1rem; border-bottom:1px solid color-mix(in srgb,var(--zl-border) 75%,transparent); }
+.zl-table .zl-table-number { text-align:right; font-variant-numeric:tabular-nums; }
 .zl-table tbody tr:last-child td { border-bottom:0; }
 .zl-table--dense th,.zl-table--dense td { padding-left:.75rem; padding-right:.75rem; }
 .zl-table--dense td { padding-top:.68rem; padding-bottom:.68rem; }
@@ -99,7 +100,9 @@ button:disabled { cursor: wait; }
 .zl-tooltip__content { position:absolute; z-index:50; left:50%; bottom:calc(100% + .45rem); width:16rem; transform:translate(-50%,3px); border:1px solid var(--zl-border); border-radius:.6rem; background:var(--zl-text); padding:.5rem .65rem; color:var(--zl-surface); font-size:.75rem; font-weight:500; line-height:1.4; opacity:0; visibility:hidden; box-shadow:0 8px 24px rgba(24,20,16,.16); transition:opacity .15s ease,transform .15s ease,visibility .15s ease; }
 .zl-tooltip:hover .zl-tooltip__content,.zl-tooltip:focus-within .zl-tooltip__content { opacity:1; visibility:visible; transform:translate(-50%,0); }
 .zl-chart-bar { transform-origin:bottom; animation:zl-bar-rise .65s cubic-bezier(.22,.8,.32,1) both; }
+.zl-inventory-progress { transform-origin:left; animation:zl-progress-grow .65s cubic-bezier(.22,.8,.32,1) both; }
 @keyframes zl-bar-rise { from { transform:scaleY(.04); opacity:.35; } to { transform:scaleY(1); opacity:1; } }
+@keyframes zl-progress-grow { from { transform:scaleX(0); } to { transform:scaleX(1); } }
 @keyframes zl-menu-in { from { opacity:0; transform:translateY(-3px) scale(.985); } to { opacity:1; transform:translateY(0) scale(1); } }
 .zl-skeleton { position:relative; overflow:hidden; background:var(--zl-surface-soft); }
 .zl-skeleton::after { content:""; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--zl-surface) 75%,transparent),transparent); animation:zl-shimmer 1.35s ease-in-out infinite; }

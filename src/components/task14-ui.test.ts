@@ -18,7 +18,8 @@ describe("Task 14 focused UI", () => {
     const checkout = read("./sales-checkout.tsx");
     const dashboard = read("../app/(protected)/dashboard/page.tsx");
     expect(checkout).not.toMatch(/employee\.username|employee\.full_name/);
-    expect(dashboard).toContain('employee.role === "owner" ? getActiveShops()');
+    expect(dashboard).toContain('employee.role === "owner" ? getActiveLocations()');
+    expect(dashboard).toContain('employee.role === "owner" ? getInventoryLocationCounts()');
     expect(dashboard).not.toContain("Assigned shop");
   });
   it("keeps category performance and shows one compact count per recent sale", () => {

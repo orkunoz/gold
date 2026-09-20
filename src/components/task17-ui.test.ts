@@ -13,8 +13,10 @@ describe("Task 17 scoped UI", () => {
 
   it("keeps the sales chart responsive without scrollbar containers", () => {
     const source = read("./sales-trend.tsx");
-    expect(source).toContain('data-chart-container="no-scrollbars"');
-    expect(source).toContain("w-full min-w-0 overflow-hidden");
+    expect(source).toContain('data-chart-container="bounded-tooltips"');
+    expect(source).toContain("w-full min-w-0 overflow-visible");
+    expect(source).toContain("position < 15");
+    expect(source).toContain("position > 85");
     expect(source).not.toMatch(/overflow-[xy]-auto|min-w-\[640px\]/);
   });
 

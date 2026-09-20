@@ -302,6 +302,14 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Dashboard summary, Inventory operational, Sell cart, Sales history, Documents, and Administration lists now share typography, separators, hover/selection behavior, numeric alignment, overflow behavior, and compact/dense variants. Inventory bulk actions use the shared semantic control variants; transient bulk success uses a toast-style status while serious errors remain alerts and destructive confirmation remains a dialog.
 - V2.1 validation: browser-rendered Light review at mobile and desktop breakpoints; clean lint and typecheck; 296 tests across 53 files; successful webpack production build. No npm dependency, migration, RPC, or business-data change was added.
 
+## ZLATA UI V2.1.1 dashboard and table polish (September 20)
+
+- Shared semantic table alignment now keeps quantitative and monetary headers on the same right edge as their tabular-numeral values across Dashboard, Inventory, Sales, Documents, document detail, checkout/import/draft tables, and printable transfer/added-product tables; identifiers and dates retain their prior semantic alignment.
+- Dashboard filtered KPI reporting still uses the existing Kyiv-aware reporting RPC inputs. The apparent stale Revenue/Net Profit defect was in the count-up presentation state when a new server value was zero, not in the RPCs; the shared primitive now renders every changed target immediately and animates nonzero targets. Items Sold and Weight Sold reuse that same reduced-motion-aware 650 ms primitive.
+- Sales Activity tooltips use visible chart/card overflow plus near-edge anchoring, preserving the current bar animation while keeping first, last, and near-boundary tooltips inside the chart width. Shop Performance is ordered Shop, Items Sold, Weight Sold, Revenue, In-stock Weight, Trend.
+- Owner Inventory by Location combines active RLS-visible location records with the existing Owner-only grouped `get_admin_shop_counts()` aggregate. It includes Warehouse, excludes inactive locations, uses only current IN_STOCK counts, performs no row download or per-location query, and is independent of Dashboard shop/period filters. No migration or RPC change was needed.
+- V2.1.1 validation: clean lint and typecheck; 302 tests across 55 files; successful webpack production build. Protected desktop/mobile browser acceptance was blocked in this checkout because local Supabase public environment variables are not configured; the browser showed the expected environment error before any authenticated screen rendered. No production data, migration, RPC, dependency, push, or deployment change was made.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

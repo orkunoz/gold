@@ -21,15 +21,16 @@ export function SalesTrend({ points }: { points: Point[] }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const max = Math.max(1, ...points.map((point) => point.items_sold));
   if (!points.length) return <p className="py-10 text-center text-sm text-stone-500">{t("dashboard.noDays")}</p>;
-  return <div className="w-full min-w-0 overflow-hidden" data-chart-container="no-scrollbars">
+  return <div className="w-full min-w-0 overflow-visible" data-chart-container="bounded-tooltips">
     <div className="relative h-44 w-full min-w-0 border-b border-stone-300 bg-[linear-gradient(to_top,rgba(168,162,158,0.12)_1px,transparent_1px)] bg-[size:100%_25%] pt-3" role="img" aria-label={t("dashboard.chartLabel")}>
       {points.map((point, index) => {
         const height = Math.max(point.items_sold ? 4 : 1, point.items_sold / max * 148);
+        const position = chartPointPosition(points, index);
         const isFirst = index === 0 && points.length > 1;
         const isLast = index === points.length - 1 && points.length > 1;
         const horizontalAnchor = isFirst ? "" : isLast ? "-translate-x-full" : "-translate-x-1/2";
-        const tooltipEdge = isFirst ? "left-0" : isLast ? "right-0" : "left-1/2 -translate-x-1/2";
-        return <button key={`${point.date}-${index}`} type="button" className={`group absolute bottom-0 flex h-full w-3 items-end justify-center focus:outline-none sm:w-5 ${horizontalAnchor}`} style={{ left: `${chartPointPosition(points, index)}%` }} onMouseEnter={() => setActiveIndex(index)} onMouseLeave={() => setActiveIndex(null)} onFocus={() => setActiveIndex(index)} onBlur={() => setActiveIndex(null)} onClick={() => setActiveIndex(index)} aria-label={`${formatDashboardDate(point.date, { day: "numeric", month: "short", year: "numeric" },tag)}. ${t("dashboard.itemsSold")}: ${point.items_sold}. ${t("dashboard.revenue")}: ${formatPrice(point.revenue,locale)}.`}>
+        const tooltipEdge = position < 15 ? "left-0" : position > 85 ? "right-0" : "left-1/2 -translate-x-1/2";
+        return <button key={`${point.date}-${index}`} type="button" className={`group absolute bottom-0 flex h-full w-3 items-end justify-center focus:outline-none sm:w-5 ${horizontalAnchor}`} style={{ left: `${position}%` }} onMouseEnter={() => setActiveIndex(index)} onMouseLeave={() => setActiveIndex(null)} onFocus={() => setActiveIndex(index)} onBlur={() => setActiveIndex(null)} onClick={() => setActiveIndex(index)} aria-label={`${formatDashboardDate(point.date, { day: "numeric", month: "short", year: "numeric" },tag)}. ${t("dashboard.itemsSold")}: ${point.items_sold}. ${t("dashboard.revenue")}: ${formatPrice(point.revenue,locale)}.`}>
           {activeIndex === index ? <span role="tooltip" className={`pointer-events-none absolute z-10 w-40 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-left text-xs text-stone-700 shadow-lg ${tooltipEdge}`} style={{ bottom: `${Math.min(height + 8, 154)}px` }}>
             <span className="block font-semibold text-stone-900">{formatDashboardDate(point.date, { day: "numeric", month: "short", year: "numeric" },tag)}</span>
             <span className="block">{t("dashboard.itemsSold")}: {point.items_sold}</span>

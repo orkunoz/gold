@@ -17,3 +17,10 @@ export async function getDashboardReport(period: ReportingPeriod, shopId: string
   else if (profitResult?.data) report.profit = profitResult.data as DashboardReport["profit"];
   return report;
 }
+
+export async function getInventoryLocationCounts() {
+  const supabase = await createClient();
+  const { data, error } = await readWithRetry("dashboard_inventory_location_counts", () => supabase.rpc("get_admin_shop_counts"));
+  if (error) throw new Error("Unable to load inventory location counts.");
+  return (data ?? []).map(row => ({ shop_id: row.shop_id, in_stock_count: Number(row.in_stock_count) }));
+}

@@ -40,7 +40,7 @@ describe("dashboard live-filter and compact-layout hotfix", () => {
     expect(page).toContain('employee.role === "owner" ? requestedShop : employee.shop_id');
     expect(page).toContain('employee.role === "owner" && report.profit');
     expect(chart).toContain('role="tooltip"');
-    expect(chart).toContain('data-chart-container="no-scrollbars"');
+    expect(chart).toContain('data-chart-container="bounded-tooltips"');
     expect(chart).toContain("chartPointPosition");
   });
 

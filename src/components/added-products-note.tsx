@@ -22,6 +22,7 @@ const RECEIPT_CSS=String.raw`
 .added-products-note .transfer-note__table th:nth-child(9){width:12%}
 .added-products-note .transfer-note__table th:nth-child(10){width:18%}
 .added-products-note .transfer-note__table td:nth-child(5),.added-products-note .transfer-note__table td:nth-child(6),.added-products-note .transfer-note__table td:nth-child(7),.added-products-note .transfer-note__table td:nth-child(8){white-space:nowrap;overflow-wrap:normal}
+.added-products-note .transfer-note__table th:nth-child(6),.added-products-note .transfer-note__table th:nth-child(7),.added-products-note .transfer-note__table th:nth-child(8),.added-products-note .transfer-note__table td:nth-child(6),.added-products-note .transfer-note__table td:nth-child(7),.added-products-note .transfer-note__table td:nth-child(8){text-align:right}
 .added-products-note .transfer-note__table th:nth-child(10),.added-products-note .transfer-note__table td:nth-child(10){min-width:32mm;overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere;word-break:break-all;font-variant-numeric:tabular-nums}
 .added-products-note .transfer-note__summary{grid-template-columns:repeat(3,1fr)}
 `;
