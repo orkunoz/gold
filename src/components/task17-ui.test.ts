@@ -43,12 +43,12 @@ describe("Task 17 scoped UI", () => {
     expect(read("../lib/inventory/constants.ts")).toContain('"REMOVED"');
   });
 
-  it("only shows URL-backed date fields for Custom Range", () => {
+  it("uses one URL-backed custom range calendar", () => {
     const source = read("./dashboard-filters.tsx");
     expect(source).toContain('period === "CUSTOM"');
-    expect(source).toContain('name="start"');
-    expect(source).toContain('name="end"');
-    expect(source).toContain('t("common.optional")');
+    expect(source).toContain("DateRangeCalendar");
+    expect(source).toContain('navigate("CUSTOM"');
+    expect(source).not.toContain('type="date"');
     expect(source).toContain('name="shop"');
     const page = read("../app/(protected)/dashboard/page.tsx");
     expect(page).toContain("customDateRange");
@@ -57,8 +57,8 @@ describe("Task 17 scoped UI", () => {
 
   it("uses the cleaned-up inventory and recent-sales labels", () => {
     const source = read("../app/(protected)/dashboard/page.tsx");
-    expect(source).toContain('label={t("dashboard.inventoryValue")}');
-    expect(source).toContain('t("dashboard.itemsSold"),t("common.total")]');
+    expect(source).toContain('t("dashboard.inventoryValue")');
+    expect(source).toContain('t("sales.saleId"),t("fields.shop"),t("dashboard.itemsSold"),t("common.total")');
     expect(source).not.toContain('t("sales.viewDetails")');
     expect(source).not.toMatch(/label="Total value"|Revenue \/ Total|Status summary/);
   });

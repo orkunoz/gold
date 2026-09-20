@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { Navigation } from "@/components/navigation";
-import { SignOutButton } from "@/components/sign-out-button";
+import { AccountMenu } from "@/components/account-menu";
 import { getCurrentEmployee, getShopName } from "@/lib/inventory/queries";
 import { LanguageSelector } from "@/components/language-selector";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { getTranslations } from "@/lib/i18n/server";
 import { locationDisplayName } from "@/lib/locations/display";
 
@@ -14,17 +15,19 @@ export default async function ApplicationLayout({ children }: { children: React.
   const shopName=rawShopName ? locationDisplayName({ name: rawShopName },locale) : null;
   return <>
     <a href="#main-content" className="sr-only focus:not-sr-only focus:block focus:p-4">{t("nav.skip")}</a>
-    <header className="border-b border-stone-200 bg-white">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:gap-5 sm:px-6 sm:py-5">
-        <Image src="/logoZlataBrown.png" alt="Zlata Jewelry" width={626} height={405} className="h-14 w-auto object-contain" priority />
-        <div className="flex items-center gap-4">
-          <LanguageSelector />
-          <span className="hidden max-w-64 text-right text-sm sm:block"><strong className="block truncate text-stone-800">{employee.username || employee.full_name || t("auth.teamMember")}</strong><span className="text-xs text-stone-500">{employee.role==="owner"?t("auth.ownerAllShops"):shopName??t("auth.assignedShop")}</span></span>
-          <SignOutButton />
+    <header className="app-header border-b border-stone-200 bg-white">
+      <div className="mx-auto flex min-h-16 max-w-[1600px] items-center gap-4 px-4 sm:px-6">
+        <div className="flex min-w-0 shrink-0 items-center gap-2.5">
+          <Image src="/logoZlataBrown.png" alt="Zlata Jewelry" width={626} height={405} className="h-9 w-auto object-contain" priority />
+          <AccountMenu username={employee.username || employee.full_name || t("auth.teamMember")} roleLabel={employee.role === "owner" ? t("auth.owner") : t("auth.salesperson")} shopName={shopName} />
         </div>
-        <div className="w-full"><Navigation role={employee.role} /></div>
+        <div className="min-w-0 flex-1"><Navigation role={employee.role} /></div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <LanguageSelector />
+          <ThemeToggle />
+        </div>
       </div>
     </header>
-    <main id="main-content" className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 sm:py-12">{children}</main>
+    <main id="main-content" className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 sm:py-8">{children}</main>
   </>;
 }

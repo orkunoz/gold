@@ -11,4 +11,9 @@ describe("navigation access", () => {
     expect(navigationLinks("owner").map((link) => link.href)).toContain("/admin");
     expect(navigationLinks("salesperson").map((link) => link.href)).not.toContain("/admin");
   });
+
+  it("routes the text Sales destination to history while keeping checkout out of text links", () => {
+    expect(navigationLinks("owner")).toContainEqual({ href: "/sales", key: "nav.sales" });
+    expect(navigationLinks("salesperson").map((link) => link.href)).not.toContain("/sell");
+  });
 });

@@ -19,12 +19,12 @@ export function chartPointPosition(points: Point[], index: number) {
 export function SalesTrend({ points }: { points: Point[] }) {
   const {t,locale}=useI18n(); const tag=locale==="ua"?"uk-UA":"en-UA";
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const max = Math.max(1, ...points.map((point) => point.revenue));
+  const max = Math.max(1, ...points.map((point) => point.items_sold));
   if (!points.length) return <p className="py-10 text-center text-sm text-stone-500">{t("dashboard.noDays")}</p>;
   return <div className="w-full min-w-0 overflow-hidden" data-chart-container="no-scrollbars">
-    <div className="relative h-56 w-full min-w-0 border-b border-stone-300 bg-[linear-gradient(to_top,rgba(168,162,158,0.15)_1px,transparent_1px)] bg-[size:100%_25%] pt-3" role="img" aria-label={t("dashboard.chartLabel")}>
+    <div className="relative h-44 w-full min-w-0 border-b border-stone-300 bg-[linear-gradient(to_top,rgba(168,162,158,0.12)_1px,transparent_1px)] bg-[size:100%_25%] pt-3" role="img" aria-label={t("dashboard.chartLabel")}>
       {points.map((point, index) => {
-        const height = Math.max(point.revenue ? 4 : 1, point.revenue / max * 192);
+        const height = Math.max(point.items_sold ? 4 : 1, point.items_sold / max * 148);
         const isFirst = index === 0 && points.length > 1;
         const isLast = index === points.length - 1 && points.length > 1;
         const horizontalAnchor = isFirst ? "" : isLast ? "-translate-x-full" : "-translate-x-1/2";
@@ -35,7 +35,7 @@ export function SalesTrend({ points }: { points: Point[] }) {
             <span className="block">{t("dashboard.itemsSold")}: {point.items_sold}</span>
             <span className="block">{t("dashboard.revenue")}: {formatPrice(point.revenue,locale)}</span>
           </span> : null}
-          <span className="block w-full rounded-t bg-amber-700 transition-colors group-hover:bg-amber-600 group-focus-visible:ring-2 group-focus-visible:ring-amber-900" style={{ height: `${height}px` }} />
+          <span className="block w-full rounded-t bg-amber-700/80 transition-colors group-hover:bg-amber-700 group-focus-visible:ring-2 group-focus-visible:ring-amber-900" style={{ height: `${height}px` }} />
         </button>;
       })}
     </div>

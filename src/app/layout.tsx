@@ -12,5 +12,10 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
-  return <html lang={locale === "ua" ? "uk" : "en"}><body className="min-h-screen font-sans antialiased"><I18nProvider locale={locale}>{children}</I18nProvider></body></html>;
+  return <html lang={locale === "ua" ? "uk" : "en"} data-theme="light" suppressHydrationWarning>
+    <head>
+      <script dangerouslySetInnerHTML={{ __html: "try{document.documentElement.dataset.theme=localStorage.getItem('zlata-theme')==='dark'?'dark':'light'}catch{}" }} />
+    </head>
+    <body className="min-h-screen font-sans antialiased"><I18nProvider locale={locale}>{children}</I18nProvider></body>
+  </html>;
 }

@@ -21,10 +21,11 @@ describe("Task 14 focused UI", () => {
     expect(dashboard).toContain('employee.role === "owner" ? getActiveShops()');
     expect(dashboard).not.toContain("Assigned shop");
   });
-  it("shows category summaries and counts once per recent sale", () => {
+  it("keeps category performance and shows one compact count per recent sale", () => {
     const dashboard = read("../app/(protected)/dashboard/page.tsx");
     expect(dashboard).toContain('t("fields.productCategory")');
-    expect(dashboard).toContain("sale.category_summary");
+    expect(dashboard).toContain('t("dashboard.categoryPerformance")');
     expect(dashboard).toContain("sale.item_count");
+    expect(dashboard).not.toContain("sale.category_summary");
   });
 });

@@ -13,6 +13,7 @@ describe("current employee query", () => {
   it("keeps role and shop scoping and loads the salesperson shop label separately", () => {
     expect(layout).toContain('employee.role === "salesperson" && employee.shop_id');
     expect(layout).toContain("getShopName(employee.shop_id)");
-    expect(layout).toContain('employee.role==="owner"?t("auth.ownerAllShops")');
+    expect(layout).toContain('roleLabel={employee.role === "owner" ? t("auth.owner") : t("auth.salesperson")}');
+    expect(layout).toContain("<AccountMenu");
   });
 });

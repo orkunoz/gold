@@ -283,6 +283,16 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Document creator labels use the immutable username/account identifier rather than a role or mutable display name. Shared document metadata uses localized Created Date and Document Nr / № документа labels; download actions are native file links in both UA and EN.
 - Goods Receipt barcodes are protected identification data: reserve sufficient printable width, never clip or truncate them, and allow exceptionally long values to wrap within the same logical product row. Empty optional Transfer Note addresses render nothing rather than a placeholder dash.
 
+## ZLATA UI V2 Phase 1 (September 20)
+
+- The protected application shell uses compact horizontal navigation with the authenticated username/account popover, UA/EN control, explicit Light/Dark toggle, and a separate polished Sell CTA. Light is the default when no `zlata-theme` local preference exists; OS color scheme is intentionally ignored.
+- Checkout moved from `/sales` to `/sell` without changing checkout logic, RPC payloads, shop restrictions, or sale atomicity. `/sales` is completed-sales history, while existing immutable sale details remain at `/sales/[id]`.
+- Completed Sales history uses direct RLS-protected `sales`/`sale_items` reads, forces salesperson shop scope in server code, excludes Warehouse from Owner filter options, and shows Sale ID, date, shop, salesperson, item count, weight, and total.
+- Dashboard uses one URL-backed period/shop source of truth. Presets are Today, Last 7 Days, Last 30 Days, This Month, Last Month, All Time, and Custom Range. Custom dates are inclusive Europe/Kyiv calendar dates with an exclusive next-local-midnight query boundary; future custom dates are rejected.
+- Owner Dashboard consolidates Revenue, aggregate Net Profit, Items Sold, Weight Sold, item-count sales activity, current Inventory summary, selling-shop performance with aggregate revenue sparklines, category performance, and compact period/shop-scoped Recent Sales. Inventory remains a current all-active-location snapshot including Warehouse and does not follow period or selected selling shop.
+- Migration `20260920120000_ui_v2_reporting.sql` replaces only the existing reporting functions, preserves both dashboard RPC signatures and grants, adds Last Month/All Time and adaptive day/month buckets, enforces selling-shop authorization, excludes Warehouse from Shop Performance, and returns aggregate profit only. It was applied to linked production; migration history matched and linked database lint returned no errors.
+- Phase 1 validation: clean lint, typecheck, 292 tests across 52 files, and successful webpack production build. No new npm dependency was added.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

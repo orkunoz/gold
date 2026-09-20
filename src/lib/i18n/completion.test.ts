@@ -74,8 +74,9 @@ describe("localization completion", () => {
   });
   it("labels current and sold stock weights separately and links only the sale number", () => {
     const source=read("src/app/(protected)/dashboard/page.tsx");
-    expect(source).toContain('label={t("dashboard.inStockGoldWeight")} value={grams(report.inventory.in_stock_weight,locale)}');
-    expect(source).toContain('t("dashboard.goldWeightSold"),t("dashboard.inStock"),t("dashboard.inStockGoldWeight")');
+    expect(source).toContain('t("dashboard.inStockGoldWeight")}</dt><dd');
+    expect(source).toContain('grams(report.inventory.in_stock_weight,locale)');
+    expect(source).toContain('t("dashboard.goldWeightSold")');
     expect(source).toMatch(/<Link href=\{`\/sales\/\$\{sale.id\}`\}[^>]*>\{sale.sale_number\}<\/Link>/);
     expect(source).not.toContain('t("sales.viewDetails")');
     expect(source).not.toContain('t("common.total"),""');

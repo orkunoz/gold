@@ -42,6 +42,7 @@
     "dashboard": "Dashboard",
     "inventory": "Inventory",
     "sales": "Sales",
+    "sell": "Sell",
     "administration": "Administration",
     "main": "Main navigation",
     "skip": "Skip to content",
@@ -60,7 +61,16 @@
     "signOutError": "Unable to sign out. Please try again.",
     "ownerAllShops": "Owner · All shops",
     "assignedShop": "Assigned shop",
-    "teamMember": "Team member"
+    "teamMember": "Team member",
+    "owner": "Owner",
+    "salesperson": "Salesperson"
+  },
+  "theme": {
+    "toggle": "Toggle light or dark theme",
+    "light": "Light",
+    "dark": "Dark",
+    "useLight": "Use light theme",
+    "useDark": "Use dark theme"
   },
   "status": {
     "IN_STOCK": "In stock",
@@ -164,6 +174,12 @@
   },
   "sales": {
     "title": "Sales",
+    "sellTitle": "Sell",
+    "historyTitle": "Sales",
+    "historySubtitle": "Completed sales across the selected period.",
+    "saleId": "Sale ID",
+    "weight": "Weight",
+    "resultCount": "{count} sales",
     "completed": "Sale completed",
     "items": "Items",
     "startNew": "Start new sale",
@@ -237,6 +253,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "statistics": "Statistics",
     "revenue": "Revenue",
     "itemsSold": "Items Sold",
     "goldWeightSold": "Weight Sold",
@@ -253,6 +270,8 @@
     "last7": "Last 7 days",
     "thisMonth": "This month",
     "last30": "Last 30 days",
+    "lastMonth": "Last month",
+    "allTime": "All time",
     "custom": "Custom range",
     "from": "From",
     "to": "To",
@@ -263,7 +282,22 @@
     "noSales": "No sales in this period.",
     "inStockGoldWeight": "In-stock Weight",
     "invalidRange": "Select a valid custom date or date range. Showing This Month instead.",
-    "reversedRange": "Start date must be on or before end date. Showing This Month instead."
+    "reversedRange": "Start date must be on or before end date. Showing This Month instead.",
+    "customRange": "Custom range",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "selectStart": "Select a start date.",
+    "selectEnd": "Select an end date.",
+    "rangeSelected": "Date range selected.",
+    "openCalendar": "Open calendar",
+    "salesActivity": "Sales activity",
+    "itemsOverTime": "Items sold over time",
+    "currentSnapshot": "Current inventory across active locations",
+    "notPeriodFiltered": "Current",
+    "inStockCurrentNote": "In-stock weight is current inventory, independent of the selected period.",
+    "trend": "Trend",
+    "recentSalesSubtitle": "Latest completed sales in this period",
+    "viewAll": "View all"
   },
   "admin": {
     "title": "Administration",

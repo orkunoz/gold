@@ -4,34 +4,32 @@ import { describe, expect, it } from "vitest";
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 describe("dashboard live-filter and compact-layout hotfix", () => {
-  it("uses client navigation, preserves URL state, and prevents a document form submit", () => {
+  it("uses client navigation and preserves URL state without an Apply form", () => {
     const source = read("./dashboard-filters.tsx");
     expect(source).toContain("useRouter");
     expect(source).toContain("useSearchParams");
     expect(source).toContain("new URLSearchParams(searchParams.toString())");
-    expect(source).toContain("event.preventDefault()");
     expect(source).toContain("router.push");
     expect(source).toContain("useTransition");
     expect(source).not.toMatch(/action=|window\.location|location\.href/);
   });
 
-  it("keeps Custom Range fields conditional and applies dropdowns immediately", () => {
+  it("opens the custom calendar and applies completed ranges and dropdowns immediately", () => {
     const source = read("./dashboard-filters.tsx");
     expect(source).toContain('period === "CUSTOM"');
-    expect(source).toContain('value !== "CUSTOM"');
+    expect(source).toContain("DateRangeCalendar");
+    expect(source).toContain("completeRange");
     expect(source).toContain("changeShop(event.target.value)");
-    expect(source).toContain('name="start"');
-    expect(source).toContain('name="end"');
+    expect(source).not.toContain('type="date"');
   });
 
   it("uses the requested KPI, inventory, analytics, and shop table structure", () => {
     const source = read("../app/(protected)/dashboard/page.tsx");
-    expect(source).toContain("data-dashboard-kpis");
-    expect(source).toContain("lg:grid-cols-4");
+    expect(source).toContain('aria-labelledby="statistics-title"');
+    expect(source).toContain('t("dashboard.statistics")');
     expect(source).toContain("data-dashboard-inventory");
-    expect(source).toContain("sm:grid-cols-3");
-    expect(source).toContain("data-dashboard-analytics");
-    expect(source).toContain("lg:grid-cols-2");
+    expect(source).toContain('t("dashboard.currentSnapshot")');
+    expect(source).toContain("Sparkline");
     expect(source).toContain('t("dashboard.itemsSold")');
     expect(source).not.toMatch(/Status summary|status_counts/);
   });
@@ -49,7 +47,7 @@ describe("dashboard live-filter and compact-layout hotfix", () => {
   it("resolves all touched localization labels in both dictionaries", () => {
     const en = JSON.parse(read("../../locales/en.json"));
     const ua = JSON.parse(read("../../locales/ua.json"));
-    for (const key of ["title", "period", "apply", "revenue", "itemsSold", "goldWeightSold", "netProfit", "inStock", "inStockGoldWeight", "inventoryValue", "dailyRevenue", "categoryPerformance", "shopPerformance"]) {
+    for (const key of ["title", "period", "revenue", "itemsSold", "goldWeightSold", "netProfit", "inStock", "inStockGoldWeight", "inventoryValue", "statistics", "salesActivity", "categoryPerformance", "shopPerformance", "lastMonth", "allTime"]) {
       expect(en.dashboard[key]).toBeTruthy();
       expect(ua.dashboard[key]).toBeTruthy();
     }
