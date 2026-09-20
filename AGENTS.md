@@ -324,6 +324,16 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Transfer Notes and Goods Receipts remain explicitly Light in app previews, browser print, and generated PDF HTML. Theme initialization and `zlata-theme` persistence remain exactly Light/Dark with Light as the default and no System mode.
 - V2.2 validation: clean lint and typecheck; 311 tests across 58 files; successful webpack production build; representative Light/Dark acceptance at 1440×900 and 390×844 confirmed readable hierarchy, dark-compatible overlays and controls, preserved printable documents, and no page-level mobile overflow. No migration, RPC, dependency, production-data, push, or deployment change was made.
 
+## ZLATA V2.3 dashboard and document polish (September 20)
+
+- The Owner Dashboard now follows the approved compact editorial composition: a 1.85:1 Statistics/Inventory top row, four balanced KPI tiles, a chart that flexes to the remaining card height, full-width Shop Performance, and balanced lower comparison cards. Recent Sales has no subtitle, Dashboard-only tables use tighter density, and reporting/filter semantics remain unchanged.
+- Inventory remains a current all-location snapshot independent of reporting filters. Selling locations retain count-descending/localized-name ordering in a responsive two-column grid, with Warehouse always last, full-width, and neutral.
+- Desktop header order is Logo, page navigation, flexible space, Sell, Language, Theme, Account. Narrow layouts keep the utility cluster usable and make the page navigation horizontally scrollable without a visible scrollbar; the avatar-only account trigger retains its accessible username label.
+- Shared account/calendar popover surfaces use restrained 140–160 ms open/close motion and inherit the global reduced-motion override. The skip link is off-screen until keyboard focus. The Shop Performance info tooltip is portaled to viewport coordinates so table/card overflow cannot clip it.
+- Transfer Note and Goods Receipt canonical HTML/PDF markup now uses approximately 13 px headers, 12 px row text, 13 px summaries, content-driven location height, and compact spacing. A4 rendering preserves complete wrapping barcodes, readable Ukrainian headers, Light document styling, and existing confidentiality rules.
+- V2.3 validation: clean lint and typecheck; 316 tests across 59 files; successful webpack production build; representative Light/Dark browser review at 1440×900 and 390×844; tooltip, account popover, skip-link behavior, and responsive header review; and rendered A4 visual inspection for both canonical PDFs.
+- No migration, RPC, dependency, permission, reporting-semantic, business-data, push, or deployment change was added.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

@@ -6,6 +6,7 @@ import { formatDashboardRange, REPORTING_PERIODS, type ReportingPeriod } from "@
 import { useI18n } from "./i18n-provider";
 import { locationDisplayName } from "@/lib/locations/display";
 import { DateRangeCalendar } from "./date-range-calendar";
+import { PopoverSurface } from "./ui/popover-surface";
 
 type Shop = { id: string; name: string; location_type?: string | null };
 
@@ -52,7 +53,7 @@ export function DashboardFilters({ period: initialPeriod, start: initialStart, e
       <label className="sr-only" htmlFor="dashboard-period">{t("dashboard.period")}</label>
       <select id="dashboard-period" name="period" value={period} onChange={(event) => changePeriod(event.target.value as ReportingPeriod)} className={`${control} min-w-40 pr-8`}>{REPORTING_PERIODS.map((value) => <option key={value} value={value}>{value === "CUSTOM" && start ? formatDashboardRange(start, end || start, locale) : t(`dashboard.${periodKeys[value]}`)}</option>)}</select>
       {period === "CUSTOM" ? <button type="button" onClick={() => setCalendarOpen(value => !value)} className="absolute inset-y-0 right-7 w-8" aria-label={t("dashboard.openCalendar")}><svg aria-hidden="true" viewBox="0 0 24 24" className="mx-auto h-4 w-4" fill="none" stroke="currentColor"><path d="M6 3v3M18 3v3M4 8h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" /></svg></button> : null}
-      {calendarOpen ? <div className="absolute right-0 top-[calc(100%+.5rem)] z-40"><DateRangeCalendar start={start} end={end} max={today} onComplete={completeRange} /></div> : null}
+      <PopoverSurface open={calendarOpen} role="dialog" aria-label={t("dashboard.customRange")} className="absolute right-0 top-[calc(100%+.5rem)] z-40 origin-top-right"><DateRangeCalendar start={start} end={end} max={today} onComplete={completeRange} /></PopoverSurface>
     </div>
     {isPending ? <span className="text-xs text-stone-500" role="status">{t("common.loading")}</span> : null}
   </div>;

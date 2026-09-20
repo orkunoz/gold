@@ -253,6 +253,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "subtitle": "Your business at a glance",
     "statistics": "Statistics",
     "revenue": "Revenue",
     "itemsSold": "Items Sold",

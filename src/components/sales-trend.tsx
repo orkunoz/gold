@@ -21,8 +21,8 @@ export function SalesTrend({ points }: { points: Point[] }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const max = Math.max(1, ...points.map((point) => point.items_sold));
   if (!points.length) return <p className="py-10 text-center text-sm text-stone-500">{t("dashboard.noDays")}</p>;
-  return <div className="w-full min-w-0 overflow-visible" data-chart-container="bounded-tooltips">
-    <div className="zl-chart-grid relative h-44 w-full min-w-0 border-b border-stone-300 pt-3" role="img" aria-label={t("dashboard.chartLabel")}>
+  return <div className="flex h-full min-h-40 flex-col w-full min-w-0 overflow-visible" data-chart-container="bounded-tooltips">
+    <div className="zl-chart-grid relative min-h-40 w-full min-w-0 flex-1 border-b border-stone-300 pt-3" role="img" aria-label={t("dashboard.chartLabel")}>
       {points.map((point, index) => {
         const height = Math.max(point.items_sold ? 4 : 1, point.items_sold / max * 148);
         const position = chartPointPosition(points, index);

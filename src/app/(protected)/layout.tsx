@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Navigation } from "@/components/navigation";
+import { Navigation, SellLink } from "@/components/navigation";
 import { AccountMenu } from "@/components/account-menu";
 import { getCurrentEmployee, getShopName } from "@/lib/inventory/queries";
 import { LanguageSelector } from "@/components/language-selector";
@@ -14,17 +14,16 @@ export default async function ApplicationLayout({ children }: { children: React.
   const rawShopName=employee.role === "salesperson" && employee.shop_id ? await getShopName(employee.shop_id) : null;
   const shopName=rawShopName ? locationDisplayName({ name: rawShopName },locale) : null;
   return <>
-    <a href="#main-content" className="sr-only focus:not-sr-only focus:block focus:p-4">{t("nav.skip")}</a>
+    <a href="#main-content" className="zl-skip-link">{t("nav.skip")}</a>
     <header className="app-header border-b border-stone-200 bg-white">
-      <div className="mx-auto flex min-h-16 max-w-[1600px] items-center gap-5 px-4 sm:px-6">
-        <div className="flex min-w-0 shrink-0 items-center gap-3">
-          <Image src="/logoZlataBrown.png" alt="Zlata Jewelry" width={626} height={405} className="zl-brand-logo h-10 w-auto object-contain sm:h-11" priority />
-          <AccountMenu username={employee.username || employee.full_name || t("auth.teamMember")} roleLabel={employee.role === "owner" ? t("auth.owner") : t("auth.salesperson")} shopName={shopName} />
-        </div>
-        <div className="min-w-0 flex-1"><Navigation role={employee.role} /></div>
-        <div className="flex shrink-0 items-center gap-1.5">
+      <div className="app-header__row mx-auto flex min-h-16 max-w-[1600px] items-center gap-5 px-4 sm:px-6">
+        <Image src="/logoZlataBrown.png" alt="Zlata Jewelry" width={626} height={405} className="zl-brand-logo h-10 w-auto shrink-0 object-contain sm:h-11" priority />
+        <div className="app-header__nav-slot min-w-0"><Navigation role={employee.role} /></div>
+        <div className="app-header__utilities ml-auto flex shrink-0 items-center gap-1.5">
+          <SellLink />
           <LanguageSelector />
           <ThemeToggle />
+          <AccountMenu username={employee.username || employee.full_name || t("auth.teamMember")} roleLabel={employee.role === "owner" ? t("auth.owner") : t("auth.salesperson")} shopName={shopName} />
         </div>
       </div>
     </header>
