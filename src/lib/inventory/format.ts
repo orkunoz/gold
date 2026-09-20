@@ -2,7 +2,8 @@ import type { Locale } from "@/lib/i18n/core";
 import { localeTag } from "@/lib/i18n/core";
 export function formatPrice(value: number | null, locale: Locale = "ua") {
   if (value === null) return "—";
-  return new Intl.NumberFormat(localeTag(locale), { style: "currency", currency: "UAH", maximumFractionDigits: 2 }).format(value);
+  const normalized = Math.abs(value) < 0.005 ? 0 : value;
+  return new Intl.NumberFormat(localeTag(locale), { style: "currency", currency: "UAH", maximumFractionDigits: 2 }).format(normalized);
 }
 export function formatDate(value: string | null, locale: Locale = "ua") {
   if (!value) return "—";

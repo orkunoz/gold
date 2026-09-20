@@ -1,13 +1,24 @@
 "use client";
 
-import { forwardRef, useEffect, useState, type HTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from "react";
 
 export const PopoverSurface = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement> & { open: boolean; children: ReactNode }>(function PopoverSurface({ open, className = "", children, ...props }, ref) {
-  const [hasOpened, setHasOpened] = useState(open);
-  useEffect(() => { if (open) setHasOpened(true); }, [open]);
+  const [state, setState] = useState<"idle" | "open" | "closing">(open ? "open" : "idle");
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  useEffect(() => {
+    let frame = 0;
+    let timeout = 0;
+    if (open) frame = requestAnimationFrame(() => setState("open"));
+    else if (stateRef.current !== "idle") {
+      setState("closing");
+      timeout = window.setTimeout(() => setState("idle"), 160);
+    }
+    return () => { cancelAnimationFrame(frame); window.clearTimeout(timeout); };
+  }, [open]);
   return <div ref={ref}
     {...props}
-    data-state={open ? "open" : hasOpened ? "closed" : "idle"}
+    data-state={state}
     aria-hidden={!open}
     inert={!open}
     className={`zl-popover-surface ${className}`}

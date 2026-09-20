@@ -12,17 +12,17 @@ const RECEIPT_CSS=String.raw`
 .added-products-note .transfer-note__table th{font-size:13px}
 .added-products-note .transfer-note__table th,.added-products-note .transfer-note__table td{padding:5px 4px}
 .added-products-note .transfer-note__table th:nth-child(1){width:4%}
-.added-products-note .transfer-note__table th:nth-child(2){width:12%}
-.added-products-note .transfer-note__table th:nth-child(3){width:9%}
-.added-products-note .transfer-note__table th:nth-child(4){width:11%}
-.added-products-note .transfer-note__table th:nth-child(5){width:7%;white-space:nowrap;overflow-wrap:normal}
+.added-products-note .transfer-note__table th:nth-child(2){width:11%}
+.added-products-note .transfer-note__table th:nth-child(3){width:8%}
+.added-products-note .transfer-note__table th:nth-child(4){width:10%}
+.added-products-note .transfer-note__table th:nth-child(5){width:6%;white-space:nowrap;overflow-wrap:normal}
 .added-products-note .transfer-note__table th:nth-child(6){width:7%}
-.added-products-note .transfer-note__table th:nth-child(7){width:11%}
-.added-products-note .transfer-note__table th:nth-child(8){width:10%}
-.added-products-note .transfer-note__table th:nth-child(9){width:13%}
+.added-products-note .transfer-note__table th:nth-child(7){width:12%}
+.added-products-note .transfer-note__table th:nth-child(8){width:12%}
+.added-products-note .transfer-note__table th:nth-child(9){width:12%}
 .added-products-note .transfer-note__table th:nth-child(9){overflow-wrap:normal;word-break:normal}
-.added-products-note .transfer-note__table th:nth-child(10){width:16%}
-.added-products-note .transfer-note__table td:nth-child(5),.added-products-note .transfer-note__table td:nth-child(6),.added-products-note .transfer-note__table td:nth-child(7),.added-products-note .transfer-note__table td:nth-child(8){white-space:nowrap;overflow-wrap:normal}
+.added-products-note .transfer-note__table th:nth-child(10){width:18%}
+.added-products-note .transfer-note__table td:nth-child(5),.added-products-note .transfer-note__table td:nth-child(6),.added-products-note .transfer-note__table td:nth-child(7),.added-products-note .transfer-note__table td:nth-child(8){white-space:normal;overflow-wrap:anywhere}
 .added-products-note .transfer-note__table th:nth-child(6),.added-products-note .transfer-note__table th:nth-child(7),.added-products-note .transfer-note__table th:nth-child(8),.added-products-note .transfer-note__table td:nth-child(6),.added-products-note .transfer-note__table td:nth-child(7),.added-products-note .transfer-note__table td:nth-child(8){text-align:right}
 .added-products-note .transfer-note__table th:nth-child(10),.added-products-note .transfer-note__table td:nth-child(10){min-width:32mm;overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere;word-break:break-all;font-variant-numeric:tabular-nums}
 .added-products-note .transfer-note__summary{grid-template-columns:repeat(3,1fr)}
@@ -30,7 +30,8 @@ const RECEIPT_CSS=String.raw`
 
 export function AddedProductsNote({document,items,labels,locale,logoSrc}:{document:AddedProductsDocument;items:AddedProductsItem[];labels:AddedProductsLabels;locale:"ua"|"en";logoSrc:string}){
  const language=locale==="ua"?"uk-UA":"en-US",number=new Intl.NumberFormat(language,{maximumFractionDigits:3}),money=new Intl.NumberFormat(language,{style:"currency",currency:"UAH"}),dateTime=(value:string)=>new Intl.DateTimeFormat(language,{dateStyle:"medium",timeStyle:"short",timeZone:"Europe/Kyiv"}).format(new Date(value));
- return <><style dangerouslySetInnerHTML={{__html:TRANSFER_NOTE_CSS+RECEIPT_CSS}}/><article className="transfer-note added-products-note" lang={locale==="ua"?"uk":"en"}>
+ const compact=items.some(item=>[item.category_name,item.article_number,item.producer,item.location_name,item.barcode].some(value=>(value?.length??0)>22)||String(item.price_per_gram).length>12||String(item.price).length>12);
+ return <><style dangerouslySetInnerHTML={{__html:TRANSFER_NOTE_CSS+RECEIPT_CSS}}/><article className={`transfer-note added-products-note${compact?" transfer-note--compact-table":""}`} lang={locale==="ua"?"uk":"en"}>
   <header className="transfer-note__header"><img className="transfer-note__logo" src={logoSrc} alt="Zlata Jewelry"/><h1 className="transfer-note__heading">{labels.title}</h1><div className="transfer-note__meta"><strong>{labels.number}: <span className="transfer-note__number">{document.document_number}</span></strong><span>{labels.date}: {dateTime(document.created_at)}</span></div></header>
   <section className="transfer-note__locations"><div className="transfer-note__location"><span className="transfer-note__location-label">{labels.locations}</span><strong className="transfer-note__location-name">{document.location_names.map(labels.location).join(", ")}</strong></div></section>
   <div className="transfer-note__table-wrap"><table className="transfer-note__table"><thead><tr>{labels.headings.map(x=><th key={x}>{x}</th>)}</tr></thead><tbody>{items.map(x=><tr key={x.id??x.line_number}>{[x.line_number,x.category_name,x.article_number,x.producer,x.size,number.format(x.weight_grams),money.format(x.price_per_gram),money.format(x.price),labels.location(x.location_name),x.barcode].map((v,i)=><td key={i}>{display(v)}</td>)}</tr>)}</tbody></table></div>

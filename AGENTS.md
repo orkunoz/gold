@@ -334,6 +334,16 @@ Keep this file current after meaningful milestones. Record actual completed work
 - V2.3 validation: clean lint and typecheck; 316 tests across 59 files; successful webpack production build; representative Light/Dark browser review at 1440×900 and 390×844; tooltip, account popover, skip-link behavior, and responsive header review; and rendered A4 visual inspection for both canonical PDFs.
 - No migration, RPC, dependency, permission, reporting-semantic, business-data, push, or deployment change was added.
 
+## ZLATA V2.4 responsive shell and detail refinement (September 21)
+
+- Header and protected main content now use the same `zl-app-container` width/gutters; the skip link and its dedicated styles were removed. Dashboard removed the Shop Performance View All action and Inventory Current badge, while Sale IDs stay on one line inside horizontally scrollable tables.
+- Shared custom popovers now remain mounted through a real 160 ms open/close transition with reduced-motion coverage. The current-stock tooltip remains portaled and uses a top-level stacking layer.
+- Sale Detail is centered by the shared shell, removes Notes, normalizes negative zero, adds compact SOLD semantics, balances the summary/final total, and displays category, article, producer, size, weight, barcode, list price, discount, sale price, and SOLD from immutable `sale_items` snapshots. Purchase price is not selected or rendered.
+- Documents history uses linked Transfer/Document identifiers, Created By immediately after Created Date, and PDF-only actions. Transfer terminology is localized as Transfer Nr / № переміщення.
+- Transfer Note and Goods Receipt use content-aware column widths, safe wrapping, protected barcodes, and table-only font reduction for unusually long combinations. Long-value A4 fixtures were rendered as one page each and visually checked with no overlap or clipping.
+- V2.4 validation: clean lint and typecheck; 321 tests across 60 files; successful webpack production build; single-page A4 visual review for both long-value document families. Protected Light/Dark browser acceptance could not be performed because this checkout has no Supabase public environment configuration and production opened at login.
+- No migration, RPC, dependency, permission, reporting-semantic, production-data, push, or deployment change was added.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

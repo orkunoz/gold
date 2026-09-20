@@ -4,19 +4,16 @@ import { describe, expect, it } from "vitest";
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 
 describe("ZLATA V2.3 dashboard, motion, and document polish", () => {
-  it("keeps the approved desktop header order and a focus-only skip link", () => {
+  it("keeps the approved desktop header order", () => {
     const layout = read("../app/(protected)/layout.tsx");
     const order = ["zl-brand-logo", "<Navigation", "<SellLink", "<LanguageSelector", "<ThemeToggle", "<AccountMenu"];
     for (let index = 1; index < order.length; index += 1) expect(layout.indexOf(order[index])).toBeGreaterThan(layout.indexOf(order[index - 1]));
-    expect(layout).toContain('className="zl-skip-link"');
-    const css = read("../app/globals.css");
-    expect(css).toContain(".zl-skip-link:focus-visible");
-    expect(css).toContain("transform:translateY(calc(-100% - 1.5rem))");
+    expect(layout).toContain("zl-app-container app-header__row");
   });
 
   it("uses the approved dashboard composition without the Recent Sales subtitle", () => {
     const dashboard = read("../app/(protected)/dashboard/page.tsx");
-    expect(dashboard).toContain("max-w-[1320px]");
+    expect(dashboard).toContain("data-dashboard-content");
     expect(dashboard).toContain("minmax(0,1.85fr)");
     expect(dashboard).toContain("lg:grid-cols-4");
     expect(dashboard).toContain("zl-table--dashboard");
@@ -40,9 +37,10 @@ describe("ZLATA V2.3 dashboard, motion, and document polish", () => {
     expect(read("./account-menu.tsx")).toContain("PopoverSurface");
     expect(read("./account-menu.tsx")).toContain("aria-label={username}");
     expect(read("./dashboard-filters.tsx")).toContain("PopoverSurface");
-    expect(popover).toContain('data-state={open ? "open"');
-    expect(css).toContain("zl-popover-in .16s ease-out");
-    expect(css).toContain("zl-popover-out .14s ease-in");
+    expect(popover).toContain('"closing"');
+    expect(popover).toContain("setTimeout(() => setState(\"idle\"), 160)");
+    expect(css).toContain('data-state="closing"');
+    expect(css).toContain("transition:opacity .16s ease");
     expect(css).toContain("@media (prefers-reduced-motion:reduce)");
     expect(tooltip).toContain("createPortal");
     expect(tooltip).toContain("getBoundingClientRect");
