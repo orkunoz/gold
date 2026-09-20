@@ -25,9 +25,11 @@ describe("ZLATA V2.1.1 dashboard and table polish", () => {
   it("resets zero count-up targets and animates sold items and weight with the shared primitive", () => {
     const metric = read("./metric-count-up.tsx");
     const page = read("../app/(protected)/dashboard/page.tsx");
-    expect(metric).toContain("animation.target === value ? animation.display : value");
-    expect(metric).toContain('value === 0');
+    expect(metric).toContain("animation.target === value ? animation.display : 0");
+    expect(metric).toContain("METRIC_COUNT_UP_DURATION = 650");
     expect(metric).toContain("prefers-reduced-motion: reduce");
+    expect(page).toContain("statisticsPresentation");
+    expect(page).toContain("key={`weight:${statisticsPresentation}`}");
     expect(page).toContain('value={report.kpis.items_sold} locale={locale} kind="number"');
     expect(page).toContain('value={report.kpis.gold_weight_sold} locale={locale} kind="weight"');
   });
