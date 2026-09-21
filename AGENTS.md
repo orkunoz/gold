@@ -366,6 +366,13 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Four-row Ukrainian boundary fixtures for both document types were rendered in HTML and as single-page A4 PDFs. Visual inspection confirmed separated headers, readable values, intact identifiers, complete barcodes, and no clipping, overlap, or character-by-character wrapping.
 - No database, migration, RPC, RLS, permission, dependency, document-snapshot, business-logic, production-data, push, or deployment change was made.
 
+## ZLATA V2.4 content-aware Ukrainian document rendering follow-up (September 21)
+
+- Ukrainian Transfer Note and Goods Receipt product tables use Chromium auto table layout instead of fixed percentage profiles. Number, Size, Weight, Price per Gram, and Price use intrinsic `1%`/nowrap guardrails; Category, Article, Producer, Location, and Barcode remain content-sized. Category, Producer, and Location wrap only at normal word boundaries, Article prefers one line, and only barcodes longer than 13 characters opt into safe anywhere wrapping.
+- The shared document formatter renders all Ukrainian document timestamps in Europe/Kyiv as medium dates with short times (for example, `20 вер. 2026 р., 16:39`). Ukrainian summaries use `г`; the total label is `Загальна вартість, грн`, with a locale-formatted numeric-only value beneath it. Price headers and numeric formats remain `Ціна/г, грн`, `Ціна, грн`, and space-grouped comma decimals.
+- The auto layout fit realistic four-row boundary fixtures at the normal product-table type size, so no font-size fallback was applied. HTML and single-page A4 PDF renders for both document types were visually inspected with no collision, clipping, character-by-character wrapping, or missing barcode digits; short articles yielded space to longer producers.
+- Focused tests cover the shared formatter, HTML/PDF canonical presentation, semantic auto-layout rules, short/long content contrast, realistic values, localized numbers, units, labels, and confidentiality. Final validation completed with clean lint and typecheck, 333 tests across 62 files, and a successful webpack production build. No database, migration, RPC, RLS, permission, dependency, document-snapshot, business-logic, production-data, push, or deployment change was made.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
