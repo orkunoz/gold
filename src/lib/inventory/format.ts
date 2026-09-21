@@ -5,6 +5,12 @@ export function formatPrice(value: number | null, locale: Locale = "ua") {
   const normalized = Math.abs(value) < 0.005 ? 0 : value;
   return new Intl.NumberFormat(localeTag(locale), { style: "currency", currency: "UAH", maximumFractionDigits: 2 }).format(normalized);
 }
+export function formatTablePrice(value: number | null, locale: Locale = "ua") {
+  if (locale !== "ua") return formatPrice(value, locale);
+  if (value === null) return "—";
+  const normalized = Math.abs(value) < 0.005 ? 0 : value;
+  return new Intl.NumberFormat(localeTag(locale), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(normalized);
+}
 export function formatDate(value: string | null, locale: Locale = "ua") {
   if (!value) return "—";
   return new Intl.DateTimeFormat(localeTag(locale), { dateStyle: "medium", timeZone: "UTC" }).format(new Date(value));

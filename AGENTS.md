@@ -373,6 +373,12 @@ Keep this file current after meaningful milestones. Record actual completed work
 - The auto layout fit realistic four-row boundary fixtures at the normal product-table type size, so no font-size fallback was applied. HTML and single-page A4 PDF renders for both document types were visually inspected with no collision, clipping, character-by-character wrapping, or missing barcode digits; short articles yielded space to longer producers.
 - Focused tests cover the shared formatter, HTML/PDF canonical presentation, semantic auto-layout rules, short/long content contrast, realistic values, localized numbers, units, labels, and confidentiality. Final validation completed with clean lint and typecheck, 333 tests across 62 files, and a successful webpack production build. No database, migration, RPC, RLS, permission, dependency, document-snapshot, business-logic, production-data, push, or deployment change was made.
 
+## ZLATA V2.4 Ukrainian in-app unit consistency (September 21)
+
+- Ukrainian Inventory and Documents tables now keep currency in the column heading and render amount cells as locale-formatted numbers only. Inventory uses `Ціна, грн`; Transfer History and Added Products use `Загальна вартість, грн`; Ukrainian Documents weights use `г` instead of Latin `g`.
+- The numeric-only formatter is table-specific, so existing English currency presentation and all generated Transfer Note/Goods Receipt HTML, print CSS, geometry, PDF rendering, and business logic remain unchanged. The normal document views continue to share the already-correct localized document presentation.
+- Validation completed with 26 focused tests across five files, clean lint, and clean typecheck. No database, migration, RPC, RLS, permission, dependency, document-snapshot, production-data, push, or deployment change was made.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

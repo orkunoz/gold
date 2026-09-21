@@ -4,7 +4,7 @@ import {useActionState,useState} from "react";
 import type {InventoryStatus,Tables} from "@/lib/database.types";
 import type {InventoryActionState} from "@/lib/inventory/actions";
 import {INVENTORY_STATUSES} from "@/lib/inventory/constants";
-import {formatPrice} from "@/lib/inventory/format";
+import {formatTablePrice} from "@/lib/inventory/format";
 import {useI18n} from "./i18n-provider";
 import {locationDisplayName} from "@/lib/locations/display";
 type Action=(state:InventoryActionState,formData:FormData)=>Promise<InventoryActionState>;
@@ -23,7 +23,7 @@ export function InventoryForm({action,categories,shops,item,categoryName,cancelH
   <label className={label}>{t("fields.purchasePrice")}<input name="purchase_price" type="number" min="0" step="0.01" inputMode="decimal" defaultValue={item?.purchase_price??""} className={input}/><ErrorText text={state.fieldErrors?.purchase_price}/></label>
   <label className={label}>{t("fields.pricePerGram")}<input name="price_per_gram" type="number" min="0" step="0.01" inputMode="decimal" value={rate} onChange={e=>setRate(e.target.value)} className={input}/><ErrorText text={state.fieldErrors?.price_per_gram}/></label>
   <label className={label}>{t("fields.article")}<input name="article_number" defaultValue={item?.article_number??""} className={input}/></label>
-  <div className={label}>{t("fields.priceUah")}<p className={`${input} bg-stone-100`}>{formatPrice(calculated,locale)}</p></div>
+  <div className={label}>{t("fields.priceUah")}<p className={`${input} bg-stone-100`}>{formatTablePrice(calculated,locale)}</p></div>
   {item?<label className={label}>{t("fields.status")}<select name="status" required defaultValue={item.status as InventoryStatus} className={input}>{INVENTORY_STATUSES.filter(s=>s!=="SOLD").map(s=><option key={s} value={s}>{t(`status.${s}`)}</option>)}</select><ErrorText text={state.fieldErrors?.status}/></label>:<input type="hidden" name="status" value="IN_STOCK"/>}
   <input type="hidden" name="metal" value=""/>
   <label className={label}>{t("fields.shop")}<select name="shop_id" defaultValue={item?.shop_id??(shops.length===1?shops[0].id:"")} className={input}><option value="">{t("common.unassigned")}</option>{shops.map(s=><option key={s.id} value={s.id}>{locationDisplayName(s,locale)}</option>)}</select><ErrorText text={state.fieldErrors?.shop_id}/></label>

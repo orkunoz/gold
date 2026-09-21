@@ -88,7 +88,7 @@
     "purchasePrice": "Ціна закупки",
     "pricePerGram": "Ціна за грам",
     "article": "Артикул",
-    "priceUah": "Ціна (грн)",
+    "priceUah": "Ціна, грн",
     "notes": "Примітка",
     "status": "Статус",
     "shop": "Магазин",
@@ -436,7 +436,7 @@
   },
   "documents":{"title":"Документи","types":"Типи документів","documentNumber":"№ документа","createdBy":"Створив","view":"Переглянути","actions":"PDF","pricePerGram":"Ціна/г, грн","price":"Ціна, грн"},
   "transfers":{"title":"Переміщення","noteTitle":"Накладна переміщення","generate":"Завантажити PDF","downloadPdf":"Завантажити PDF","number":"№ переміщення","from":"Звідки","to":"Куди","items":"Вироби","totalWeight":"Загальна вага","totalValue":"Загальна вартість, грн","sender":"Передав","receiver":"Прийняв","signatures":"Підписи відправника / одержувача"},
-  "addedProducts":{"title":"Додані вироби","noteTitle":"Накладна надходження товару","number":"№ документа","date":"Дата створення","locations":"Локації","products":"Вироби","totalWeight":"Загальна вага","totalValue":"Загальна вартість","createdBy":"Створив","pdf":"PDF / Перегляд","downloadPdf":"Завантажити PDF","signature":"Прийняв"},
+  "addedProducts":{"title":"Додані вироби","noteTitle":"Накладна надходження товару","number":"№ документа","date":"Дата створення","locations":"Локації","products":"Вироби","totalWeight":"Загальна вага","totalValue":"Загальна вартість, грн","createdBy":"Створив","pdf":"PDF / Перегляд","downloadPdf":"Завантажити PDF","signature":"Прийняв"},
   "history": {
     "fields": {
       "created": "Створено",
