@@ -358,6 +358,14 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Representative four-row Goods Receipt and Transfer Note PDFs were rendered in EN and UA and visually inspected as one-page A4 documents. All four had separated headers, readable prices, complete barcodes, and no clipping, overlap, or character-by-character header wrapping. Validation completed with clean lint and typecheck, 330 tests across 61 files, and a successful webpack production build.
 - No database, migration, RPC, RLS, permission, dependency, document-snapshot, business-logic, production-data, push, or deployment change was made.
 
+## ZLATA V2.4 Ukrainian document boundary layout follow-up (September 21)
+
+- Ukrainian Transfer Note and Goods Receipt tables now use fixed, document-specific column profiles sized against realistic maximum category, producer, article, size, price, location, and barcode values instead of content-triggered shrinking. English retains its existing compact fallback independently.
+- Ukrainian price headers are the concise `Ціна/г, грн` and `Ціна, грн`. Numeric cells preserve the existing Ukrainian space-grouping/comma-decimal format and remain currency-free, right-aligned, and single-line.
+- The fixed profiles keep short identifiers intact, wrap category and producer by words, and preserve complete barcodes with safe wrapping only for the 20-digit boundary value. Screen rendering uses 11–11.75 px table text with 3–4 px horizontal padding; print uses 8–8.75 pt text with 0.55–0.7 mm horizontal padding.
+- Four-row Ukrainian boundary fixtures for both document types were rendered in HTML and as single-page A4 PDFs. Visual inspection confirmed separated headers, readable values, intact identifiers, complete barcodes, and no clipping, overlap, or character-by-character wrapping.
+- No database, migration, RPC, RLS, permission, dependency, document-snapshot, business-logic, production-data, push, or deployment change was made.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
