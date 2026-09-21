@@ -351,6 +351,13 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Transfer Notes and Goods Receipts use document-specific EN/UA currency-bearing headers and locale-formatted numeric-only price cells. Explicit semantic colgroups prioritize narrow number/size/weight fields, flexible word-wrapped category/producer fields, protected one-line numeric prices, safe article wrapping, and complete barcode preservation.
 - Focused long-value A4 fixtures for Transfer Note and Goods Receipt were rendered in EN and UA as one page each and visually inspected with no overlap, clipping, lost barcode digits, character-by-character headers, or unreadable prices. No migration, RPC, dependency, permission, reporting-semantic, snapshot, production-data, push, or deployment change was needed.
 
+## ZLATA V2.4 document table layout follow-up (September 21)
+
+- Transfer Note and Goods Receipt table headers now use header-only centered alignment, protected word wrapping, and a deliberate second line for the `(UAH)` / `(грн)` suffix. Body prices remain right-aligned, numeric-only, single-line values with the existing EN and UA locale formatting unchanged.
+- Document-specific fixed colgroups give Size, Weight, Price per Gram, and Price enough protected width; flexible text columns wrap by words, while long article and barcode identifiers remain complete with safe wrapping when required. Compact Goods Receipt headers use an 8 pt print fallback without shrinking the rest of the document.
+- Representative four-row Goods Receipt and Transfer Note PDFs were rendered in EN and UA and visually inspected as one-page A4 documents. All four had separated headers, readable prices, complete barcodes, and no clipping, overlap, or character-by-character header wrapping. Validation completed with clean lint and typecheck, 330 tests across 61 files, and a successful webpack production build.
+- No database, migration, RPC, RLS, permission, dependency, document-snapshot, business-logic, production-data, push, or deployment change was made.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

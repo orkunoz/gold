@@ -52,7 +52,7 @@ describe("ZLATA V2.4 responsive refinement", () => {
     expect(css).toContain("z-index:1000");
     expect(transfer).toContain("transfer-note--compact-table");
     expect(transfer).toContain("overflow-wrap:anywhere");
-    expect(receipt).toContain("transfer-note__col--barcode{width:17%}");
+    expect(receipt).toContain("transfer-note__col--barcode{width:13.5%}");
     expect(receipt).toContain("ADDED_PRODUCTS_COLUMNS");
   });
 });
