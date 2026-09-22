@@ -386,6 +386,12 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Normal in-app Transfer and Goods Receipt details use a shared web detail component. The canonical Transfer Note and Goods Receipt components, PDF routes, print CSS, generated geometry, snapshot data, and accepted PDF labels/number formatting remain unchanged.
 - Validation completed with 342 tests across 64 files, clean lint, and clean typecheck. No database, migration, RPC, RLS, permission, dependency, business-logic, production-data, push, or deployment change was made.
 
+## In-app document layout hotfix (September 22)
+
+- The normal in-app Transfer Note and Goods Receipt details again use their accepted canonical document composition: compact document width, metadata/header layout, content-aware table columns, spacing, and summary hierarchy. The generic `DocumentDetailView` introduced by the currency pass was removed.
+- Those two web pages supply unit-free in-app labels plus the shared operational `₴` formatter and Ukrainian `г` weight formatter. Canonical PDF callers do not supply that presentation option, so their accepted labels, numeric-only price cells, summary formatting, render routes, and print CSS remain unchanged.
+- Validation completed with 344 tests across 65 files, clean lint, and clean typecheck. No database, migration, RPC, RLS, permission, dependency, production-data, push, or deployment change was made.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

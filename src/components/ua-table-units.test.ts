@@ -28,16 +28,19 @@ describe("Ukrainian in-app currency convention",()=>{
   expect(checkout).toContain("formatTablePrice(discountedPrice(item.listPrice, item.discountPercent),locale)");
  });
 
- it("uses unit-free web document labels, ₴ values, and Ukrainian gram units",()=>{
+ it("restores the accepted in-app document presentation with unit-free labels, ₴ values, and Ukrainian gram units",()=>{
   const ua=read("../../locales/ua.json"),list=read("../app/(protected)/documents/page.tsx"),transfer=read("../app/(protected)/transfers/[id]/page.tsx"),receipt=read("../app/(protected)/documents/added-products/[id]/page.tsx");
   expect(ua).toContain('"inAppTotalValue":"Загальна вартість"');
   expect(list.match(/t\("documents\.inAppTotalValue"\)/g)).toHaveLength(2);
   expect(list.match(/formatTablePrice\(row\.total_value, locale\)/g)).toHaveLength(2);
   for(const detail of [transfer,receipt]){
    expect(detail).toContain('t("common.grams")');
-   expect(detail).toContain('t("documents.inAppTotalValue")');
    expect(detail).toContain("formatTablePrice(");
+   expect(detail).toContain("presentation={{formatPrice");
+   expect(detail).not.toContain("DocumentDetailView");
   }
+  expect(transfer).toContain("<TransferNote");
+  expect(receipt).toContain("<AddedProductsNote");
  });
 
  it("leaves canonical generated PDF and print components on their accepted presentation path",()=>{
