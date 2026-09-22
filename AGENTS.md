@@ -398,6 +398,14 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Canonical Ukrainian Transfer and Goods Receipt HTML/PDF documents now use unit-free `Ціна/г` and `Ціна` headings plus deterministic space-grouped, comma-decimal `₴` values in price cells and the `Загальна вартість` summary. Ukrainian `г`, English document formatting, accepted table geometry, print CSS, and snapshot/business behavior remain unchanged.
 - Validation completed with 348 tests across 66 files, clean lint and typecheck, a successful webpack production build, and visual review of generated one-page A4 Ukrainian Transfer and Goods Receipt PDFs. No database, migration, RPC, RLS, permission, dependency, production-data, push, or deployment change was made.
 
+## English UI, shared pagination, and Inventory filters (September 22)
+
+- English operational money values use comma grouping, decimal points, and a trailing `UAH`, with unit-free in-app monetary headings. The shared formatter's Ukrainian branches and generated Ukrainian documents are unchanged.
+- Inventory and Sales share a URL-driven, compact Motion paginator based on the supplied 21.dev component. It preserves query parameters, clamps page selection, shows bounded siblings and ellipses for large counts, and respects reduced motion. Both histories use 25 rows per page; domain-specific result summaries remain separate.
+- Inventory adds exact Producer, Size, and positive numeric Weight filters using existing option loading and the existing inventory query. Filters reset pagination while retaining sort and other filters. The responsive Owner filter grid presents all nine controls in one row at large desktop widths.
+- Revenue and Net Profit share numeric tracking, the header logo links to Dashboard, and Transfer/Goods Receipt Back labels have equal emphasis in both languages. No database, migration, RPC, RLS, permission, snapshot, business-data, push, or deployment change was made.
+- Validation: 375 tests across 70 files, clean lint and typecheck, successful webpack build, and isolated desktop/mobile visual review of the shared paginator and Inventory filter controls. Authenticated page review was unavailable in this checkout without local Supabase configuration or an account session.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

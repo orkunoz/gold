@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { INVENTORY_FILTER_DEBOUNCE_MS, inventoryFilterFields, inventoryHref, inventoryPageHref, inventorySortHref } from "./filter-url";
+import { INVENTORY_FILTER_DEBOUNCE_MS, inventoryFilterFields, inventoryHref, inventorySortHref } from "./filter-url";
+import {pageHref} from "@/components/ui/url-pagination";
 
 describe("inventory filter navigation", () => {
   it("updates filters in the URL and resets pagination", () => {
     expect(inventoryHref("status=SOLD&page=3", { barcode: " 123 " }))
       .toBe("/inventory?status=SOLD&barcode=123");
+  });
+  it("combines Producer, Size and exact Weight while preserving sort and clearing page",()=>{
+    expect(inventoryHref("status=SOLD&sort=weight&direction=asc&page=4&producer=Old",{producer:"Maker",size:"17.5",weight:"2.35"}))
+      .toBe("/inventory?status=SOLD&sort=weight&direction=asc&producer=Maker&size=17.5&weight=2.35");
+    expect(inventoryFilterFields("salesperson")).toEqual(expect.arrayContaining(["producer","size","weight"]));
   });
 
   it("removes cleared filters while preserving the others", () => {
@@ -13,7 +19,7 @@ describe("inventory filter navigation", () => {
   });
 
   it("keeps active filters in pagination links", () => {
-    expect(inventoryPageHref("status=SOLD&article=ring", 2))
+    expect(pageHref("/inventory","status=SOLD&article=ring", 2))
       .toBe("/inventory?status=SOLD&article=ring&page=2");
   });
 
@@ -21,7 +27,7 @@ describe("inventory filter navigation", () => {
     expect(inventoryHref("status=SOLD", { status: "ALL" })).toBe("/inventory?status=ALL");
     expect(inventorySortHref("status=ALL&shop=shop-1&page=4", "priceUah", "desc"))
       .toBe("/inventory?status=ALL&shop=shop-1&sort=priceUah&direction=desc");
-    expect(inventoryPageHref("status=ALL&sort=article&direction=asc", 2))
+    expect(pageHref("/inventory","status=ALL&sort=article&direction=asc", 2))
       .toBe("/inventory?status=ALL&sort=article&direction=asc&page=2");
   });
 

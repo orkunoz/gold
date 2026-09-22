@@ -2,8 +2,8 @@ import type { EmployeeRole } from "@/lib/database.types";
 
 export const INVENTORY_FILTER_DEBOUNCE_MS = 400;
 
-export const TEXT_INVENTORY_FILTERS = ["barcode", "article"] as const;
-export const SELECT_INVENTORY_FILTERS = ["category", "status", "shop", "createdDate"] as const;
+export const TEXT_INVENTORY_FILTERS = ["barcode", "article", "weight"] as const;
+export const SELECT_INVENTORY_FILTERS = ["producer", "size", "category", "status", "shop", "createdDate"] as const;
 
 export function inventoryFilterFields(role: EmployeeRole) {
   return role === "owner"
@@ -24,17 +24,6 @@ export function inventoryHref(currentQuery: string, updates: Record<string, stri
     else params.delete(name);
   }
   return `${pathname}${params.size ? `?${params.toString()}` : ""}`;
-}
-
-export function inventoryPageHref(currentQuery: string, page: number) {
-  const params = new URLSearchParams(currentQuery);
-  params.delete("metal");
-  params.delete("search");
-  if (params.get("status") === "REMOVED") params.delete("status");
-  params.delete("mode");
-  if (page > 1) params.set("page", String(page));
-  else params.delete("page");
-  return `/inventory${params.size ? `?${params.toString()}` : ""}`;
 }
 
 export function inventorySortHref(currentQuery: string, sort: string, direction: "asc" | "desc") {

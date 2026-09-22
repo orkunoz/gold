@@ -14,7 +14,7 @@ describe("inventory defaults and sorting", () => {
     const page = read("../app/(protected)/inventory/page.tsx");
     expect(page).toContain('? rawSort as InventorySort : "createdDate"');
     expect(page).toContain('parameter(params, "direction") === "asc" ? "asc" : "desc"');
-    expect(page).toContain('getInventoryItems(filters, page, 50, sort, direction)');
+    expect(page).toContain('getInventoryItems(filters, page, 25, sort, direction)');
   });
 
   it("sorts before the database range and protects purchase price sorting", () => {

@@ -3,6 +3,7 @@ import { localeTag } from "@/lib/i18n/core";
 export function formatPrice(value: number | null, locale: Locale = "ua") {
   if (value === null) return "—";
   const normalized = Math.abs(value) < 0.005 ? 0 : value;
+  if (locale === "en") return `${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(normalized)} UAH`;
   return new Intl.NumberFormat(localeTag(locale), { style: "currency", currency: "UAH", maximumFractionDigits: 2 }).format(normalized);
 }
 export function formatDashboardPrice(value: number | null, locale: Locale = "ua") {

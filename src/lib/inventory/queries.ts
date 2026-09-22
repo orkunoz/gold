@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { applyExactBarcodeMatch } from "@/lib/inventory/scanner";
 import { readWithRetry } from "@/lib/supabase/read";
 import { kyivCalendarDateBoundaries } from "@/lib/inventory/created-date";
+import {positiveInventoryWeight} from "@/lib/inventory/weight-filter";
 
 export type CurrentEmployee = Pick<
   Tables<"employees">,
@@ -17,6 +18,9 @@ export type CurrentEmployee = Pick<
 export type InventoryFilters = {
   barcode?: string;
   article?: string;
+  producer?: string;
+  size?: string;
+  weight?: string;
   category?: string;
   status?: InventoryStatus | "ALL";
   shop?: string;
@@ -90,7 +94,7 @@ const inventorySortColumns: Record<InventorySort, string> = {
   createdDate: "created_at",
 };
 
-export async function getInventoryItems(filters: InventoryFilters, page = 1, pageSize = 50, sort: InventorySort = "createdDate", direction: SortDirection = "desc") {
+export async function getInventoryItems(filters: InventoryFilters, page = 1, pageSize = 25, sort: InventorySort = "createdDate", direction: SortDirection = "desc") {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
   let query = supabase
@@ -104,6 +108,10 @@ export async function getInventoryItems(filters: InventoryFilters, page = 1, pag
   const article = safeSearch(filters.article);
   if (barcode) query = query.ilike("barcode", `%${barcode}%`);
   if (article) query = query.ilike("article_number", `%${article}%`);
+  if (filters.producer) query = query.eq("producer", filters.producer);
+  if (filters.size) query = query.eq("size", filters.size);
+  const weight = positiveInventoryWeight(filters.weight);
+  if (weight !== null) query = query.eq("weight_grams", weight);
   if (filters.category) query = query.eq("category_id", filters.category);
   if (filters.status && filters.status !== "ALL") query = query.eq("status", filters.status);
   if (filters.shop) query = query.eq("shop_id", filters.shop);

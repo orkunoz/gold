@@ -10,13 +10,16 @@ import type { InventoryFilters } from "@/lib/inventory/queries";
 import { locationDisplayName } from "@/lib/locations/display";
 import { useI18n } from "./i18n-provider";
 import { CameraBarcodeScanner } from "./camera-barcode-scanner";
+import {positiveInventoryWeight} from "@/lib/inventory/weight-filter";
 
 type Option = { id: string; name: string; location_type?: string | null };
 
-export function InventoryFilters({ filters, role, categories, shops, children }: {
+export function InventoryFilters({ filters, role, categories, producers, sizes, shops, children }: {
   filters: InventoryFilters;
   role: EmployeeRole;
   categories: Option[];
+  producers: string[];
+  sizes: string[];
   shops: Option[];
   children: ReactNode;
 }) {
@@ -24,7 +27,7 @@ export function InventoryFilters({ filters, role, categories, shops, children }:
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [draft, setDraft] = useState({ barcode: filters.barcode ?? "", article: filters.article ?? "" });
+  const [draft, setDraft] = useState({ barcode: filters.barcode ?? "", article: filters.article ?? "", weight: filters.weight ?? "" });
   const [isPending, startTransition] = useTransition();
   const initialized = useRef(false);
   const barcodeRef = useRef<HTMLInputElement>(null);
@@ -35,6 +38,7 @@ export function InventoryFilters({ filters, role, categories, shops, children }:
       return;
     }
     const timer = window.setTimeout(() => {
+      if (draft.weight && positiveInventoryWeight(draft.weight)===null) return;
       const href = inventoryHref(searchParams.toString(), draft, pathname);
       const current = `${pathname}${searchParams.size ? `?${searchParams.toString()}` : ""}`;
       if (href !== current) startTransition(() => router.push(href, { scroll: false }));
@@ -52,9 +56,12 @@ export function InventoryFilters({ filters, role, categories, shops, children }:
 
   const control = "zl-control mt-1.5 h-10 w-full min-w-0 bg-white px-2.5";
   return <><form onSubmit={(event) => event.preventDefault()} className="zl-surface mt-5 px-4 py-3">
-    <div className={`grid gap-3 sm:grid-cols-2 md:grid-cols-3 ${role === "owner" ? "lg:grid-cols-6" : "lg:grid-cols-5"}`}>
+    <div className={`grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 ${role === "owner" ? "2xl:grid-cols-9" : "2xl:grid-cols-8"}`}>
       <label className="min-w-0 text-xs font-medium">{t("fields.barcode")}<span className="mt-1.5 flex gap-1.5"><input ref={barcodeRef} name="barcode" value={draft.barcode} onChange={(event) => setDraft((current) => ({ ...current, barcode: event.target.value }))} className="zl-control h-10 min-w-0 flex-1 px-2.5" /><CameraBarcodeScanner returnFocus={barcodeRef} onDetected={applyScannedBarcode}/></span></label>
       <label className="min-w-0 text-xs font-medium">{t("fields.article")}<input name="article" value={draft.article} onChange={(event) => setDraft((current) => ({ ...current, article: event.target.value }))} className={control} /></label>
+      <label className="min-w-0 text-xs font-medium">{t("fields.producer")}<select name="producer" value={filters.producer ?? ""} onChange={(event) => applySelect("producer", event.target.value)} className={control}><option value="">{locale==="ua"?t("common.all"):t("inventory.filters.allProducers")}</option>{producers.map(producer=><option key={producer} value={producer}>{producer}</option>)}</select></label>
+      <label className="min-w-0 text-xs font-medium">{t("fields.size")}<select name="size" value={filters.size ?? ""} onChange={(event) => applySelect("size", event.target.value)} className={control}><option value="">{locale==="ua"?t("common.all"):t("inventory.filters.allSizes")}</option>{sizes.map(size=><option key={size} value={size}>{size}</option>)}</select></label>
+      <label className="min-w-0 text-xs font-medium">{t("fields.weight")}<input name="weight" type="number" min="0" step="any" inputMode="decimal" value={draft.weight} onChange={(event)=>setDraft(current=>({...current,weight:event.target.value}))} className={control}/></label>
       <label className="min-w-0 text-xs font-medium">{t("fields.createdDate")}<input name="createdDate" type="date" value={filters.createdDate ?? ""} onChange={(event) => applySelect("createdDate", event.target.value)} className={control} /></label>
       <label className="min-w-0 text-xs font-medium">{t("fields.productCategory")}<select name="category" value={filters.category ?? ""} onChange={(event) => applySelect("category", event.target.value)} className={control}><option value="">{t("inventory.filters.allCategories")}</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
       <label className="min-w-0 text-xs font-medium">{t("fields.status")}<select name="status" value={filters.status ?? "IN_STOCK"} onChange={(event) => applySelect("status", event.target.value)} className={control}><option value="ALL">{t("inventory.filters.allStatuses")}</option>{(["IN_STOCK", "SOLD"] as InventoryStatus[]).map((status) => <option key={status} value={status}>{t(`status.${status}`)}</option>)}</select></label>
