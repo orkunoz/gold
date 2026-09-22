@@ -179,7 +179,7 @@
     "sellTitle": "Sell",
     "historyTitle": "Sales",
     "historySubtitle": "Completed sales across the selected period.",
-    "saleId": "Sale ID",
+    "saleId": "Sale Nr",
     "weight": "Weight",
     "resultCount": "{count} sales",
     "completed": "Sale completed",

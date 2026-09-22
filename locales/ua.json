@@ -183,7 +183,7 @@
     "sellTitle": "Продати",
     "historyTitle": "Продажі",
     "historySubtitle": "Завершені продажі за вибраний період.",
-    "saleId": "ID продажу",
+    "saleId": "№ продажу",
     "weight": "Вага",
     "resultCount": "Продажів: {count}",
     "completed": "Продаж завершено",
