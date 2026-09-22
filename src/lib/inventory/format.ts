@@ -5,11 +5,19 @@ export function formatPrice(value: number | null, locale: Locale = "ua") {
   const normalized = Math.abs(value) < 0.005 ? 0 : value;
   return new Intl.NumberFormat(localeTag(locale), { style: "currency", currency: "UAH", maximumFractionDigits: 2 }).format(normalized);
 }
+export function formatDashboardPrice(value: number | null, locale: Locale = "ua") {
+  if (locale !== "ua") return formatPrice(value, locale);
+  if (value === null) return "—";
+  const normalized = Math.abs(value) < 0.005 ? 0 : value;
+  const number = new Intl.NumberFormat(localeTag(locale), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(normalized);
+  return `${number} грн`;
+}
 export function formatTablePrice(value: number | null, locale: Locale = "ua") {
   if (locale !== "ua") return formatPrice(value, locale);
   if (value === null) return "—";
   const normalized = Math.abs(value) < 0.005 ? 0 : value;
-  return new Intl.NumberFormat(localeTag(locale), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(normalized);
+  const number = new Intl.NumberFormat(localeTag(locale), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(normalized);
+  return `${number} ₴`;
 }
 export function formatDate(value: string | null, locale: Locale = "ua") {
   if (!value) return "—";

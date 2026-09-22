@@ -14,6 +14,8 @@ describe("completed Sale Detail rendering",()=>{
     for(const label of ["Завершений продаж","Дата продажу","Працівник","Сума до знижок","Підсумкова сума","Продано","Ціна до знижки","English Shop","Gold Ring","АРТ-123","Виробник","123456789","admin"]){expect(html).toContain(label);}
     expect(html).not.toMatch(/Completed sale|Sold at|No notes\.|Немає приміток/);
     expect(html).toContain('href="/inventory/item"');
+    expect(html).toContain("₴");
+    expect(html).toContain("г");
   });
   it("renders selectable English without the deprecated Notes panel",async()=>{
     state.locale="en";

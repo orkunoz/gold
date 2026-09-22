@@ -2,7 +2,7 @@ import Link from "next/link";
 import {InventoryStatus} from "@/components/inventory-status";
 import {ConfirmActionButton} from "@/components/confirm-action-button";
 import {deleteInventoryItemPermanently} from "@/lib/inventory/actions";
-import {displayValue,formatDateTime,formatPrice,formatTablePrice} from "@/lib/inventory/format";
+import {displayValue,formatDateTime,formatTablePrice} from "@/lib/inventory/format";
 import {historyField,historySource,historyValue} from "@/lib/inventory/history-display";
 import {canManageInventory,getCurrentEmployee,getInventoryHistory,getInventoryItem} from "@/lib/inventory/queries";
 import {getTranslations} from "@/lib/i18n/server";
@@ -13,8 +13,8 @@ export default async function InventoryItemPage({params,searchParams}:{params:Pr
  const[item,employee,history]=await Promise.all([getInventoryItem(id),getCurrentEmployee(),getInventoryHistory(id)]);
  const details=[
   [t("fields.productCategory"),item.product_categories?.name??"—"],[t("fields.producer"),displayValue(item.producer)],[t("fields.size"),displayValue(item.size)],
-  [t("fields.weight"),item.weight_grams===null?"—":`${item.weight_grams} ${t("common.grams")}`],[t("fields.pricePerGram"),formatPrice(item.price_per_gram,locale)],
-  ...(employee.role==="owner"?[[t("fields.purchasePrice"),formatPrice(item.purchase_price,locale)]]:[]),[t("fields.article"),displayValue(item.article_number)],
+  [t("fields.weight"),item.weight_grams===null?"—":`${item.weight_grams} ${t("common.grams")}`],[t("fields.pricePerGram"),formatTablePrice(item.price_per_gram,locale)],
+  ...(employee.role==="owner"?[[t("fields.purchasePrice"),formatTablePrice(item.purchase_price,locale)]]:[]),[t("fields.article"),displayValue(item.article_number)],
   [t("fields.priceUah"),formatTablePrice(item.price,locale)],[t("fields.status"),t(`status.${item.status}`)],[t("fields.shop"),locationDisplayName(item.shops,locale)??t("common.unassigned")],
   [t("fields.barcode"),displayValue(item.barcode)],[t("fields.createdDate"),formatDateTime(item.created_at,locale)],
  ];

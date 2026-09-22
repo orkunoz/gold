@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatPrice } from "@/lib/inventory/format";
+import { formatDashboardPrice } from "@/lib/inventory/format";
 import { localeTag, type Locale } from "@/lib/i18n/core";
 
 export const METRIC_COUNT_UP_DURATION = 650;
@@ -35,6 +35,6 @@ export function MetricCountUp({ value, locale, kind = "price", suffix = "" }: { 
     return () => cancelAnimationFrame(frame);
   }, [value]);
   const display = animation.target === value ? animation.display : 0;
-  const format = (number: number) => kind === "price" ? formatPrice(number, locale) : `${new Intl.NumberFormat(localeTag(locale), { maximumFractionDigits: metricMaximumFractionDigits(kind, value) }).format(number)}${suffix}`;
+  const format = (number: number) => kind === "price" ? formatDashboardPrice(number, locale) : `${new Intl.NumberFormat(localeTag(locale), { maximumFractionDigits: metricMaximumFractionDigits(kind, value) }).format(number)}${suffix}`;
   return <span className="zl-tabular" aria-label={format(value)}>{format(display)}</span>;
 }

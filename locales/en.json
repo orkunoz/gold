@@ -424,7 +424,7 @@
     "required": "Required",
     "invalid": "Enter a valid value."
   },
-  "documents":{"title":"Documents","types":"Document types","documentNumber":"Document Nr","createdBy":"Created by","view":"View","actions":"PDF","pricePerGram":"Price per Gram (UAH)","price":"Price (UAH)"},
+  "documents":{"title":"Documents","types":"Document types","documentNumber":"Document Nr","createdBy":"Created by","view":"View","actions":"PDF","pricePerGram":"Price per Gram (UAH)","price":"Price (UAH)","inAppTotalValue":"Total Value"},
   "transfers":{"title":"Transfer History","noteTitle":"Transfer Note","generate":"Download PDF","downloadPdf":"Download PDF","number":"Transfer Nr","from":"From","to":"To","items":"Items","totalWeight":"Total Weight","totalValue":"Total Value","sender":"Sent by","receiver":"Received by","signatures":"Sender / Receiver signatures"},
   "addedProducts":{"title":"Added Products","noteTitle":"Goods Receipt","number":"Document Nr","date":"Created Date","locations":"Locations","products":"Products","totalWeight":"Total Weight","totalValue":"Total Value","createdBy":"Created by","pdf":"PDF / View","downloadPdf":"Download PDF","signature":"Received by"},
   "history": {

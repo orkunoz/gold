@@ -1,6 +1,6 @@
 import { getTranslations } from "@/lib/i18n/server";
 import Link from "next/link";
-import { displayValue, formatDateTime, formatPrice } from "@/lib/inventory/format";
+import { displayValue, formatDateTime, formatPrice, formatTablePrice } from "@/lib/inventory/format";
 import { getSaleDetail } from "@/lib/sales/queries";
 
 export async function generateMetadata() { const { t } = await getTranslations(); return { title: t("sales.details") }; }
@@ -60,8 +60,8 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
           <td className="font-semibold"><Link href={`/inventory/${item.inventory_item_id}`} className="hover:underline">{displayValue(item.category_name)}</Link></td>
           <td>{displayValue(item.article_number)}</td><td>{displayValue(item.producer)}</td><td>{displayValue(item.size)}</td>
           <td className="zl-table-number whitespace-nowrap">{item.weight_grams == null ? "—" : `${item.weight_grams} ${t("common.grams")}`}</td>
-          <td className="font-mono text-xs">{displayValue(item.barcode)}</td><td className="zl-table-number whitespace-nowrap">{formatPrice(item.list_price, locale)}</td>
-          <td className="zl-table-number whitespace-nowrap">{item.discount_percent}%</td><td className="zl-table-number whitespace-nowrap font-semibold">{formatPrice(item.sale_price, locale)}</td>
+          <td className="font-mono text-xs">{displayValue(item.barcode)}</td><td className="zl-table-number whitespace-nowrap">{formatTablePrice(item.list_price, locale)}</td>
+          <td className="zl-table-number whitespace-nowrap">{item.discount_percent}%</td><td className="zl-table-number whitespace-nowrap font-semibold">{formatTablePrice(item.sale_price, locale)}</td>
           <td><span className="zl-status-sold inline-flex rounded-full px-2 py-1 text-[11px] font-bold tracking-wide">{t("status.SOLD")}</span></td>
         </tr>)}</tbody>
       </table></div>

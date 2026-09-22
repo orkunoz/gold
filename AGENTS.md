@@ -379,6 +379,13 @@ Keep this file current after meaningful milestones. Record actual completed work
 - The numeric-only formatter is table-specific, so existing English currency presentation and all generated Transfer Note/Goods Receipt HTML, print CSS, geometry, PDF rendering, and business logic remain unchanged. The normal document views continue to share the already-correct localized document presentation.
 - Validation completed with 26 focused tests across five files, clean lint, and clean typecheck. No database, migration, RPC, RLS, permission, dependency, document-snapshot, production-data, push, or deployment change was made.
 
+## Final Ukrainian currency consistency pass (September 22)
+
+- Ukrainian Dashboard KPI/stat values use the localized numeric value followed by `грн`. Operational web tables and product/document data views use a unit-free label plus the localized value followed by `₴`; Ukrainian weights remain `г`.
+- Shared formatting now distinguishes Dashboard KPI currency from operational table currency. Inventory, Product Detail, Dashboard comparison/recent-sale tables, Sales, Sale Detail, Documents history, and normal in-app Transfer/Goods Receipt details use the operational formatter consistently.
+- Normal in-app Transfer and Goods Receipt details use a shared web detail component. The canonical Transfer Note and Goods Receipt components, PDF routes, print CSS, generated geometry, snapshot data, and accepted PDF labels/number formatting remain unchanged.
+- Validation completed with 342 tests across 64 files, clean lint, and clean typecheck. No database, migration, RPC, RLS, permission, dependency, business-logic, production-data, push, or deployment change was made.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

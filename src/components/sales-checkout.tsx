@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import type { EmployeeRole } from "@/lib/database.types";
 import { completeSaleAction, type SaleConfirmation } from "@/lib/sales/actions";
 import { addProductToCart, buildSaleRpcItems, cartTotal, checkoutShops, discountedPrice, normalizeSalesBarcode, parseDiscountPercent, removeCartItem, updateCartDiscount, type CartItem, type CheckoutProduct } from "@/lib/sales/checkout";
-import { formatPrice } from "@/lib/inventory/format";
+import { formatPrice, formatTablePrice } from "@/lib/inventory/format";
 import { InventoryStatus } from "@/components/inventory-status";
 import { useI18n } from "./i18n-provider";
 import { locationDisplayName } from "@/lib/locations/display";
@@ -153,7 +153,7 @@ export function SalesCheckout({ employee, shops }: { employee: { username?:strin
             <td className="zl-table-number">{item.weight_grams === null ? "—" : `${item.weight_grams} ${t("common.grams")}`}</td>
             <td><InventoryStatus status={item.status} /></td>
             <td className="zl-table-number"><input aria-label={t("sales.discountFor",{name:item.barcode??item.article_number??t("sales.product")})} type="number" min="0" max="100" step="0.01" inputMode="decimal" value={item.discountPercent} onChange={(event)=>setCart(updateCartDiscount(cart,item.id,event.target.value))} className={`zl-control w-24 px-3 text-right ${discountError?"border-red-500":"border-stone-300"}`} />{discountError?<p className="mt-1 text-xs text-red-700">{discountError}</p>:null}</td>
-            <td className="zl-table-number whitespace-nowrap font-semibold">{formatPrice(discountedPrice(item.listPrice, item.discountPercent),locale)}</td>
+            <td className="zl-table-number whitespace-nowrap font-semibold">{formatTablePrice(discountedPrice(item.listPrice, item.discountPercent),locale)}</td>
             <td className="text-right"><button onClick={() => { setCart(removeCartItem(cart, item.id)); refocusScanner(); }} className="text-sm font-medium text-red-700 hover:underline">{t("sales.remove")}</button></td>
           </tr>;
         })}</tbody>
