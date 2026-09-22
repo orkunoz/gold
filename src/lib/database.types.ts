@@ -555,6 +555,7 @@ export type Database = {
       bulk_move_inventory_items: { Args:{p_inventory_item_ids:string[];p_shop_id?:string|null}; Returns:number }
       bulk_move_inventory_items_with_transfer: { Args:{p_inventory_item_ids:string[];p_shop_id:string}; Returns:string }
       bulk_change_price_per_gram: { Args:{p_inventory_item_ids:string[];p_price_per_gram:number}; Returns:number }
+      bulk_change_purchase_price: { Args:{p_inventory_item_ids:string[];p_purchase_price:number}; Returns:number }
       bulk_delete_inventory_items: { Args:{p_inventory_item_ids:string[]}; Returns:number }
       resolve_product_category: { Args:{p_name:string}; Returns:string|null }
     }

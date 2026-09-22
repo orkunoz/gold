@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/database.types";
 import { canManageInventory, getCurrentEmployee } from "./queries";
 import { inventoryMutationTimer } from "./mutation-timing";
+import { parseRequiredPurchasePrice } from "./purchase-price";
 import { toInventoryUpdate, validateInventoryForm, type InventoryFormErrors } from "./validation";
 
 export type InventoryActionState = { error: string; fieldErrors?: InventoryFormErrors };
@@ -115,7 +116,7 @@ export async function deleteInventoryItemPermanently(id: string): Promise<void> 
   redirect("/inventory");
 }
 
-async function bulkContext(operation: "bulk_move" | "bulk_price_change" | "bulk_delete") {
+async function bulkContext(operation: "bulk_move" | "bulk_price_change" | "bulk_purchase_price_change" | "bulk_delete") {
   const timing = inventoryMutationTimer(operation);
   const [{ t }, employee] = await timing.phase("authorization_and_locale", () => Promise.all([getTranslations(), getCurrentEmployee()]));
   return { timing, t, employee };
@@ -144,6 +145,19 @@ export async function bulkChangePricePerGram(ids: string[], raw: string): Promis
   timing.mark("revalidation_deferred_to_client_refresh"); timing.finish();
   if (error) return { error: error.message };
   return { error: "", success: t("inventory.priceChanged", { count: data ?? 0 }) };
+}
+
+export async function bulkChangePurchasePrice(ids: string[], raw: string): Promise<BulkMoveState> {
+  const { timing, t, employee } = await bulkContext("bulk_purchase_price_change");
+  if (!canManageInventory(employee.role)) { timing.finish(); return { error: t("inventory.ownerRequired") }; }
+  const unique = [...new Set(ids)], purchasePrice = parseRequiredPurchasePrice(raw);
+  if (!unique.length || unique.length > 50 || unique.some((id) => !/^[0-9a-f-]{36}$/i.test(id))) { timing.finish(); return { error: t("inventory.validSelection") }; }
+  if (purchasePrice === null) { timing.finish(); return { error: t("inventory.invalidPurchasePrice") }; }
+  const db = await createClient();
+  const { data, error } = await timing.phase("database_rpc_and_audit", () => db.rpc("bulk_change_purchase_price", { p_inventory_item_ids: unique, p_purchase_price: purchasePrice }));
+  timing.mark("revalidation_deferred_to_client_refresh"); timing.finish();
+  if (error) return { error: error.code === "42501" ? t("inventory.ownerRequired") : t("inventory.purchasePriceChangeFailed") };
+  return { error: "", success: t("inventory.purchasePriceChanged", { count: data ?? 0 }) };
 }
 
 export async function bulkDeleteInventoryItems(ids: string[]): Promise<BulkMoveState> {

@@ -1,5 +1,6 @@
 import type { InventoryStatus, TablesInsert, TablesUpdate } from "@/lib/database.types";
 import { INVENTORY_STATUSES } from "./constants";
+import { parseRequiredPurchasePrice } from "./purchase-price";
 
 export type InventoryFormValues = Record<string, string>;
 export type InventoryFormErrors = Partial<Record<string, string>>;
@@ -63,7 +64,8 @@ export function validateInventoryForm(formData: FormData): InventoryValidationRe
   const ownerPrice = parseNonnegativeNumber("owner_price", "Owner price", values, errors);
   const sellingPrice = parseNonnegativeNumber("selling_price", "Selling price", values, errors);
   const pricePerGram = parseNonnegativeNumber("price_per_gram", "Price per gram", values, errors);
-  const purchasePrice = parseNonnegativeNumber("purchase_price", "Purchase price", values, errors);
+  const purchasePrice = values.purchase_price ? parseRequiredPurchasePrice(values.purchase_price) : null;
+  if (values.purchase_price && purchasePrice === null) errors.purchase_price = "Purchase price must be a valid non-negative monetary amount.";
 
   let receivedAt: string | null = null;
   if (values.received_at) {

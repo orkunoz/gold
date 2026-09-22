@@ -10,6 +10,7 @@ const fields: Record<string, string> = {
   "Article": "fields.article",
   "Weight": "fields.weight",
   "Price per Gram": "fields.pricePerGram",
+  "Purchase Price": "fields.purchasePrice",
   "Inventory Price": "history.fields.inventoryPrice",
   "Inventory Discount": "history.fields.inventoryDiscount",
   "Status": "fields.status",
