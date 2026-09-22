@@ -16,21 +16,21 @@ describe("Added Products PDF",()=>{
   const html=normalize(await addedProductsHtml(document,items,addedProductsLabels(createTranslator("ua"),"ua"),"ua"));
   expect(html).toContain("Дата створення: 20 вер. 2026 р., 16:39");
   expect(html).toContain("Загальна вага</span><strong>24,24 г</strong>");
-  expect(html).toContain("Загальна вартість, грн</span><strong>591 214,00</strong>");
-  expect(html).not.toContain("591 214,00 ₴");
+  expect(html).toContain("Загальна вартість</span><strong>591 214,00 ₴</strong>");
+  expect(html).not.toContain("грн");
  });
 
- it.each(["en","ua"] as const)("uses localized numeric-only boundary prices and concise %s headers",async locale=>{
+ it.each(["en","ua"] as const)("uses localized boundary prices and concise %s headers",async locale=>{
   const html=normalize(await addedProductsHtml(document,items,addedProductsLabels(createTranslator(locale),locale),locale)),priceCells=[...html.matchAll(/<td class="transfer-note__cell--price(?:-per-gram)?">([^<]+)<\/td>/g)].map(match=>match[1]);
   if(locale==="en")expect(html).toContain('transfer-note__heading-main">Price per Gram</span><span class="transfer-note__heading-unit">(UAH)');
-  else{expect(html).toContain('transfer-note__heading-main">Ціна/г, грн</span>');expect(html).toContain('transfer-note__heading-main">Ціна, грн</span>')}
-  expect(priceCells.slice(0,2)).toEqual(locale==="en"?["24,390.00","295,607.00"]:["24 390,00","295 607,00"]);
+  else{expect(html).toContain('transfer-note__heading-main">Ціна/г</span>');expect(html).toContain('transfer-note__heading-main">Ціна</span>')}
+  expect(priceCells.slice(0,2)).toEqual(locale==="en"?["24,390.00","295,607.00"]:["24 390,00 ₴","295 607,00 ₴"]);
   expect(priceCells.join(" ")).not.toMatch(/UAH|грн/);
  });
 
  it("uses content-aware receipt columns for long boundaries and short-article contrast",async()=>{
   const html=normalize(await addedProductsHtml(document,items,addedProductsLabels(createTranslator("ua"),"ua"),"ua"));
-  for(const value of["Перстень діаманти (0,05ct)","shmfpD600040|R55","Золотий Соверен","17,5-18,5","Нововолинськ","12345678901234567890","asd","TestProducer B","24 390,00","295 607,00"])expect(html).toContain(value);
+  for(const value of["Перстень діаманти (0,05ct)","shmfpD600040|R55","Золотий Соверен","17,5-18,5","Нововолинськ","12345678901234567890","asd","TestProducer B","24 390,00 ₴","295 607,00 ₴"])expect(html).toContain(value);
   for(const rule of['article class="transfer-note added-products-note transfer-note--ua-table"',"added-products-note.transfer-note--ua-table .transfer-note__table{table-layout:auto","added-products-note.transfer-note--ua-table .transfer-note__col--category,.added-products-note.transfer-note--ua-table .transfer-note__col--article,.added-products-note.transfer-note--ua-table .transfer-note__col--producer,.added-products-note.transfer-note--ua-table .transfer-note__col--location,.added-products-note.transfer-note--ua-table .transfer-note__col--barcode{width:auto}","added-products-note.transfer-note--ua-table .transfer-note__col--nr,.added-products-note.transfer-note--ua-table .transfer-note__col--size,.added-products-note.transfer-note--ua-table .transfer-note__col--weight,.added-products-note.transfer-note--ua-table .transfer-note__col--price-per-gram,.added-products-note.transfer-note--ua-table .transfer-note__col--price{width:1%}","transfer-note--ua-table .transfer-note__cell--barcode{white-space:nowrap","transfer-note__cell--barcode transfer-note__cell--long-id"])expect(html).toContain(rule);
   expect(html).not.toMatch(/added-products-note\.transfer-note--ua-table \.transfer-note__col--(?:category|article|producer|location|barcode)\{width:\d/);
   expect(html).not.toContain("text-overflow:ellipsis");

@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import {DocumentTableHeading,TRANSFER_NOTE_CSS,type DocumentWebPresentation} from "./transfer-note";
-import {documentWeightUnit,formatDocumentDateTime} from "@/lib/documents/format";
+import {documentWeightUnit,formatDocumentDateTime,formatDocumentPrice,formatDocumentTotalPrice} from "@/lib/documents/format";
 
 export type AddedProductsDocument={document_number:string;created_at:string;created_by_name:string;location_names:string[];product_count:number;total_weight:number;total_value:number};
 export type AddedProductsItem={id?:string;line_number:number;category_name:string;article_number:string|null;producer:string;size:string|null;weight_grams:number;price_per_gram:number;price:number;location_name:string;barcode:string|null};
@@ -32,7 +32,7 @@ const RECEIPT_CSS=String.raw`
 export const ADDED_PRODUCTS_COLUMNS=["nr","category","article","producer","size","weight","price-per-gram","price","location","barcode"] as const;
 
 export function AddedProductsNote({document,items,labels,locale,logoSrc,presentation}:{document:AddedProductsDocument;items:AddedProductsItem[];labels:AddedProductsLabels;locale:"ua"|"en";logoSrc:string;presentation?:DocumentWebPresentation}){
- const language=locale==="ua"?"uk-UA":"en-US",number=new Intl.NumberFormat(language,{maximumFractionDigits:3}),priceNumber=new Intl.NumberFormat(language,{minimumFractionDigits:2,maximumFractionDigits:2}),money=new Intl.NumberFormat(language,{style:"currency",currency:"UAH"}),weightUnit=documentWeightUnit(locale),formatCellPrice=(value:number)=>presentation?.formatPrice(value)??priceNumber.format(value),formatTotalPrice=(value:number)=>presentation?.formatPrice(value)??(locale==="ua"?priceNumber.format(value):money.format(value)),formatWeight=(value:number)=>presentation?.formatWeight(value)??number.format(value),totalValue=formatTotalPrice(document.total_value);
+ const language=locale==="ua"?"uk-UA":"en-US",number=new Intl.NumberFormat(language,{maximumFractionDigits:3}),weightUnit=documentWeightUnit(locale),formatCellPrice=(value:number)=>presentation?.formatPrice(value)??formatDocumentPrice(value,locale),formatTotalPrice=(value:number)=>presentation?.formatPrice(value)??formatDocumentTotalPrice(value,locale),formatWeight=(value:number)=>presentation?.formatWeight(value)??number.format(value),totalValue=formatTotalPrice(document.total_value);
  const compact=locale==="en"&&items.some(item=>[item.category_name,item.article_number,item.producer,item.location_name,item.barcode].some(value=>(value?.length??0)>22)||String(item.price_per_gram).length>12||String(item.price).length>12);
  return <><style dangerouslySetInnerHTML={{__html:TRANSFER_NOTE_CSS+RECEIPT_CSS}}/><article className={`transfer-note added-products-note${locale==="ua"?" transfer-note--ua-table":""}${compact?" transfer-note--compact-table":""}`} lang={locale==="ua"?"uk":"en"}>
   <header className="transfer-note__header"><img className="transfer-note__logo" src={logoSrc} alt="Zlata Jewelry"/><h1 className="transfer-note__heading">{labels.title}</h1><div className="transfer-note__meta"><strong>{labels.number}: <span className="transfer-note__number">{document.document_number}</span></strong><span>{labels.date}: {formatDocumentDateTime(document.created_at,locale)}</span></div></header>

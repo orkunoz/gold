@@ -8,3 +8,18 @@ export function formatDocumentDateTime(value:string,locale:Locale){
 }
 
 export function documentWeightUnit(locale:Locale){return locale==="ua"?"г":"g"}
+
+function normalizedMoney(value:number){return Math.abs(value)<0.005?0:value}
+function ukrainianMoney(value:number){return `${new Intl.NumberFormat("uk-UA",{minimumFractionDigits:2,maximumFractionDigits:2}).format(normalizedMoney(value))} ₴`}
+
+export function formatDocumentPrice(value:number|null,locale:Locale){
+ if(value===null)return "—";
+ if(locale==="ua")return ukrainianMoney(value);
+ return new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}).format(normalizedMoney(value));
+}
+
+export function formatDocumentTotalPrice(value:number|null,locale:Locale){
+ if(value===null)return "—";
+ if(locale==="ua")return ukrainianMoney(value);
+ return new Intl.NumberFormat("en-US",{style:"currency",currency:"UAH",maximumFractionDigits:2}).format(normalizedMoney(value));
+}

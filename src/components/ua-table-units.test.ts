@@ -43,13 +43,14 @@ describe("Ukrainian in-app currency convention",()=>{
   expect(receipt).toContain("<AddedProductsNote");
  });
 
- it("leaves canonical generated PDF and print components on their accepted presentation path",()=>{
+ it("uses the hryvnia symbol in canonical Ukrainian generated documents without changing the in-app convention",()=>{
   for(const file of["./transfer-note.tsx","./added-products-note.tsx"]){
    const note=read(file);
    expect(note).toContain("documentWeightUnit(locale)");
+   expect(note).toContain("formatDocumentPrice");
    expect(note).not.toContain("formatTablePrice");
   }
   const transferPdf=read("../lib/transfers/pdf.test.ts"),receiptPdf=read("../lib/added-products/pdf.test.ts");
-  for(const test of[transferPdf,receiptPdf])expect(test).toContain("Загальна вартість, грн");
+  for(const test of[transferPdf,receiptPdf])expect(test).toContain("Загальна вартість</span><strong>591 214,00 ₴</strong>");
  });
 });

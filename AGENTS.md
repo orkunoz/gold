@@ -392,6 +392,12 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Those two web pages supply unit-free in-app labels plus the shared operational `₴` formatter and Ukrainian `г` weight formatter. Canonical PDF callers do not supply that presentation option, so their accepted labels, numeric-only price cells, summary formatting, render routes, and print CSS remain unchanged.
 - Validation completed with 344 tests across 65 files, clean lint, and clean typecheck. No database, migration, RPC, RLS, permission, dependency, production-data, push, or deployment change was made.
 
+## Document navigation and Ukrainian PDF currency follow-up (September 22)
+
+- Normal in-app Transfer and Goods Receipt details have a left-side Back control to their correctly filtered Documents history list, with the existing PDF download control retained on the right. These controls are outside canonical document markup and do not print or enter generated PDF output.
+- Canonical Ukrainian Transfer and Goods Receipt HTML/PDF documents now use unit-free `Ціна/г` and `Ціна` headings plus deterministic space-grouped, comma-decimal `₴` values in price cells and the `Загальна вартість` summary. Ukrainian `г`, English document formatting, accepted table geometry, print CSS, and snapshot/business behavior remain unchanged.
+- Validation completed with 348 tests across 66 files, clean lint and typecheck, a successful webpack production build, and visual review of generated one-page A4 Ukrainian Transfer and Goods Receipt PDFs. No database, migration, RPC, RLS, permission, dependency, production-data, push, or deployment change was made.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
