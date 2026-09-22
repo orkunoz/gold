@@ -59,8 +59,17 @@ describe("shared pagination",()=>{
   expect(pageHref("/sales","period=CUSTOM&shop=shop-1&start=2026-09-01&end=2026-09-22&page=3",1)).toBe("/sales?period=CUSTOM&shop=shop-1&start=2026-09-01&end=2026-09-22");
   const urlPagination=readFileSync(new URL("./url-pagination.tsx",import.meta.url),"utf8");
   const inventoryFilters=readFileSync(new URL("../inventory-filters.tsx",import.meta.url),"utf8");
-  expect(urlPagination).toContain("{scroll:true}");
-  expect(urlPagination).not.toContain("{scroll:false}");
+  expect(urlPagination).toContain("{scroll:false}");
+  expect(urlPagination).toContain("scrollToTopForPagination()");
+  expect(urlPagination).not.toContain("{scroll:true}");
   expect(inventoryFilters).toContain("{ scroll: false }");
+ });
+ it("overrides the global waiting cursor for disabled paginator arrows",()=>{
+  const css=readFileSync(new URL("../../app/globals.css",import.meta.url),"utf8");
+  expect(css).toContain("button:disabled { cursor: wait; }");
+  expect(css).toContain("button.zl-pagination-arrow:disabled { cursor: default; }");
+  const html=renderToStaticMarkup(<Pagination count={1} page={1} onPageChange={()=>{}} label="Pages" previousLabel="Previous" nextLabel="Next" pageLabel={String}/>);
+  expect(html.match(/class="zl-pagination-arrow/g)).toHaveLength(2);
+  expect(html.match(/disabled=""/g)).toHaveLength(2);
  });
 });

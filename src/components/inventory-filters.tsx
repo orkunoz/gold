@@ -56,7 +56,7 @@ export function InventoryFilters({ filters, role, categories, producers, sizes, 
 
   const control = "zl-control mt-1.5 h-10 w-full min-w-0 bg-white px-2.5";
   return <><form onSubmit={(event) => event.preventDefault()} className="zl-surface mt-5 px-4 py-3">
-    <div className={`grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 ${role === "owner" ? "2xl:grid-cols-9" : "2xl:grid-cols-8"}`}>
+    <div className={`zl-inventory-filters-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 ${role === "owner" ? "zl-inventory-filters-grid--owner" : "zl-inventory-filters-grid--sales"}`}>
       <label className="min-w-0 text-xs font-medium">{t("fields.barcode")}<span className="mt-1.5 flex gap-1.5"><input ref={barcodeRef} name="barcode" value={draft.barcode} onChange={(event) => setDraft((current) => ({ ...current, barcode: event.target.value }))} className="zl-control h-10 min-w-0 flex-1 px-2.5" /><CameraBarcodeScanner returnFocus={barcodeRef} onDetected={applyScannedBarcode}/></span></label>
       <label className="min-w-0 text-xs font-medium">{t("fields.article")}<input name="article" value={draft.article} onChange={(event) => setDraft((current) => ({ ...current, article: event.target.value }))} className={control} /></label>
       <label className="min-w-0 text-xs font-medium">{t("fields.producer")}<select name="producer" value={filters.producer ?? ""} onChange={(event) => applySelect("producer", event.target.value)} className={control}><option value="">{locale==="ua"?t("common.all"):t("inventory.filters.allProducers")}</option>{producers.map(producer=><option key={producer} value={producer}>{producer}</option>)}</select></label>

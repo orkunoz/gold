@@ -7,7 +7,7 @@ export type DocumentWebPresentation={formatPrice:(value:number|null)=>string;for
 
 export const TRANSFER_NOTE_CSS=String.raw`
 .transfer-note,.transfer-note *{box-sizing:border-box}
-.transfer-note{max-width:1120px;margin:0 auto;padding:32px;background:#fff;color:#2f2118;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.4}
+.transfer-note{max-width:1120px;margin:0 auto;padding:32px;background:#fff;color:#2f2118;font-family:"Zlata Currency",Arial,Helvetica,sans-serif;font-size:14px;line-height:1.4}
 .transfer-note__header{display:grid;grid-template-columns:160px minmax(180px,1fr) minmax(240px,auto);align-items:center;gap:20px;padding-bottom:18px;border-bottom:2px solid #785115}
 .transfer-note__logo{display:block;width:120px;height:48px;object-fit:contain;object-position:left center}
 .transfer-note__heading{margin:0;color:#352109;font-family:Georgia,"Times New Roman",serif;font-size:26px;font-weight:600;line-height:1.15;text-align:center;text-transform:none}

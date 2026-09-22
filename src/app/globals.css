@@ -75,6 +75,7 @@ table tbody tr:hover { background:color-mix(in srgb,var(--zl-selection) 62%,tran
 button, a, input { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
 button:disabled { cursor: wait; }
+button.zl-pagination-arrow:disabled { cursor: default; }
 :focus-visible { outline:2px solid var(--zl-focus); outline-offset:3px; }
 .icon-button { display:grid; height:2rem; width:2rem; place-items:center; border:1px solid var(--zl-border); border-radius:.55rem; color:var(--zl-muted); background:var(--zl-surface); transition:color .15s ease,background .15s ease; }
 .icon-button:hover { color:var(--zl-text); background:var(--zl-surface-soft); }
@@ -115,6 +116,11 @@ button:disabled { cursor: wait; }
 .zl-sale-total { border-top:1px solid color-mix(in srgb,var(--zl-gold) 40%,var(--zl-border)); background:color-mix(in srgb,var(--zl-amber-50) 62%,var(--zl-surface)); color:var(--zl-text); }
 .zl-control { min-height:2.5rem; border:1px solid var(--zl-border); border-radius:.65rem; background:var(--zl-surface); color:var(--zl-text); font-size:.8125rem; font-weight:600; transition:border-color .16s ease,background-color .16s ease,box-shadow .16s ease,transform .1s ease; }
 .zl-control:hover { border-color:color-mix(in srgb,var(--zl-border) 40%,var(--zl-muted)); background:var(--zl-surface-soft); }
+@media (min-width:1240px) {
+  .zl-inventory-filters-grid { column-gap:.5rem; }
+  .zl-inventory-filters-grid--owner { grid-template-columns:minmax(0,1.45fr) minmax(0,1.05fr) minmax(0,1.2fr) minmax(0,.55fr) minmax(0,.55fr) minmax(0,1fr) minmax(0,1.05fr) minmax(0,.95fr) minmax(0,.8fr); }
+  .zl-inventory-filters-grid--sales { grid-template-columns:minmax(0,1.45fr) minmax(0,1.05fr) minmax(0,1.2fr) minmax(0,.55fr) minmax(0,.55fr) minmax(0,1fr) minmax(0,1.05fr) minmax(0,.95fr); }
+}
 .zl-button { display:inline-flex; min-height:2.5rem; align-items:center; justify-content:center; gap:.5rem; border:1px solid transparent; border-radius:.65rem; padding:.55rem 1rem; font-size:.8125rem; font-weight:600; line-height:1.1; transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease,transform .1s ease,opacity .16s ease; }
 .zl-button:active:not(:disabled) { transform:translateY(1px); }
 .zl-button:disabled,.zl-button[aria-disabled="true"] { cursor:not-allowed; opacity:.48; }
