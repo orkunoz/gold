@@ -406,6 +406,13 @@ Keep this file current after meaningful milestones. Record actual completed work
 - Revenue and Net Profit share numeric tracking, the header logo links to Dashboard, and Transfer/Goods Receipt Back labels have equal emphasis in both languages. No database, migration, RPC, RLS, permission, snapshot, business-data, push, or deployment change was made.
 - Validation: 375 tests across 70 files, clean lint and typecheck, successful webpack build, and isolated desktop/mobile visual review of the shared paginator and Inventory filter controls. Authenticated page review was unavailable in this checkout without local Supabase configuration or an account session.
 
+## Small UI, paginator, and Ukrainian PDF alignment follow-up (September 22)
+
+- English Inventory's category placeholder is `All Categories`; Ukrainian generic all-options use `Усі` for Producer, Size, Product Category, and Shop while the existing status wording remains unchanged.
+- Previous/next pagination controls are natively disabled, suppress hover treatment when disabled, and guard callbacks at boundaries. Page navigation scrolls to the top while preserving query parameters; filter-navigation scroll behavior is unchanged.
+- Ukrainian generated Transfer Note and Goods Receipt body price and price-per-gram cells have an explicit right-alignment rule. Summary label/value remain `Загальна вартість` and a localized total with `₴`. No document widths, table layout, font, padding, wrapping, or business behavior changed.
+- Focused regression tests and one-page A4 visual review cover both Ukrainian PDFs. No database, migration, RPC, RLS, permission, dependency, production-data, push, or deployment change was made.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

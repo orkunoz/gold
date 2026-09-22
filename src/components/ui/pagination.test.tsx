@@ -1,7 +1,7 @@
 import {renderToStaticMarkup} from "react-dom/server";
 import {readFileSync} from "node:fs";
-import {describe,expect,it} from "vitest";
-import {paginate,Pagination} from "./pagination";
+import {describe,expect,it,vi} from "vitest";
+import {paginate,Pagination,requestPageChange} from "./pagination";
 import {pageHref} from "./url-pagination";
 
 describe("shared pagination",()=>{
@@ -39,11 +39,28 @@ describe("shared pagination",()=>{
   const html=renderToStaticMarkup(<Pagination count={2} page={1} onPageChange={()=>{}} label="Inventory pages" previousLabel="Previous" nextLabel="Next" pageLabel={String}/>);
   expect(html).toContain('aria-current="page"');
   expect(html).toContain('aria-label="Previous" disabled');
+  expect(html).toContain("enabled:hover:bg-stone-100 enabled:hover:text-stone-800");
+  expect(html).not.toContain("disabled:hover:");
   expect(html).toContain('aria-label="Next"');
   expect(html).toContain('aria-label="Inventory pages"');
+  const lastPage=renderToStaticMarkup(<Pagination count={2} page={2} onPageChange={()=>{}} label="Inventory pages" previousLabel="Previous" nextLabel="Next" pageLabel={String}/>);
+  expect(lastPage).toContain('aria-label="Next" disabled');
+ });
+ it("guards previous and next callbacks at their disabled boundaries",()=>{
+  const onPageChange=vi.fn();
+  requestPageChange(1,10,0,onPageChange);
+  requestPageChange(10,10,11,onPageChange);
+  expect(onPageChange).not.toHaveBeenCalled();
+  requestPageChange(4,10,5,onPageChange);
+  expect(onPageChange).toHaveBeenCalledExactlyOnceWith(5);
  });
  it("changes only page while preserving Inventory and Sales query parameters",()=>{
   expect(pageHref("/inventory","producer=Maker&size=17&weight=2.5&status=SOLD&sort=priceUah&direction=asc&page=1",3)).toBe("/inventory?producer=Maker&size=17&weight=2.5&status=SOLD&sort=priceUah&direction=asc&page=3");
   expect(pageHref("/sales","period=CUSTOM&shop=shop-1&start=2026-09-01&end=2026-09-22&page=3",1)).toBe("/sales?period=CUSTOM&shop=shop-1&start=2026-09-01&end=2026-09-22");
+  const urlPagination=readFileSync(new URL("./url-pagination.tsx",import.meta.url),"utf8");
+  const inventoryFilters=readFileSync(new URL("../inventory-filters.tsx",import.meta.url),"utf8");
+  expect(urlPagination).toContain("{scroll:true}");
+  expect(urlPagination).not.toContain("{scroll:false}");
+  expect(inventoryFilters).toContain("{ scroll: false }");
  });
 });

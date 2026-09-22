@@ -25,6 +25,7 @@ describe("transfer PDF",()=>{
   expect(html).not.toContain("Ціна закупки");
   expect(html).toContain("data:image/png;base64,");
   expect(html).toContain("@page{size:A4 portrait");
+  expect(html).toContain("transfer-note--ua-table .transfer-note__table td.transfer-note__cell--price-per-gram,.transfer-note--ua-table .transfer-note__table td.transfer-note__cell--price{text-align:right}");
   expect(html).toContain("display:table-header-group");
   expect(html).toContain("page-break-inside:avoid");
  });
@@ -42,6 +43,7 @@ describe("transfer PDF",()=>{
   if(locale==="en")expect(html).toContain('transfer-note__heading-main">Price per Gram</span><span class="transfer-note__heading-unit">(UAH)');
   else{expect(html).toContain('transfer-note__heading-main">Ціна/г</span>');expect(html).toContain('transfer-note__heading-main">Ціна</span>')}
   expect(priceCells.slice(0,2)).toEqual(locale==="en"?["24,390.00","295,607.00"]:["24 390,00 ₴","295 607,00 ₴"]);
+  if(locale==="ua")expect(priceCells).toHaveLength(4);
   expect(priceCells.join(" ")).not.toMatch(/UAH|грн/);
  });
 

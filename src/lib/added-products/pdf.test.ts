@@ -17,6 +17,7 @@ describe("Added Products PDF",()=>{
   expect(html).toContain("Дата створення: 20 вер. 2026 р., 16:39");
   expect(html).toContain("Загальна вага</span><strong>24,24 г</strong>");
   expect(html).toContain("Загальна вартість</span><strong>591 214,00 ₴</strong>");
+  expect(html).toContain("transfer-note--ua-table .transfer-note__table td.transfer-note__cell--price-per-gram,.transfer-note--ua-table .transfer-note__table td.transfer-note__cell--price{text-align:right}");
   expect(html).not.toContain("грн");
  });
 
@@ -25,6 +26,7 @@ describe("Added Products PDF",()=>{
   if(locale==="en")expect(html).toContain('transfer-note__heading-main">Price per Gram</span><span class="transfer-note__heading-unit">(UAH)');
   else{expect(html).toContain('transfer-note__heading-main">Ціна/г</span>');expect(html).toContain('transfer-note__heading-main">Ціна</span>')}
   expect(priceCells.slice(0,2)).toEqual(locale==="en"?["24,390.00","295,607.00"]:["24 390,00 ₴","295 607,00 ₴"]);
+  if(locale==="ua")expect(priceCells).toHaveLength(4);
   expect(priceCells.join(" ")).not.toMatch(/UAH|грн/);
  });
 

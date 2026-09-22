@@ -9,12 +9,20 @@ describe("English operational presentation",()=>{
  it("uses unit-free headings and UAH-suffixed values while preserving Ukrainian conventions",()=>{
   const en=createTranslator("en"),ua=createTranslator("ua");
   expect(en("fields.priceUah")).toBe("Price");
+  expect(en("inventory.filters.allCategories")).toBe("All Categories");
+  expect(ua("common.all")).toBe("Усі");
   expect(en("fields.pricePerGram")).toBe("Price per Gram");
   expect(en("documents.inAppTotalValue")).toBe("Total Value");
   expect(formatTablePrice(266375,"en")).toBe("266,375.00 UAH");
   expect(formatTablePrice(266375,"ua").replace(/[\u00a0\u202f]/g," ")).toBe("266 375,00 ₴");
   expect(formatDashboardPrice(266375,"ua").replace(/[\u00a0\u202f]/g," ")).toBe("266 375,00 грн");
   expect(ua("fields.priceUah")).toBe("Ціна");
+  const inventoryFilters=read("../components/inventory-filters.tsx");
+  expect(inventoryFilters.match(/locale==="ua"\?t\("common\.all"\):t\("inventory\.filters\.allCategories"\)/g)).toHaveLength(1);
+  expect(inventoryFilters.match(/locale==="ua"\?t\("common\.all"\):t\("inventory\.filters\.allShops"\)/g)).toHaveLength(1);
+  expect(inventoryFilters).toContain('locale==="ua"?t("common.all"):t("inventory.filters.allProducers")');
+  expect(inventoryFilters).toContain('locale==="ua"?t("common.all"):t("inventory.filters.allSizes")');
+  expect(inventoryFilters).toContain('t("inventory.filters.allStatuses")');
  });
  it("aligns Revenue and Net Profit number styles",()=>{
   const dashboard=read("../app/(protected)/dashboard/page.tsx");
