@@ -26,10 +26,9 @@ describe("English operational presentation",()=>{
  });
  it("aligns Revenue and Net Profit number styles",()=>{
   const dashboard=read("../app/(protected)/dashboard/page.tsx");
-  const revenue=dashboard.match(/<dd className="([^"]+)"><MetricCountUp key={`revenue:/)?.[1];
-  const profit=dashboard.match(/<dd className="([^"]+)"><MetricCountUp key={`profit:/)?.[1];
-  expect(revenue).toBeDefined();expect(profit).toBeDefined();
-  expect(profit?.replace("zl-success ","").replace("text-stone-950 ","")).toBe(revenue?.replace("zl-success ","").replace("text-stone-950 ",""));
+  expect(dashboard).toContain('const financialMetricClass = "mt-1.5 whitespace-nowrap text-lg font-semibold tracking-[-.025em] sm:text-xl"');
+  expect(dashboard).toContain('`${financialMetricClass} text-stone-950`');
+  expect(dashboard).toContain('`${financialMetricClass} ${netProfitTone(report.profit.net_profit)}`');
  });
  it("links the header logo and keeps matching detail Back emphasis",()=>{
   const layout=read("../app/(protected)/layout.tsx");

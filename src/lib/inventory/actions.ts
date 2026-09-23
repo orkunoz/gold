@@ -7,6 +7,7 @@ import type { Json } from "@/lib/database.types";
 import { canManageInventory, getCurrentEmployee } from "./queries";
 import { inventoryMutationTimer } from "./mutation-timing";
 import { parseRequiredPurchasePrice } from "./purchase-price";
+import { bulkInventoryError } from "./bulk-errors";
 import { toInventoryUpdate, validateInventoryForm, type InventoryFormErrors } from "./validation";
 
 export type InventoryActionState = { error: string; fieldErrors?: InventoryFormErrors };
@@ -131,7 +132,7 @@ export async function bulkMoveInventoryItems(ids: string[], shopId: string | nul
   const supabase = await createClient();
   const { data, error } = await timing.phase("database_rpc_and_audit", () => supabase.rpc("bulk_move_inventory_items_with_transfer", { p_inventory_item_ids: uniqueIds, p_shop_id: shopId! }));
   timing.mark("revalidation_deferred_to_client_refresh"); timing.finish();
-  if (error) return { error: t("inventory.moveFailed") };
+  if (error) return { error: bulkInventoryError(error, t, "inventory.moveFailed") };
   return { error: "", success: t("inventory.moved", { count: uniqueIds.length }), transferId: data ?? undefined };
 }
 
@@ -143,7 +144,7 @@ export async function bulkChangePricePerGram(ids: string[], raw: string): Promis
   const db = await createClient();
   const { data, error } = await timing.phase("database_rpc_and_audit", () => db.rpc("bulk_change_price_per_gram", { p_inventory_item_ids: unique, p_price_per_gram: price }));
   timing.mark("revalidation_deferred_to_client_refresh"); timing.finish();
-  if (error) return { error: error.message };
+  if (error) return { error: bulkInventoryError(error, t, "inventory.priceChangeFailed") };
   return { error: "", success: t("inventory.priceChanged", { count: data ?? 0 }) };
 }
 
@@ -156,7 +157,7 @@ export async function bulkChangePurchasePrice(ids: string[], raw: string): Promi
   const db = await createClient();
   const { data, error } = await timing.phase("database_rpc_and_audit", () => db.rpc("bulk_change_purchase_price", { p_inventory_item_ids: unique, p_purchase_price: purchasePrice }));
   timing.mark("revalidation_deferred_to_client_refresh"); timing.finish();
-  if (error) return { error: error.code === "42501" ? t("inventory.ownerRequired") : t("inventory.purchasePriceChangeFailed") };
+  if (error) return { error: bulkInventoryError(error, t, "inventory.purchasePriceChangeFailed") };
   return { error: "", success: t("inventory.purchasePriceChanged", { count: data ?? 0 }) };
 }
 
@@ -168,6 +169,6 @@ export async function bulkDeleteInventoryItems(ids: string[]): Promise<BulkMoveS
   const db = await createClient();
   const { data, error } = await timing.phase("database_rpc_and_audit", () => db.rpc("bulk_delete_inventory_items", { p_inventory_item_ids: unique }));
   timing.mark("revalidation_deferred_to_client_refresh"); timing.finish();
-  if (error) return { error: error.message };
+  if (error) return { error: bulkInventoryError(error, t, "inventory.deleteFailed") };
   return { error: "", success: t("inventory.deleted", { count: data ?? 0 }) };
 }

@@ -59,8 +59,8 @@ describe("Task 17 scoped UI", () => {
 
   it("uses the cleaned-up inventory and recent-sales labels", () => {
     const source = read("../app/(protected)/dashboard/page.tsx");
-    expect(source).toContain("report.inventory.customer_value");
-    expect(source).not.toContain('t("dashboard.inventoryValue")');
+    expect(source).toContain("inventory.customer_value");
+    expect(source).toContain('t("dashboard.inventoryValue")');
     expect(source).toContain('t("sales.saleId"),t("fields.shop"),t("dashboard.itemsSold"),t("common.total")');
     expect(source).not.toContain('t("sales.viewDetails")');
     expect(source).not.toMatch(/label="Total value"|Revenue \/ Total|Status summary/);

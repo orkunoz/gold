@@ -20,7 +20,7 @@ export function customDateRange(period: ReportingPeriod, startValue?: string, en
   if (start > end) return { start: null, end: null, error: "Start date must be on or before end date." };
   return { start, end, error: null };
 }
-export function dashboardSections(role: EmployeeRole) { return { inventory: role === "owner", comparisons: role === "owner", shopPerformance: role === "owner" }; }
+export function dashboardSections(role: EmployeeRole) { return { inventory: true, comparisons: role === "owner", shopPerformance: role === "owner" }; }
 
 export const DASHBOARD_RECENT_SALES_LIMIT = 5;
 export function recentSalesWindow<T>(sales: T[]) {

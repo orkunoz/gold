@@ -10,7 +10,7 @@ describe("ZLATA V2.1.1 dashboard and table polish", () => {
     expect(page).toContain("getInventoryLocationCounts()");
     expect(page).toContain("getActiveLocations()");
     expect(queries).toContain('rpc("get_admin_shop_counts")');
-    expect(queries).not.toMatch(/inventory_items.*select/);
+    expect(queries).toContain('.eq("shop_id", shopId).eq("status", "IN_STOCK")');
     expect(page).not.toMatch(/getInventoryLocationCounts\([^)]*(period|shopId)/);
   });
 

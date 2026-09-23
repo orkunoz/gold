@@ -28,7 +28,7 @@ describe("dashboard live-filter and compact-layout hotfix", () => {
     expect(source).toContain('aria-labelledby="statistics-title"');
     expect(source).toContain('t("dashboard.statistics")');
     expect(source).toContain("data-dashboard-inventory");
-    expect(source).toContain('t("dashboard.currentSnapshot")');
+    expect(source).toContain('"dashboard.currentSnapshot" : "dashboard.assignedShopSnapshot"');
     expect(source).toContain("Sparkline");
     expect(source).toContain('t("dashboard.itemsSold")');
     expect(source).not.toMatch(/Status summary|status_counts/);
