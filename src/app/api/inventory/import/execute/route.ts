@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     }
     timing.phaseSync("revalidation", () => revalidatePath("/inventory"));
     timing.finish();
-    return NextResponse.json({ imported, skipped: preview.summary.errors, footerSkipped: preview.summary.footerSkipped, duplicates: preview.summary.duplicates, failed: failures.length, failures });
+    return NextResponse.json({ imported, skipped: preview.summary.errors, ignoredRows: preview.summary.ignoredRows, duplicates: preview.summary.duplicates, failed: failures.length, failures });
   } catch {
     timing.finish();
     return NextResponse.json({ error: t("import.messages.notCompleted") }, { status: 500 });

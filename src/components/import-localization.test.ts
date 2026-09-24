@@ -13,16 +13,16 @@ import { InventoryImport } from "./inventory-import";
 describe("Import Inventory rendered states",()=>{
   it("renders preview labels in Ukrainian and leaves spreadsheet values intact",()=>{
     const parsed={selectedSheet:"Sheet One",sheetNames:["Sheet One"],headerRow:2,headers:["Original English Header"],rows:[["Original English Data"]],sourceRows:[4],suggestedMapping:{}};
-    const preview={summary:{sourceRows:1,total:1,ready:1,warnings:0,errors:0,duplicates:0,footerSkipped:0},rows:[{sourceRow:4,classification:"Ready",errors:[],warnings:[],item:{category_name:"Original English Data",metal:"Gold",producer:"Producer",status:"IN_STOCK"}}]};
+    const preview={summary:{sourceRows:1,ready:1,warnings:0,errors:0,duplicates:0,ignoredRows:0},ignoredSourceRows:[],rows:[{sourceRow:4,classification:"Ready",errors:[],warnings:[],item:{category_name:"Original English Data",metal:null,producer:"Producer",status:"IN_STOCK"}}]};
     state.values=[{name:"items.xlsx"},parsed,{},"shop",preview,null,"",false];
     const html=renderToStaticMarkup(React.createElement(InventoryImport,{employeeShopId:"shop",shops:[{id:"shop",name:"English Shop",code:null}]}));
-    for(const text of ["Заголовки виявлено в рядку 3","Рядок джерела","Попередження","Помилки","Імпортувати 1 коректний виріб","В наявності","Original English Header","Original English Data"]){expect(html).toContain(text);}
+    for(const text of ["Заголовки виявлено в рядку 3","Рядок джерела","Потребують уваги","Неможливо імпортувати","Імпортувати 1 коректний виріб","В наявності","Original English Header","Original English Data"]){expect(html).toContain(text);}
     expect(html).not.toMatch(/Detected headers|>Ready<|>Warnings<|>Errors<|>IN_STOCK</);
   });
   it("renders successful import results and navigation in Ukrainian",()=>{
-    state.values=[null,null,{},"shop",null,{imported:2,skipped:1,footerSkipped:1,duplicates:0,failed:0,failures:[]},"",false];
+    state.values=[null,null,{},"shop",null,{imported:2,skipped:1,ignoredRows:1,duplicates:0,failed:0,failures:[]},"",false];
     const html=renderToStaticMarkup(React.createElement(InventoryImport,{employeeShopId:"shop",shops:[]}));
-    for(const key of ["import.imported","import.validationSkipped","import.footerSkipped","import.databaseFailures","import.return","import.another"]){expect(html).toContain(createTranslator("ua")(key));}
+    for(const key of ["import.imported","import.validationSkipped","import.ignoredRows","import.databaseFailures","import.return","import.another"]){expect(html).toContain(createTranslator("ua")(key));}
     expect(html).toContain('href="/inventory"');
     expect(html).not.toMatch(/Validation errors skipped|Return to inventory|Import another file/);
   });

@@ -1,5 +1,4 @@
 import { createTranslator, type Locale } from "@/lib/i18n/core";
-import type { InventoryStatus } from "@/lib/database.types";
 import { IMPORT_FIELDS, type ColumnMapping, type ImportPreview, type ImportRow, type SpreadsheetCell, type SpreadsheetRow } from "./types";
 
 type Category = { id: string; name: string };
@@ -55,18 +54,6 @@ export function matchCategory(value: SpreadsheetCell | undefined, categories: Ca
   return category ? { id: category.id, name: category.name } : { id: null, name };
 }
 
-export function normalizeImportedStatus(value: SpreadsheetCell | undefined, locale: Locale = "en") {
-  const t = createTranslator(locale);
-  const raw = text(value);
-  if (!raw) return { value: "IN_STOCK" as InventoryStatus };
-  const key = normalized(raw).replace(/[ -]+/g, "_").toUpperCase();
-  const aliases: Record<string, InventoryStatus> = {
-    IN_STOCK: "IN_STOCK", INSTOCK: "IN_STOCK", SOLD: "SOLD", REMOVED: "REMOVED",
-    "В_НАЯВНОСТІ": "IN_STOCK", ПРОДАНО: "SOLD", ВИДАЛЕНО: "REMOVED",
-  };
-  return aliases[key] ? { value: aliases[key] } : { value: "IN_STOCK" as InventoryStatus, warning: t("import.messages.unknownStatus", {name:raw}) };
-}
-
 export function calculateInventoryPrice(weight:number|null,pricePerGram:number|null){return weight===null||pricePerGram===null?null:Math.round(weight*pricePerGram*100)/100;}
 
 function mapped(row: SpreadsheetRow, mapping: ColumnMapping, field: keyof ColumnMapping) {
@@ -81,9 +68,10 @@ export function removeEmptySpreadsheetRows(rows: SpreadsheetRow[]) {
 export function validateImportRows(rows: SpreadsheetRow[], context: Context): ImportPreview {
   const t = createTranslator(context.locale ?? "en");
   const withSource = rows.map((row, index) => ({ row, index, sourceRow: context.sourceRows?.[index] ?? index + (context.headerRow ?? 0) + 2 }));
-  const footerSkipped = withSource.filter(({ row }) => context.mapping.price_per_gram !== undefined && text(mapped(row, context.mapping, "price_per_gram")) === null).length;
-  const candidates = withSource
-    .filter(({ row }) => context.mapping.price_per_gram === undefined || text(mapped(row, context.mapping, "price_per_gram")) !== null);
+  const ignored = withSource.filter(({ row }) => text(mapped(row, context.mapping, "article_number")) === null && text(mapped(row, context.mapping, "price_per_gram")) === null && text(mapped(row, context.mapping, "barcode")) === null);
+  const ignoredSourceRows = ignored.map(({ sourceRow }) => sourceRow);
+  const ignoredSet = new Set(ignoredSourceRows);
+  const candidates = withSource.filter(({ sourceRow }) => !ignoredSet.has(sourceRow));
   const barcodeCounts = new Map<string, number>();
   candidates.forEach(({ row }) => {
     const barcode = text(mapped(row, context.mapping, "barcode"));
@@ -99,25 +87,16 @@ export function validateImportRows(rows: SpreadsheetRow[], context: Context): Im
       if (context.existingBarcodes.has(barcode)) errors.push(t("import.messages.barcodeExists"));
     }
 
-    let shopId = context.targetShopId;
-    const spreadsheetShop = text(mapped(row, context.mapping, "shop"));
-    if (spreadsheetShop) {
-      const shop = context.shops.find((candidate) => normalized(candidate.name) === normalized(spreadsheetShop) || normalized(candidate.code ?? "") === normalized(spreadsheetShop));
-      if (!shop) errors.push(t("import.messages.unknownShop",{name:spreadsheetShop}));
-      else shopId = shop.id;
-    }
+    const shopId = context.targetShopId;
     if (!context.shops.some((shop) => shop.id === shopId)) errors.push(t("import.messages.invalidShop"));
 
     const weight = parseImportedNumber(mapped(row, context.mapping, "weight_grams"));
     const pricePerGram = parseImportedNumber(mapped(row, context.mapping, "price_per_gram"));
     const purchasePrice = parseImportedNumber(mapped(row, context.mapping, "purchase_price"));
-    if (weight.error) warnings.push(t("import.messages.invalidWeight")); else if (weight.value !== null && weight.value < 0) errors.push(t("import.messages.negativeWeight"));
-    if (pricePerGram.error) warnings.push(t("import.messages.invalidGramPrice")); else if (pricePerGram.value !== null && pricePerGram.value < 0) errors.push(t("import.messages.negativeGramPrice"));
+    if (weight.error) warnings.push(t("import.messages.invalidWeight")); else if (weight.value === null) warnings.push(t("import.messages.missingWeight")); else if (weight.value < 0) errors.push(t("import.messages.negativeWeight"));
+    if (pricePerGram.error) warnings.push(t("import.messages.invalidGramPrice")); else if (pricePerGram.value === null) warnings.push(t("import.messages.missingGramPrice")); else if (pricePerGram.value < 0) errors.push(t("import.messages.negativeGramPrice"));
     if (purchasePrice.error) warnings.push(t("import.messages.invalidPurchasePrice")); else if (purchasePrice.value !== null && purchasePrice.value < 0) errors.push(t("import.messages.negativePurchasePrice"));
     const category = matchCategory(mapped(row, context.mapping, "category"), context.categories);
-    const status = normalizeImportedStatus(mapped(row, context.mapping, "status"), context.locale);
-    if (status.warning) warnings.push(status.warning);
-    if (status.value === "SOLD") errors.push(t("import.messages.soldStatus"));
 
     const item: ImportRow["item"] = shopId ? {
       shop_id: shopId, shop_name: context.shops.find((shop) => shop.id === shopId)?.name ?? t("common.unknown"), barcode, article_number: text(mapped(row, context.mapping, "article_number")), category_id: category.id, category_name: category.name ?? null,
@@ -126,18 +105,17 @@ export function validateImportRows(rows: SpreadsheetRow[], context: Context): Im
       price_per_gram: pricePerGram.error ? null : pricePerGram.value,
       purchase_price: purchasePrice.error ? null : purchasePrice.value,
       price: weight.error || pricePerGram.error ? null : calculateInventoryPrice(weight.value,pricePerGram.value),
-      discount:null, status: status.value, notes:null,
+      discount:null, status: "IN_STOCK", notes:null,
     } : null;
     return { sourceRow: context.sourceRows?.[index] ?? index + (context.headerRow ?? 0) + 2, classification: errors.length ? "Error" : warnings.length ? "Warning" : "Ready", errors, warnings, item };
   });
-  return { rows: validated, summary: {
+  return { rows: validated, ignoredSourceRows, summary: {
     sourceRows: rows.length,
-    total: validated.length,
     ready: validated.filter((row) => row.classification === "Ready").length,
     warnings: validated.filter((row) => row.classification === "Warning").length,
     errors: validated.filter((row) => row.classification === "Error").length,
     duplicates: validated.filter((row) => row.errors.some((error) => error === t("import.messages.duplicateFile") || error === t("import.messages.barcodeExists"))).length,
-    footerSkipped,
+    ignoredRows: ignoredSourceRows.length,
   } };
 }
 /** @deprecated Compatibility helper; the current import path never stores this value. */

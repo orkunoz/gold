@@ -28,16 +28,16 @@ describe("localization completion", () => {
     expect(uniqueHeaders([null,"Column 2","Виріб"],"ua")).toEqual(["Стовпець 1","Column 2","Виріб"]);
   });
   it("localizes import validation without changing classifications, totals or business data", () => {
-    const rows = [["ABC","oops","Gold","SOLD","SOLD"],["ABC","10","Gold","SOLD","strange"]];
-    const context = {mapping:{barcode:0,weight_grams:1,metal:2,category:3,status:4},targetShopId:"shop",categories:[],shops:[{id:"shop",name:"English Shop",code:null}],existingBarcodes:new Set<string>()};
+    const rows = [["ABC","oops","SOLD","A-1","100"],["ABC","10","SOLD","A-2","strange"]];
+    const context = {mapping:{barcode:0,weight_grams:1,category:2,article_number:3,price_per_gram:4},targetShopId:"shop",categories:[],shops:[{id:"shop",name:"English Shop",code:null}],existingBarcodes:new Set<string>()};
     const english=validateImportRows(rows,{...context,locale:"en"});
     const ukrainian=validateImportRows(rows,{...context,locale:"ua"});
     expect(ukrainian.summary).toEqual(english.summary);
     expect(ukrainian.summary.duplicates).toBe(2);
     expect(ukrainian.rows.map(row=>row.item)).toEqual(english.rows.map(row=>row.item));
     expect(ukrainian.rows[0].errors).toContain("Дублікат штрихкоду у файлі");
-    expect(ukrainian.rows[0].warnings).toContain("Некоректна вага; буде збережено порожнє значення");
-    expect(ukrainian.rows[1].warnings[0]).toContain("«strange»");
+    expect(ukrainian.rows[0].warnings).toContain("Некоректна вага");
+    expect(ukrainian.rows[1].warnings).toContain("Некоректна ціна за грам");
     expect(ukrainian.rows[0].item?.category_name).toBe("SOLD");
   });
   it("localizes known history labels only in their display context", () => {

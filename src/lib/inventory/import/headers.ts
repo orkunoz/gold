@@ -10,8 +10,6 @@ const aliases: Partial<Record<ImportField, string[]>> = {
   size: ["size", "розмір", "размер"],
   price_per_gram: ["price per gram", "price/g", "ціна грам", "ціна за грам", "цена грам"],
   purchase_price: ["purchase price", "ціна закупки", "закупівельна ціна"],
-  shop: ["shop", "store", "location", "магазин", "крамниця"],
-  status: ["status", "статус"],
 };
 
 export function normalizeHeader(value: unknown) {

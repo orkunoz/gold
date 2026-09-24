@@ -37,27 +37,26 @@ describe("flexible inventory import validation", () => {
     const row = validateImportRows([["  Браслет   оф ", "2", "UA-1", "100"]], base).rows[0];
     expect(row).toMatchObject({ classification: "Ready", warnings: [], errors: [], item: { category_id: null, category_name: "Браслет оф" } });
   });
-  it("accepts no mapped columns and applies operational defaults", () => {
-    const row = validateImportRows([["ignored"]], { ...base, mapping: {} }).rows[0];
-    expect(row.item).toMatchObject({ shop_id: "main-id", status: "IN_STOCK", barcode: null, article_number: null });
-  });
-  it("ignores a totals row when the mapped Price Per Gram cell is empty", () => {
+  it("ignores a totals row only when Article and Price Per Gram are both empty", () => {
     const preview = validateImportRows([
       ["Bracelet", "2", "A-1", "100"],
-      ["Total", "2", "TOTAL", "   "],
+      ["Total", "2", "", "   "],
     ], base);
-    expect(preview.summary).toMatchObject({ total: 1, ready: 1, warnings: 0, errors: 0 });
-    expect(preview.summary.footerSkipped).toBe(1);
+    expect(preview.summary).toMatchObject({ ready: 1, warnings: 0, errors: 0, ignoredRows: 1 });
+    expect(preview.ignoredSourceRows).toEqual([3]);
     expect(preview.rows).toHaveLength(1);
     expect(preview.rows[0]).toMatchObject({ sourceRow: 2, item: { article_number: "A-1", price_per_gram: 100 } });
   });
-  it("imports new Ukrainian metal and producer values without warnings", () => {
-    const row = validateImportRows([["  Золота Україна  ", "  Жадент  "]], { ...base, mapping: { metal: 0, producer: 1 } }).rows[0];
-    expect(row).toMatchObject({ classification: "Ready", warnings: [], errors: [], item: { metal: null, producer: "Жадент" } });
+  it("keeps products with an Article visible when formula inputs are missing", () => {
+    const preview=validateImportRows([["Ring",null,"A-1",null]],base);
+    expect(preview.rows[0]).toMatchObject({classification:"Warning",warnings:["Weight is missing","Price per Gram is missing"],item:{article_number:"A-1",weight_grams:null,price_per_gram:null}});
+    expect(preview.summary.ignoredRows).toBe(0);
   });
-  it("imports blank metal and producer values as null", () => {
-    const row = validateImportRows([["   ", null]], { ...base, mapping: { metal: 0, producer: 1 } }).rows[0];
-    expect(row).toMatchObject({ classification: "Ready", warnings: [], item: { metal: null, producer: null } });
+  it("allows absent or blank Purchase Price without a warning",()=>{
+    const absent=validateImportRows([["Ring","2","A-1","100"]],base).rows[0];
+    const blank=validateImportRows([["Ring","2","A-1","100",""]],{...base,mapping:{...base.mapping,purchase_price:4}}).rows[0];
+    expect(absent).toMatchObject({classification:"Ready",warnings:[],item:{purchase_price:null}});
+    expect(blank).toMatchObject({classification:"Ready",warnings:[],item:{purchase_price:null}});
   });
   it("preserves original worksheet row numbers after blank rows were removed",()=>{
     const preview=validateImportRows([["Ring","2","A-1","100"],["Ring","3","A-2","100"]],{...base,sourceRows:[4,7]});
@@ -68,20 +67,16 @@ describe("flexible inventory import validation", () => {
     const preview = validateImportRows([["DUP"], ["DUP"], ["EXISTS"], [null], [null]], context);
     expect(preview.rows[0].errors).toContain("Duplicate barcode in file");
     expect(preview.rows[2].errors).toContain("Barcode already exists");
-    expect(preview.rows[3]).toMatchObject({ classification: "Ready", item: { barcode: null } });
-    expect(preview.summary).toMatchObject({ total: 5, errors: 3, duplicates: 3 });
+    expect(preview.ignoredSourceRows).toEqual([5,6]);
+    expect(preview.summary).toMatchObject({ errors: 3, duplicates: 3 });
   });
   it("warns and stores null for malformed optional numbers, but rejects negatives", () => {
     const context = { ...base, mapping: { weight_grams: 0, price_per_gram: 1 } };
-    expect(validateImportRows([["bad", "oops"]], context).rows[0]).toMatchObject({ classification: "Warning", warnings:expect.arrayContaining([expect.stringContaining("formula price")]), item: { weight_grams: null, price_per_gram: null, price: null } });
+    expect(validateImportRows([["bad", "oops"]], context).rows[0]).toMatchObject({ classification: "Warning", warnings:["Invalid Weight","Invalid Price per Gram"], item: { weight_grams: null, price_per_gram: null, price: null } });
     expect(validateImportRows([["-1", "-2"]], context).rows[0].errors).toHaveLength(2);
   });
-  it("uses a mapped shop when valid", () => {
-    const context = { ...base, mapping: { shop: 0 } };
-    expect(validateImportRows([["OTHER"]], context).rows[0].item?.shop_id).toBe("other-id");
-  });
-  it("ignores removed fineness mappings", () => {
-    const row = validateImportRows([["585"]], { ...base, mapping: { fineness: 0 } }).rows[0];
-    expect(row.item?.gold_fineness).toBeNull();
+  it("always uses the target Warehouse and IN_STOCK defaults", () => {
+    const row=validateImportRows([["A-1","100"]],{...base,mapping:{article_number:0,price_per_gram:1}}).rows[0];
+    expect(row.item).toMatchObject({shop_id:"main-id",shop_name:"Main Shop",status:"IN_STOCK"});
   });
 });

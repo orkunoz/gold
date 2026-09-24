@@ -1,8 +1,7 @@
 import type { InventoryStatus } from "@/lib/database.types";
 
 export const IMPORT_FIELDS = [
-  "category", "metal", "fineness", "producer", "size", "weight_grams", "purchase_price", "price_per_gram",
-  "article_number", "discount", "notes", "status", "shop", "barcode",
+  "category", "article_number", "producer", "size", "weight_grams", "purchase_price", "price_per_gram", "barcode",
 ] as const;
 
 export type ImportField = typeof IMPORT_FIELDS[number];
@@ -48,5 +47,6 @@ export type ImportRow = {
 
 export type ImportPreview = {
   rows: ImportRow[];
-  summary: { sourceRows: number; total: number; ready: number; warnings: number; errors: number; duplicates: number; footerSkipped: number };
+  summary: { sourceRows: number; ready: number; warnings: number; errors: number; duplicates: number; ignoredRows: number };
+  ignoredSourceRows: number[];
 };
