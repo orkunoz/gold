@@ -17,6 +17,9 @@ describe("Import Inventory rendered states",()=>{
     const html=renderToStaticMarkup(React.createElement(InventoryImport,{employeeShopId:"shop",shops:[{id:"shop",name:"Warehouse",code:null}]}));
     for(const supported of ["Виріб","Виробник","Розмір","Вага","Ціна-грам","Артикул"])expect(html).toContain(supported);
     for(const unsupported of ["№ з/п","Примітка","Дата реалізації","Ціна(грн)"])expect(html).not.toContain(unsupported);
+    expect(html).toContain('<option value="producer" selected="">Виробник</option>');
+    expect(html).toContain('<option value="size" selected="">Розмір</option>');
+    for(const target of ["category","article_number","producer","size","weight_grams","purchase_price","price_per_gram","barcode"])expect(html).toContain(`value="${target}"`);
     expect(html).toContain("xl:flex-nowrap");
   });
   it("renders preview labels in Ukrainian and leaves spreadsheet values intact",()=>{
