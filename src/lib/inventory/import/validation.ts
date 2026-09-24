@@ -93,15 +93,22 @@ export function validateImportRows(rows: SpreadsheetRow[], context: Context): Im
     const weight = parseImportedNumber(mapped(row, context.mapping, "weight_grams"));
     const pricePerGram = parseImportedNumber(mapped(row, context.mapping, "price_per_gram"));
     const purchasePrice = parseImportedNumber(mapped(row, context.mapping, "purchase_price"));
+    const category = matchCategory(mapped(row, context.mapping, "category"), context.categories);
+    const article = text(mapped(row, context.mapping, "article_number"));
+    const producer = text(mapped(row, context.mapping, "producer"));
+    const size = text(mapped(row, context.mapping, "size"));
+    if (!category.name) warnings.push(t("import.messages.missingCategory"));
+    if (!article) warnings.push(t("import.messages.missingArticle"));
+    if (!producer) warnings.push(t("import.messages.missingProducer"));
+    if (!size) warnings.push(t("import.messages.missingSize"));
     if (weight.error) warnings.push(t("import.messages.invalidWeight")); else if (weight.value === null) warnings.push(t("import.messages.missingWeight")); else if (weight.value < 0) errors.push(t("import.messages.negativeWeight"));
     if (pricePerGram.error) warnings.push(t("import.messages.invalidGramPrice")); else if (pricePerGram.value === null) warnings.push(t("import.messages.missingGramPrice")); else if (pricePerGram.value < 0) errors.push(t("import.messages.negativeGramPrice"));
     if (purchasePrice.error) warnings.push(t("import.messages.invalidPurchasePrice")); else if (purchasePrice.value !== null && purchasePrice.value < 0) errors.push(t("import.messages.negativePurchasePrice"));
-    const category = matchCategory(mapped(row, context.mapping, "category"), context.categories);
 
     const item: ImportRow["item"] = shopId ? {
-      shop_id: shopId, shop_name: context.shops.find((shop) => shop.id === shopId)?.name ?? t("common.unknown"), barcode, article_number: text(mapped(row, context.mapping, "article_number")), category_id: category.id, category_name: category.name ?? null,
-      metal:null, gold_fineness:null, producer: text(mapped(row, context.mapping, "producer")),
-      weight_grams: weight.error ? null : weight.value, size: text(mapped(row, context.mapping, "size")),
+      shop_id: shopId, shop_name: context.shops.find((shop) => shop.id === shopId)?.name ?? t("common.unknown"), barcode, article_number: article, category_id: category.id, category_name: category.name ?? null,
+      metal:null, gold_fineness:null, producer,
+      weight_grams: weight.error ? null : weight.value, size,
       price_per_gram: pricePerGram.error ? null : pricePerGram.value,
       purchase_price: purchasePrice.error ? null : purchasePrice.value,
       price: weight.error || pricePerGram.error ? null : calculateInventoryPrice(weight.value,pricePerGram.value),
