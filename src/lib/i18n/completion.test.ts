@@ -60,7 +60,8 @@ describe("localization completion", () => {
     const source=read("src/components/inventory-import.tsx");
     for(const text of ["Detected headers on spreadsheet row","Validation errors skipped","Return to inventory","Import another file","Source row numbers match","Importing…"]){expect(source).not.toContain(text);}
     expect(source).toContain('t("import.detectedHeaders"');
-    expect(source).toContain('t(`import.summary.${label}`)');
+    expect(source).toContain('t("import.preImportSummary"');
+    expect(source).not.toContain('t(`import.summary.${label}`)');
     expect(source).toContain('t("import.importValid"');
     expect(source).toContain('t("import.validationSkipped")');
   });
