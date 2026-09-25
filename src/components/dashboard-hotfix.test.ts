@@ -47,10 +47,12 @@ describe("dashboard live-filter and compact-layout hotfix", () => {
   it("resolves all touched localization labels in both dictionaries", () => {
     const en = JSON.parse(read("../../locales/en.json"));
     const ua = JSON.parse(read("../../locales/ua.json"));
-    for (const key of ["title", "period", "revenue", "itemsSold", "goldWeightSold", "netProfit", "inStock", "inStockGoldWeight", "inventoryValue", "statistics", "salesActivity", "categoryPerformance", "shopPerformance", "lastMonth", "allTime"]) {
+    for (const key of ["title", "period", "revenue", "itemsSold", "goldWeightSold", "netProfit", "inStock", "inStockGoldWeight", "statistics", "salesActivity", "categoryPerformance", "shopPerformance", "lastMonth", "allTime"]) {
       expect(en.dashboard[key]).toBeTruthy();
       expect(ua.dashboard[key]).toBeTruthy();
     }
+    expect(en.dashboard.inventoryValue).toBeUndefined();
+    expect(ua.dashboard.inventoryValue).toBeUndefined();
     expect(en.dashboard.itemsSold).toBe("Items Sold");
     expect(ua.dashboard.itemsSold).toMatch(/Продано/);
   });

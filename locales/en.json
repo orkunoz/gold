@@ -266,7 +266,6 @@
     "goldWeightSold": "Weight Sold",
     "netProfit": "Net Profit",
     "missingPurchaseCost": "{count} sold item(s) have no purchase cost; profit excludes their cost.",
-    "inventoryValue": "Inventory Value",
     "inStock": "In Stock",
     "dailyRevenue": "Daily Revenue",
     "noDays": "No reporting days available.",

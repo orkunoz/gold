@@ -17,7 +17,8 @@ describe("ZLATA V2.1 light visual system", () => {
     const filters = page.indexOf("<DashboardFilters", statistics);
     expect(filters).toBeGreaterThan(statistics);
     expect(page).not.toContain('t("dashboard.itemsOverTime")');
-    expect(page).toContain('t("dashboard.inventoryValue")');
+    expect(page).toContain("inventory.customer_value");
+    expect(page).not.toContain('t("dashboard.inventoryValue")');
     expect(page).not.toContain("className=\"eyebrow\"");
   });
 
